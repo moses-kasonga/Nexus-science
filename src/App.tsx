@@ -5,6 +5,9 @@ import Home from "./pages/Home";
 import CoursePage from "./pages/CoursePage";
 import AuthPage from "./pages/AuthPage";
 import Account from "./pages/Account";
+import AdminGuard from "./components/admin/AdminGuard";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 function Header() {
   const { session, profile } = useAuth();
@@ -17,6 +20,7 @@ function Header() {
         </Link>
         <nav aria-label="Navigation principale" className="nav">
           <NavLink to="/" end>Cours</NavLink>
+          {session && profile?.role === "admin" && <NavLink to="/admin">Administration</NavLink>}
           {session ? <NavLink to="/compte" className="nav-cta">{displayName(profile, session.user.email)}</NavLink> : <NavLink to="/connexion" className="nav-cta">Se connecter</NavLink>}
         </nav>
       </div>
@@ -37,6 +41,9 @@ export default function App() {
           <Route path="/connexion" element={<AuthPage mode="login" />} />
           <Route path="/inscription" element={<AuthPage mode="register" />} />
           <Route path="/compte" element={<Account />} />
+          <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
+            <Route index element={<AdminDashboard />} />
+          </Route>
           <Route path="*" element={<section className="wrap page"><h1>Page introuvable</h1><p><Link to="/">Retour aux cours</Link></p></section>} />
         </Routes>
       </main>
