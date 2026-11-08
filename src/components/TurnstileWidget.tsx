@@ -29,6 +29,8 @@ const SCRIPT_URL = "https://challenges.cloudflare.com/turnstile/v0/api.js?render
 
 export function TurnstileWidget({ siteKey, onSuccess, onExpire, onError }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const callbacksRef = useRef({ onSuccess, onExpire, onError });
+  callbacksRef.current = { onSuccess, onExpire, onError };
 
   useEffect(() => {
     const container = containerRef.current;
@@ -41,13 +43,13 @@ export function TurnstileWidget({ siteKey, onSuccess, onExpire, onError }: Props
       try {
         widgetId = window.turnstile.render(containerRef.current, {
           sitekey: siteKey,
-          callback: onSuccess,
-          "expired-callback": onExpire,
-          "error-callback": onError,
+          callback: (token) => callbacksRef.current.onSuccess(token),
+          "expired-callback": () => callbacksRef.current.onExpire(),
+          "error-callback": () => callbacksRef.current.onError(),
           theme: "auto",
         });
       } catch {
-        onError();
+        callbacksRef.current.onError();
       }
     };
 
@@ -56,7 +58,7 @@ export function TurnstileWidget({ siteKey, onSuccess, onExpire, onError }: Props
       renderWidget();
     } else if (script) {
       script.addEventListener("load", renderWidget, { once: true });
-      script.addEventListener("error", onError, { once: true });
+      script.addEventListener("error", () => callbacksRef.current.onError(), { once: true });
     } else {
       script = document.createElement("script");
       script.id = SCRIPT_ID;
@@ -64,7 +66,7 @@ export function TurnstileWidget({ siteKey, onSuccess, onExpire, onError }: Props
       script.async = true;
       script.defer = true;
       script.addEventListener("load", renderWidget, { once: true });
-      script.addEventListener("error", onError, { once: true });
+      script.addEventListener("error", () => callbacksRef.current.onError(), { once: true });
       document.head.appendChild(script);
     }
 
@@ -72,7 +74,7 @@ export function TurnstileWidget({ siteKey, onSuccess, onExpire, onError }: Props
       cancelled = true;
       if (widgetId && window.turnstile) window.turnstile.remove(widgetId);
     };
-  }, [siteKey, onSuccess, onExpire, onError]);
+  }, [siteKey]);
 
   return <div ref={containerRef} aria-label="Vérification anti-robot" />;
 }
