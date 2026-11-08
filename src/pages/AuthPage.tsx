@@ -85,7 +85,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
         if (data.session) navigate("/compte", { replace: true });
         else setNotice("Compte créé. Ouvrez le message de confirmation envoyé à votre adresse e-mail, puis connectez-vous.");
       } else {
-        const { error: failure } = await supabase.auth.signInWithPassword({ email, password }, { captchaToken });
+        const { error: failure } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } });
         if (failure) {
           console.error("[NEXUS auth:login]", { name: failure.name, code: failure.code, status: failure.status, message: failure.message });
           setDiagnostic(diagnosticDetails(failure));
