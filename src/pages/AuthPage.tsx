@@ -11,9 +11,9 @@ function diagnosticDetails(failure: AuthFailure): string {
   const status = typeof failure.status === "number" ? String(failure.status) : "non précisé";
   const message = typeof failure.message === "string"
     ? failure.message
-        .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi, "[adresse masquée]")
-        .replace(/https?:\\/\\/\\S+/gi, "[URL masquée]")
-        .replace(/(apikey|authorization|token|password)\\s*[:=]\\s*\\S+/gi, "$1=[masqué]")
+        .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[adresse masquée]")
+        .replace(/https?:\/\/\S+/gi, "[URL masquée]")
+        .replace(/(apikey|authorization|token|password)\s*[:=]\s*\S+/gi, "$1=[masqué]")
         .slice(0, 180)
     : "aucun message";
   return `Type : ${name} · Code : ${code} · HTTP : ${status} · Détail : ${message}`;
