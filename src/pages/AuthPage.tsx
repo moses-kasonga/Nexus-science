@@ -1,16 +1,40 @@
 import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { supabase, supabaseConfigured } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 
-function friendlyError(message: string): string {
+function friendlyError(message: string, code?: string, status?: number, operation?: "login" | "register"): string {
   const text = message.toLowerCase();
-  if (text.includes("invalid login")) return "Adresse e-mail ou mot de passe incorrect.";
-  if (text.includes("email not confirmed")) return "Votre adresse n'est pas encore confirmée. Ouvrez le message de confirmation reçu par e-mail.";
-  if (text.includes("already registered") || text.includes("already been registered")) return "Un compte existe déjà avec cette adresse. Connectez-vous.";
-  if (text.includes("password") && text.includes("least")) return "Le mot de passe est trop court (8 caractères minimum).";
-  if (text.includes("rate limit") || text.includes("too many")) return "Trop de tentatives. Patientez quelques minutes avant de réessayer.";
-  return "Une erreur est survenue. Vérifiez vos informations et réessayez.";
+  const errorCode = (code ?? "").toLowerCase();
+
+  if (errorCode === "invalid_credentials" || text.includes("invalid login") || text.includes("invalid credentials")) {
+    return "Adresse e-mail ou mot de passe incorrect.";
+  }
+  if (errorCode === "email_not_confirmed" || text.includes("email not confirmed")) {
+    return "Cette adresse e-mail n'est pas encore confirmée. Vérifie ta boîte de réception.";
+  }
+  if (errorCode === "user_already_exists" || text.includes("already registered") || text.includes("already been registered")) {
+    return "Un compte existe déjà avec cette adresse. Essaie de te connecter.";
+  }
+  if (errorCode === "weak_password" || (text.includes("password") && (text.includes("least") || text.includes("short")))) {
+    return "Le mot de passe est trop court ou ne respecte pas les exigences de sécurité.";
+  }
+  if (errorCode.includes("rate_limit") || text.includes("rate limit") || text.includes("too many")) {
+    return "Trop de tentatives. Patiente quelques minutes avant de réessayer.";
+  }
+  if (errorCode === "signup_disabled") {
+    return "Les inscriptions sont actuellement désactivées dans le service d'authentification.";
+  }
+  if (text.includes("database error") || errorCode === "unexpected_failure" || status === 500) {
+    return operation === "register"
+      ? "Supabase a refusé la création du compte côté serveur. Le profil automatique ou un déclencheur de la base doit être vérifié."
+      : "Le service d'authentification a rencontré une erreur serveur. La configuration Supabase doit être vérifiée.";
+  }
+  if (status === 429) return "Le service limite temporairement les tentatives. Réessaie dans quelques minutes.";
+  if (status === 0 || text.includes("failed to fetch") || text.includes("network")) {
+    return "Le site n'arrive pas à joindre Supabase. Vérifie ta connexion Internet et la configuration du service.";
+  }
+  return "Supabase a renvoyé une erreur non identifiée. Réessaie plus tard ; le diagnostic technique doit être consulté.";
 }
 
 export default function AuthPage({ mode }: { mode: "login" | "register" }) {
@@ -30,20 +54,35 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
     const password = String(form.get("password") ?? "");
     setBusy(true); setError(""); setNotice("");
     try {
+      if (!supabaseConfigured) {
+        setError("La connexion à Supabase n'est pas configurée pour cette version du site. Vérifie les variables Vercel.");
+        return;
+      }
       if (isRegister) {
         if (password.length < 8) { setError("Le mot de passe doit contenir au moins 8 caractères."); return; }
         const { data, error: failure } = await supabase.auth.signUp({
           email, password,
           options: { emailRedirectTo: window.location.origin, data: { first_name: String(form.get("first_name") ?? "").trim(), last_name: String(form.get("last_name") ?? "").trim() } },
         });
-        if (failure) { setError(friendlyError(failure.message)); return; }
+        if (failure) {
+          console.error("[NEXUS auth:register]", { code: failure.code, status: failure.status, message: failure.message });
+          setError(friendlyError(failure.message, failure.code, failure.status, "register"));
+          return;
+        }
         if (data.session) navigate("/compte", { replace: true });
         else setNotice("Compte créé. Ouvrez le message de confirmation envoyé à votre adresse e-mail, puis connectez-vous.");
       } else {
         const { error: failure } = await supabase.auth.signInWithPassword({ email, password });
-        if (failure) setError(friendlyError(failure.message)); else navigate("/compte", { replace: true });
+        if (failure) {
+          console.error("[NEXUS auth:login]", { code: failure.code, status: failure.status, message: failure.message });
+          setError(friendlyError(failure.message, failure.code, failure.status, "login"));
+        } else navigate("/compte", { replace: true });
       }
-    } catch { setError("Connexion impossible pour le moment. Vérifiez votre réseau et réessayez."); }
+    } catch (cause) {
+      const detail = cause instanceof Error ? cause.message : "Erreur inconnue";
+      console.error("[NEXUS auth:unexpected]", detail);
+      setError(friendlyError(detail, undefined, 0, isRegister ? "register" : "login"));
+    }
     finally { setBusy(false); }
   }
 
