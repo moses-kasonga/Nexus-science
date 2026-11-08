@@ -3,6 +3,22 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 
+type AuthFailure = { name?: unknown; code?: unknown; status?: unknown; message?: unknown };
+
+function diagnosticDetails(failure: AuthFailure): string {
+  const name = typeof failure.name === "string" ? failure.name : "non précisé";
+  const code = typeof failure.code === "string" ? failure.code : "non précisé";
+  const status = typeof failure.status === "number" ? String(failure.status) : "non précisé";
+  const message = typeof failure.message === "string"
+    ? failure.message
+        .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi, "[adresse masquée]")
+        .replace(/https?:\\/\\/\\S+/gi, "[URL masquée]")
+        .replace(/(apikey|authorization|token|password)\\s*[:=]\\s*\\S+/gi, "$1=[masqué]")
+        .slice(0, 180)
+    : "aucun message";
+  return `Type : ${name} · Code : ${code} · HTTP : ${status} · Détail : ${message}`;
+}
+
 function friendlyError(message: string, code?: string, status?: number, operation?: "login" | "register"): string {
   const text = message.toLowerCase();
   const errorCode = (code ?? "").toLowerCase();
@@ -42,6 +58,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [diagnostic, setDiagnostic] = useState("");
   const [notice, setNotice] = useState("");
   const isRegister = mode === "register";
 
@@ -52,7 +69,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") ?? "").trim().toLowerCase();
     const password = String(form.get("password") ?? "");
-    setBusy(true); setError(""); setNotice("");
+    setBusy(true); setError(""); setDiagnostic(""); setNotice("");
     try {
       if (!supabaseConfigured) {
         setError("La connexion à Supabase n'est pas configurée pour cette version du site. Vérifie les variables Vercel.");
@@ -65,7 +82,8 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
           options: { emailRedirectTo: window.location.origin, data: { first_name: String(form.get("first_name") ?? "").trim(), last_name: String(form.get("last_name") ?? "").trim() } },
         });
         if (failure) {
-          console.error("[NEXUS auth:register]", { code: failure.code, status: failure.status, message: failure.message });
+          console.error("[NEXUS auth:register]", { name: failure.name, code: failure.code, status: failure.status, message: failure.message });
+          setDiagnostic(diagnosticDetails(failure));
           setError(friendlyError(failure.message, failure.code, failure.status, "register"));
           return;
         }
@@ -74,14 +92,17 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
       } else {
         const { error: failure } = await supabase.auth.signInWithPassword({ email, password });
         if (failure) {
-          console.error("[NEXUS auth:login]", { code: failure.code, status: failure.status, message: failure.message });
+          console.error("[NEXUS auth:login]", { name: failure.name, code: failure.code, status: failure.status, message: failure.message });
+          setDiagnostic(diagnosticDetails(failure));
           setError(friendlyError(failure.message, failure.code, failure.status, "login"));
         } else navigate("/compte", { replace: true });
       }
     } catch (cause) {
-      const detail = cause instanceof Error ? cause.message : "Erreur inconnue";
-      console.error("[NEXUS auth:unexpected]", detail);
-      setError(friendlyError(detail, undefined, 0, isRegister ? "register" : "login"));
+      const failure = cause && typeof cause === "object" ? cause as AuthFailure : { message: String(cause) };
+      const detail = typeof failure.message === "string" ? failure.message : "Erreur inconnue";
+      console.error("[NEXUS auth:unexpected]", { name: failure.name, code: failure.code, status: failure.status, message: detail });
+      setDiagnostic(diagnosticDetails(failure));
+      setError(friendlyError(detail, typeof failure.code === "string" ? failure.code : undefined, typeof failure.status === "number" ? failure.status : undefined, isRegister ? "register" : "login"));
     }
     finally { setBusy(false); }
   }
@@ -100,6 +121,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
         <label>Adresse e-mail<input name="email" type="email" autoComplete="email" required /></label>
         <label>Mot de passe<input name="password" type="password" autoComplete={isRegister ? "new-password" : "current-password"} required minLength={isRegister ? 8 : undefined} /></label>
         {error && <p className="notice error" role="alert">{error}</p>}
+        {diagnostic && <p className="muted" role="status" style={{ fontSize: "0.8rem", overflowWrap: "anywhere" }}>Diagnostic technique : {diagnostic}</p>}
         {notice && <p className="notice ok" role="status">{notice}</p>}
         <button className="btn primary" type="submit" disabled={busy}>{busy ? "Veuillez patienter…" : isRegister ? "Créer mon compte" : "Me connecter"}</button>
       </form>
