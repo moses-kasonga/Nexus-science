@@ -15,7 +15,15 @@ export async function fetchPublishedCourses(): Promise<Course[]> {
     .select("id, name, category, description, course_schedules(start_date, end_date, status)")
     .eq("published", true)
     .order("name", { ascending: true });
-  if (error) throw new Error("Les cours n'ont pas pu être chargés. Réessayez dans un instant.");
+  if (error) {
+    const detail = [
+      error.code,
+      error.message,
+      error.details,
+      error.hint,
+    ].filter(Boolean).join(" — ");
+    throw new Error(detail || "Les cours n'ont pas pu être chargés.");
+  }
   return ((data ?? []) as Course[]).map(publishedSessions);
 }
 
