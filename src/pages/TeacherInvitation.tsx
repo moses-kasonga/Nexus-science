@@ -9,7 +9,7 @@ type Preview = { email: string } | "invalid" | null;
 export default function TeacherInvitation() {
   const [params] = useSearchParams();
   const token = params.get("token") ?? "";
-  const { session, loading } = useAuth();
+  const { session, loading, signOut } = useAuth();
   const [preview, setPreview] = useState<Preview>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -50,6 +50,7 @@ export default function TeacherInvitation() {
   return (
     <section className="wrap page narrow">
       <h1>Invitation enseignant</h1>
+      {session && <p className="muted small-text">Connecté en tant que {session.user.email}. <button className="linklike" type="button" onClick={() => void signOut()}>Changer de compte</button></p>}
       {!token && <p className="notice error" role="alert">Ce lien est incomplet. Demandez un nouveau lien à l'administration de Nexus science.</p>}
       {token && loading && <p className="muted" role="status">Chargement…</p>}
       {token && !loading && !session && (
