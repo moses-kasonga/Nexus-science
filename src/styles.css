@@ -177,4 +177,4 @@ textarea, select { padding: 10px 12px; border-radius: 12px; border: 1.5px solid 
 
 :root[data-theme="light"] { color-scheme:light; --bg:#f6f3ec;--surface:#fffdf8;--ink:#14232c;--muted:#5b6b73;--line:#ddd6c6;--brand:#0f5b63;--brand-ink:#ffffff;--accent:#c9792b;--soft:#e6f0ee;--ok-bg:#e4f3ea;--ok-ink:#14532d;--err-bg:#fbe9e7;--err-ink:#8a1f11; }
 
-.linklike { background: none; border: 0; padding: 0; color: var(--accent, #5fc4c8); text-decoration: underline; cursor: pointer; font: inherit; }
+.linklike { background: none; border: 0; padding: 0; color: var(--brand); text-decoration: underline; cursor: pointer; font: inherit; }
