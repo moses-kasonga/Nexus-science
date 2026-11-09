@@ -131,3 +131,46 @@ textarea, select { padding: 10px 12px; border-radius: 12px; border: 1.5px solid 
 .anatomical-heart-stage .holo-label-bottom{bottom:3%;left:0;font-size:.55rem}
 @media(max-width:720px){.hero-grid{grid-template-columns:1fr}.hero-art.anatomical-heart-stage{display:grid;width:min(78vw,320px);margin:4px auto 0}}
 @media(prefers-reduced-motion:reduce){.anatomical-heart{animation:none}}
+
+
+/* ---- Accueil NEXUS SCIENCE : présentation complète et responsive ---- */
+:root[data-theme="dark"] { color-scheme:dark; --bg:#0d1a20;--surface:#132630;--ink:#e8eef0;--muted:#98aab2;--line:#264451;--brand:#5ec2c8;--brand-ink:#062226;--accent:#e6a15a;--soft:#16343d;--ok-bg:#12382a;--ok-ink:#a6e3bf;--err-bg:#3d1b17;--err-ink:#ffb4a8; }
+:root[data-theme="light"] { color-scheme:light; }
+.header-tools{display:flex;align-items:center;gap:10px}
+.language-picker{display:flex;align-items:center;gap:4px;font-size:.9rem}
+.language-picker select{width:auto;min-height:36px;padding:4px 7px;border:0;background:transparent;font:600 .82rem var(--sans);cursor:pointer}
+.header-search{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:1.5rem}
+.header-search input{width:116px;min-height:36px;padding:4px 8px;border:1px solid var(--line);font-size:.82rem}
+.theme-toggle{width:38px;height:38px;border:1px solid var(--line);border-radius:50%;background:var(--surface);cursor:pointer;font-size:1rem}
+.brand-mark{font-size:1.45rem}
+.hero-grid{grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);gap:clamp(24px,5vw,72px);padding-block:58px 54px}
+.hero-copy{max-width:650px}
+.hero-copy h1{max-width:18ch;font-size:clamp(2.15rem,4.2vw,3.55rem)}
+.hero-tagline{font:600 clamp(1.1rem,2vw,1.45rem)/1.4 var(--sans);color:var(--brand);margin:18px 0 10px}
+.hero-art.anatomical-heart-stage{width:min(100%,480px);max-width:480px;min-width:0;aspect-ratio:1;display:grid;margin-inline:auto}
+.anatomical-heart{width:100%;height:100%;object-fit:contain}
+.home-section{padding-block:68px}
+.section-heading{max-width:760px;margin:0 auto 30px;text-align:center}
+.section-heading h2{margin:0 0 12px}
+.section-heading>p:last-child{margin:0;color:var(--muted);font-size:1.05rem}
+.feature-grid,.showcase-grid,.benefit-grid,.steps-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.feature-card{padding:26px;background:var(--surface);border:1px solid var(--line);border-radius:18px}
+.feature-icon{display:inline-grid;place-items:center;width:48px;height:48px;border-radius:14px;background:var(--soft);font-size:1.5rem;margin-bottom:14px}
+.feature-card h3,.showcase-card h3,.benefit-grid h3,.steps-grid h3{margin:0 0 8px}
+.feature-card p,.showcase-card p,.benefit-grid p,.steps-grid p{margin:0;color:var(--muted)}
+.showcase-section,.start-section{background:var(--soft);border-block:1px solid var(--line)}
+.showcase-card{overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:18px}
+.showcase-card>div:last-child{padding:20px}
+.showcase-visual{height:150px;display:grid;place-items:center;font-size:4rem;background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--brand) 25%,transparent),transparent 70%),var(--surface)}
+.benefit-grid article{display:flex;gap:16px;padding:20px 4px;border-bottom:1px solid var(--line)}
+.benefit-grid article>span{font-size:1.7rem;flex:0 0 42px}
+.steps-grid{list-style:none;padding:0;margin:0;counter-reset:steps}
+.steps-grid li{padding:24px;background:var(--surface);border:1px solid var(--line);border-radius:18px}
+.steps-grid li>span{display:inline-block;margin-bottom:16px;color:var(--accent);font:700 1.7rem var(--serif)}
+.courses-section{padding-bottom:76px}
+.courses-cta{display:flex;justify-content:center;margin-top:28px}
+.footer-brand{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+.footer-brand strong{color:var(--ink)}
+@media(max-width:900px){.header-row{flex-wrap:wrap;padding-block:10px}.header-tools{margin-left:auto}.nav{order:3;width:100%;justify-content:center}.hero-grid{grid-template-columns:1fr 0.8fr}.feature-grid,.showcase-grid,.benefit-grid,.steps-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:720px){.hero-grid{grid-template-columns:1fr;padding-block:38px 30px}.hero-art.anatomical-heart-stage{display:grid;width:min(82vw,360px);margin:12px auto 0}.hero-copy h1{max-width:unset}.home-section{padding-block:48px}.feature-grid,.showcase-grid,.benefit-grid,.steps-grid{grid-template-columns:1fr}.header-row{gap:8px}.brand{font-size:1.05rem}.header-tools{gap:6px}.header-search input{width:88px}.nav{justify-content:flex-start;overflow-x:auto}.footer-brand{flex-direction:column}}
+@media(max-width:390px){.header-search input{width:72px}.language-picker select{padding-inline:2px}.header-tools{gap:3px}}
