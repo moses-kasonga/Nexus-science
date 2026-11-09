@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { addSchedule, assignTeacher, deleteCourse, deleteSchedule, listAllCourses, listPeople, personName, saveCourse, setScheduleStatus, unassignTeacher, type AdminCourse, type AdminSchedule, type PersonRow } from "../../lib/adminData";
+import { addSchedule, assignTeacher, deleteCourse, deleteLesson, deleteSchedule, listAllCourses, listCourseLessons, listPeople, personName, saveCourse, saveLesson, setScheduleStatus, unassignTeacher, type AdminCourse, type AdminSchedule, type PersonRow } from "../../lib/adminData";
 import { Feedback, dayLabel, errorText, sessionStatusLabel } from "./shared";
 
 function CourseForm({ initial, busy, onSave, onCancel }: { initial?: AdminCourse; busy: boolean; onSave: (value: { name: string; category: string; description: string; published: boolean }) => void; onCancel: () => void }) {
@@ -34,6 +34,68 @@ function ScheduleAdder({ busy, onAdd }: { busy: boolean; onAdd: (start: string, 
       <label>État<select name="status" defaultValue="scheduled"><option value="scheduled">Planifiée</option><option value="published">Publiée</option><option value="cancelled">Annulée</option></select></label>
       <button className="btn small" type="submit" disabled={busy}>Ajouter la session</button>
     </form>
+  );
+}
+
+
+function LessonManager({ courseId, busy, onRun }: { courseId: string; busy: boolean; onRun: (action: () => Promise<void>) => Promise<void> }) {
+  const [lessons, setLessons] = useState<import("../../lib/adminData").AdminLesson[] | null>(null);
+  const [editing, setEditing] = useState<import("../../lib/adminData").AdminLesson | "new" | null>(null);
+  const [loadError, setLoadError] = useState("");
+  const reload = useCallback(async () => {
+    try { const rows = await listCourseLessons(courseId); setLessons(rows); setLoadError(""); }
+    catch (cause) { setLoadError(errorText(cause)); setLessons([]); }
+  }, [courseId]);
+  useEffect(() => { void reload(); }, [reload]);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const input = {
+      id: editing !== "new" && editing ? editing.id : undefined,
+      course_id: courseId,
+      title: String(form.get("title") ?? ""),
+      content: String(form.get("content") ?? ""),
+      order_index: Math.max(0, Number(form.get("order_index") ?? 0)),
+      published: form.get("published") === "on",
+    };
+    await onRun(async () => {
+      await saveLesson(input);
+      setEditing(null);
+      await reload();
+    });
+  }
+
+  return (
+    <section className="lesson-admin">
+      <div className="row between"><h4>Leçons</h4>{!editing && <button className="btn small" disabled={busy} onClick={() => setEditing("new")}>Ajouter une leçon</button>}</div>
+      {loadError && <Feedback error={loadError} />}
+      {editing && (
+        <form className="form panel" onSubmit={(event) => void submit(event)}>
+          <h4>{editing === "new" ? "Nouvelle leçon" : "Modifier la leçon"}</h4>
+          <label>Titre<input name="title" required maxLength={180} defaultValue={editing === "new" ? "" : editing.title} /></label>
+          <label>Contenu pédagogique<textarea name="content" rows={7} maxLength={50000} defaultValue={editing === "new" ? "" : editing.content ?? ""} /></label>
+          <label>Ordre pédagogique<input name="order_index" type="number" min="0" step="1" required defaultValue={editing === "new" ? (lessons?.length ?? 0) + 1 : editing.order_index} /></label>
+          <label className="check"><input type="checkbox" name="published" defaultChecked={editing === "new" ? false : editing.published} /> Publiée (visible aux élèves autorisés)</label>
+          <div className="row"><button className="btn primary small" type="submit" disabled={busy}>Enregistrer</button><button className="btn small" type="button" onClick={() => setEditing(null)}>Annuler</button></div>
+        </form>
+      )}
+      {lessons === null && <p className="muted">Chargement des leçons…</p>}
+      {lessons?.length === 0 && !editing && <p className="muted small-text">Aucune leçon créée pour ce cours.</p>}
+      <ol className="stack tight">
+        {lessons?.map((lesson) => (
+          <li className="panel" key={lesson.id}>
+            <div className="row between"><strong>{lesson.order_index}. {lesson.title}</strong><span className={`pill ${lesson.published ? "ongoing" : "past"}`}>{lesson.published ? "Publiée" : "Brouillon"}</span></div>
+            {lesson.content && <p className="muted small-text">{lesson.content.slice(0, 240)}{lesson.content.length > 240 ? "…" : ""}</p>}
+            <div className="row">
+              <button className="btn small" disabled={busy} onClick={() => setEditing(lesson)}>Modifier</button>
+              <button className="btn small" disabled={busy} onClick={() => void onRun(async () => { await saveLesson({ ...lesson, published: !lesson.published, title: lesson.title, content: lesson.content ?? "" }); await reload(); })}>{lesson.published ? "Dépublier" : "Publier"}</button>
+              <button className="btn small danger" disabled={busy} onClick={() => { if (window.confirm(`Supprimer définitivement la leçon « ${lesson.title} » ?`)) void onRun(async () => { await deleteLesson(lesson.id, courseId); await reload(); }); }}>Supprimer</button>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 
@@ -101,6 +163,8 @@ export default function AdminCourses({ adminId }: { adminId: string }) {
                 ))}
               </ul>
               <ScheduleAdder busy={busy} onAdd={(start, end, status) => void run(() => addSchedule(course.id, start, end, status, adminId))} />
+
+              <LessonManager courseId={course.id} busy={busy} onRun={run} />
 
               <h4>Enseignants du cours</h4>
               <ul className="stack tight">
