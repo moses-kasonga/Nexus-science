@@ -2,7 +2,6 @@ import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
-import { TurnstileWidget } from "../components/TurnstileWidget";
 
 type AuthFailure = { name?: unknown; code?: unknown; status?: unknown; message?: unknown };
 
@@ -36,7 +35,6 @@ function friendlyError(message: string, code?: string, status?: number, operatio
   return "Supabase a renvoyé une erreur non identifiée. Réessaie plus tard ; le diagnostic technique doit être consulté.";
 }
 
-const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 export default function AuthPage({ mode }: { mode: "login" | "register" }) {
   const { session } = useAuth();
@@ -45,8 +43,6 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
   const [error, setError] = useState("");
   const [diagnostic, setDiagnostic] = useState("");
   const [notice, setNotice] = useState("");
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const [widgetVersion, setWidgetVersion] = useState(0);
   const isRegister = mode === "register";
 
   if (session) return <Navigate to="/compte" replace />;
@@ -62,19 +58,11 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
         setError("La connexion à Supabase n'est pas configurée pour cette version du site. Vérifie les variables Vercel.");
         return;
       }
-      if (!turnstileSiteKey) {
-        setError("La vérification anti-robot n'est pas encore configurée sur cette version du site. Réessaie après la configuration technique.");
-        return;
-      }
-      if (!captchaToken) {
-        setError("Valide d'abord la vérification anti-robot.");
-        return;
-      }
       if (isRegister) {
         if (password.length < 8) { setError("Le mot de passe doit contenir au moins 8 caractères."); return; }
         const { data, error: failure } = await supabase.auth.signUp({
           email, password,
-          options: { emailRedirectTo: window.location.origin, captchaToken, data: { first_name: String(form.get("first_name") ?? "").trim(), last_name: String(form.get("last_name") ?? "").trim() } },
+          options: { emailRedirectTo: window.location.origin, data: { first_name: String(form.get("first_name") ?? "").trim(), last_name: String(form.get("last_name") ?? "").trim() } },
         });
         if (failure) {
           console.error("[NEXUS auth:register]", { name: failure.name, code: failure.code, status: failure.status, message: failure.message });
@@ -85,7 +73,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
         if (data.session) navigate("/compte", { replace: true });
         else setNotice("Compte créé. Ouvrez le message de confirmation envoyé à votre adresse e-mail, puis connectez-vous.");
       } else {
-        const { error: failure } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } });
+        const { error: failure } = await supabase.auth.signInWithPassword({ email, password });
         if (failure) {
           console.error("[NEXUS auth:login]", { name: failure.name, code: failure.code, status: failure.status, message: failure.message });
           setDiagnostic(diagnosticDetails(failure));
@@ -99,8 +87,6 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
       setDiagnostic(diagnosticDetails(failure));
       setError(friendlyError(detail, typeof failure.code === "string" ? failure.code : undefined, typeof failure.status === "number" ? failure.status : undefined, isRegister ? "register" : "login"));
     } finally {
-      setCaptchaToken(null);
-      setWidgetVersion((version) => version + 1);
       setBusy(false);
     }
   }
@@ -118,18 +104,10 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
         )}
         <label>Adresse e-mail<input name="email" type="email" autoComplete="email" required /></label>
         <label>Mot de passe<input name="password" type="password" autoComplete={isRegister ? "new-password" : "current-password"} required minLength={isRegister ? 8 : undefined} /></label>
-        {turnstileSiteKey ? (
-          <div className="captcha-block">
-            <TurnstileWidget key={widgetVersion} siteKey={turnstileSiteKey} onSuccess={setCaptchaToken} onExpire={() => setCaptchaToken(null)} onError={() => { setCaptchaToken(null); setError("Impossible de charger la vérification anti-robot. Vérifie ta connexion puis actualise la page."); }} />
-            <p className="muted" style={{ fontSize: "0.82rem" }}>Vérification de sécurité Cloudflare</p>
-          </div>
-        ) : (
-          <p className="notice error" role="status">Vérification anti-robot en attente de configuration.</p>
-        )}
         {error && <p className="notice error" role="alert">{error}</p>}
         {diagnostic && <p className="muted" role="status" style={{ fontSize: "0.8rem", overflowWrap: "anywhere" }}>Diagnostic technique : {diagnostic}</p>}
         {notice && <p className="notice ok" role="status">{notice}</p>}
-        <button className="btn primary" type="submit" disabled={busy || !captchaToken}>{busy ? "Veuillez patienter…" : isRegister ? "Créer mon compte" : "Me connecter"}</button>
+        <button className="btn primary" type="submit" disabled={busy}>{busy ? "Veuillez patienter…" : isRegister ? "Créer mon compte" : "Me connecter"}</button>
       </form>
       <p className="muted">{isRegister ? <>Déjà inscrit ? <Link to="/connexion">Se connecter</Link></> : <>Pas encore de compte ? <Link to="/inscription">Créer un compte</Link></>}</p>
     </section>
