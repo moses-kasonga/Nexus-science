@@ -6,6 +6,7 @@ import Home from "./pages/Home";
 import CoursePage from "./pages/CoursePage";
 import AuthPage from "./pages/AuthPage";
 import Account from "./pages/Account";
+import TeacherInvitation from "./pages/TeacherInvitation";
 import AdminGuard from "./components/admin/AdminGuard";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -66,6 +67,7 @@ export default function App() {
           <Route path="/connexion" element={<AuthPage mode="login" />} />
           <Route path="/inscription" element={<AuthPage mode="register" />} />
           <Route path="/compte" element={<Account />} />
+          <Route path="/enseignant/invitation" element={<TeacherInvitation />} />
           <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
             <Route index element={<AdminDashboard />} />
             <Route path="formations" element={<CoursesRoute />} />

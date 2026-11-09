@@ -2,10 +2,15 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { fetchCourse, fetchLessons, formatRange, sessionState, sessionStateLabel, type Course, type Lesson } from "../lib/courses";
 import { useAuth } from "../lib/auth";
+import { supabase } from "../lib/supabase";
 
 export default function CoursePage() {
   const { id = "" } = useParams();
-  const { session, loading: authLoading } = useAuth();
+  const { session, profile, loading: authLoading } = useAuth();
+  const [enrolled, setEnrolled] = useState<boolean | null>(null);
+  const [enrollBusy, setEnrollBusy] = useState(false);
+  const [enrollError, setEnrollError] = useState("");
+  const [reload, setReload] = useState(0);
   const [course, setCourse] = useState<Course | null | undefined>(undefined);
   const [lessons, setLessons] = useState<Lesson[] | null>(null);
   const [lessonsError, setLessonsError] = useState("");
@@ -33,7 +38,23 @@ export default function CoursePage() {
         }
       });
     return () => { active = false; };
-  }, [id, userId]);
+  }, [id, userId, reload]);
+
+  useEffect(() => {
+    let active = true;
+    setEnrolled(null);
+    if (!userId) return;
+    supabase.from("enrollments").select("status").eq("course_id", id).eq("student_id", userId).maybeSingle()
+      .then(({ data }) => { if (active) setEnrolled(data?.status === "active"); });
+    return () => { active = false; };
+  }, [id, userId, reload]);
+
+  async function enroll() {
+    setEnrollBusy(true); setEnrollError("");
+    const { error: failure } = await supabase.rpc("enroll_in_course", { p_course_id: id });
+    setEnrollBusy(false);
+    if (failure) setEnrollError(failure.message); else setReload((value) => value + 1);
+  }
 
   if (course === undefined) return <section className="wrap page"><p className="muted" role="status">Chargement du cours…</p></section>;
   if (!course) return <section className="wrap page"><h1>Cours introuvable</h1>{error && <p className="notice error" role="alert">{error}</p>}<p><Link to="/">← Retour aux cours</Link></p></section>;
@@ -50,6 +71,15 @@ export default function CoursePage() {
         {course.course_schedules.length === 0 && <li className="muted">Aucune session publiée pour l'instant.</li>}
         {course.course_schedules.map((item) => { const state = sessionState(item); return <li key={item.start_date + item.end_date}><span className={`pill ${state}`}>{sessionStateLabel[state]}</span> {formatRange(item)}</li>; })}
       </ul>
+
+      {session && profile?.role === "student" && enrolled === false && (
+        <div className="notice">
+          <p>Inscrivez-vous pour accéder aux leçons. Votre évaluation sera coordonnée par l'enseignant titulaire du cours et suivie par l'administration.</p>
+          <button className="btn primary" type="button" onClick={() => void enroll()} disabled={enrollBusy}>{enrollBusy ? "Inscription…" : "M'inscrire à cette formation"}</button>
+          {enrollError && <p className="notice error" role="alert">{enrollError}</p>}
+        </div>
+      )}
+      {session && enrolled === true && <p className="notice" role="status">Vous êtes inscrit à cette formation.</p>}
 
       <h2>Leçons</h2>
       {!session && !authLoading && <p className="notice">Les leçons sont réservées aux élèves inscrits. <Link to="/connexion">Connectez-vous</Link> ou <Link to="/inscription">créez un compte</Link> pour continuer.</p>}
