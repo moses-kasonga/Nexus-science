@@ -63,6 +63,32 @@ export async function listPeople(): Promise<PersonRow[]> {
   return (data ?? []) as PersonRow[];
 }
 
+
+// ---------- Leçons (administration) ----------
+export type AdminLesson = { id: string; course_id: string; title: string; content: string | null; order_index: number; published: boolean };
+
+export async function listCourseLessons(courseId: string): Promise<AdminLesson[]> {
+  const { data, error } = await supabase.from("lessons")
+    .select("id, course_id, title, content, order_index, published")
+    .eq("course_id", courseId)
+    .order("order_index", { ascending: true });
+  if (error) fail(error, "Les leçons de ce cours n'ont pas pu être chargées.");
+  return (data ?? []) as AdminLesson[];
+}
+
+export async function saveLesson(input: { id?: string; course_id: string; title: string; content: string; order_index: number; published: boolean }): Promise<void> {
+  const row = { title: input.title.trim(), content: input.content.trim() || null, order_index: input.order_index, published: input.published, updated_at: new Date().toISOString() };
+  const { error } = input.id
+    ? await supabase.from("lessons").update(row).eq("id", input.id).eq("course_id", input.course_id)
+    : await supabase.from("lessons").insert({ ...row, course_id: input.course_id });
+  if (error) fail(error, "La leçon n'a pas pu être enregistrée.");
+}
+
+export async function deleteLesson(id: string, courseId: string): Promise<void> {
+  const { error } = await supabase.from("lessons").delete().eq("id", id).eq("course_id", courseId);
+  if (error) fail(error, "La leçon n'a pas pu être supprimée.");
+}
+
 // ---------- Inscriptions et enseignants d'un cours ----------
 export async function listEnrollments(courseId: string): Promise<EnrollmentRow[]> {
   const { data, error } = await supabase.from("enrollments").select("id, student_id, status, created_at").eq("course_id", courseId).order("created_at", { ascending: false });
