@@ -70,7 +70,7 @@ export default function Home() {
                 <circle cx="78" cy="235" r="3" /><circle cx="340" cy="235" r="3" />
                 <circle cx="95" cy="90" r="2" /><circle cx="325" cy="90" r="2" />
               </g>
-            </svg>      </svg>
+            </svg>
             <span className="holo-label holo-label-top">NEXUS / SCIENCE</span>
             <span className="holo-label holo-label-bottom">EXPLORE · DISCOVER · LEARN</span>
           </div>
