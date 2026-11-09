@@ -8,6 +8,7 @@ export default function CoursePage() {
   const { session, loading: authLoading } = useAuth();
   const [course, setCourse] = useState<Course | null | undefined>(undefined);
   const [lessons, setLessons] = useState<Lesson[] | null>(null);
+  const [lessonsError, setLessonsError] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -21,8 +22,16 @@ export default function CoursePage() {
   useEffect(() => {
     let active = true;
     setLessons(null);
+    setLessonsError("");
     if (!userId) return;
-    fetchLessons(id).then((value) => { if (active) setLessons(value); }).catch(() => { if (active) setLessons([]); });
+    fetchLessons(id)
+      .then((value) => { if (active) setLessons(value); })
+      .catch((cause: Error) => {
+        if (active) {
+          setLessons([]);
+          setLessonsError(cause.message || "Une erreur inconnue est survenue.");
+        }
+      });
     return () => { active = false; };
   }, [id, userId]);
 
@@ -45,7 +54,8 @@ export default function CoursePage() {
       <h2>Leçons</h2>
       {!session && !authLoading && <p className="notice">Les leçons sont réservées aux élèves inscrits. <Link to="/connexion">Connectez-vous</Link> ou <Link to="/inscription">créez un compte</Link> pour continuer.</p>}
       {session && lessons === null && <p className="muted" role="status">Chargement des leçons…</p>}
-      {session && lessons && lessons.length === 0 && <p className="notice">Vous n'avez pas encore accès aux leçons de ce cours. L'accès est accordé par l'équipe de Nexus science après votre inscription.</p>}
+      {session && lessonsError && <p className="notice error" role="alert">Impossible de charger les leçons. Détail : {lessonsError}</p>}
+      {session && !lessonsError && lessons !== null && lessons.length === 0 && <p className="notice">Aucune leçon accessible pour ce cours pour le moment.</p>}
       {lessons && lessons.length > 0 && (
         <ol className="lessons">
           {lessons.map((lesson) => (

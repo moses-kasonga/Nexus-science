@@ -33,7 +33,10 @@ export async function fetchCourse(id: string): Promise<Course | null> {
 /** Les règles RLS ne renvoient les leçons qu'aux inscrits, aux enseignants du cours et aux administrateurs. */
 export async function fetchLessons(courseId: string): Promise<Lesson[]> {
   const { data, error } = await supabase.from("lessons").select("id, title, content, order_index").eq("course_id", courseId).order("order_index", { ascending: true });
-  if (error) throw new Error("Les leçons n'ont pas pu être chargées.");
+  if (error) {
+    const detail = [error.code, error.message].filter(Boolean).join(" — ");
+    throw new Error(detail || "Les leçons n'ont pas pu être chargées.");
+  }
   return (data ?? []) as Lesson[];
 }
 
