@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { safeReturnPath } from "../lib/invitation";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 
@@ -39,13 +40,17 @@ function friendlyError(message: string, code?: string, status?: number, operatio
 export default function AuthPage({ mode }: { mode: "login" | "register" }) {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const back = safeReturnPath(searchParams.get("retour"));
+  const destination = back ?? "/compte";
+  const retourQuery = back ? `?retour=${encodeURIComponent(back)}` : "";
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [diagnostic, setDiagnostic] = useState("");
   const [notice, setNotice] = useState("");
   const isRegister = mode === "register";
 
-  if (session) return <Navigate to="/compte" replace />;
+  if (session) return <Navigate to={destination} replace />;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -70,7 +75,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
           setError(friendlyError(failure.message, failure.code, failure.status, "register"));
           return;
         }
-        if (data.session) navigate("/compte", { replace: true });
+        if (data.session) navigate(destination, { replace: true });
         else setNotice("Compte créé. Ouvrez le message de confirmation envoyé à votre adresse e-mail, puis connectez-vous.");
       } else {
         const { error: failure } = await supabase.auth.signInWithPassword({ email, password });
@@ -78,7 +83,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
           console.error("[NEXUS auth:login]", { name: failure.name, code: failure.code, status: failure.status, message: failure.message });
           setDiagnostic(diagnosticDetails(failure));
           setError(friendlyError(failure.message, failure.code, failure.status, "login"));
-        } else navigate("/compte", { replace: true });
+        } else navigate(destination, { replace: true });
       }
     } catch (cause) {
       const failure = cause && typeof cause === "object" ? cause as AuthFailure : { message: String(cause) };
@@ -109,7 +114,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
         {notice && <p className="notice ok" role="status">{notice}</p>}
         <button className="btn primary" type="submit" disabled={busy}>{busy ? "Veuillez patienter…" : isRegister ? "Créer mon compte" : "Me connecter"}</button>
       </form>
-      <p className="muted">{isRegister ? <>Déjà inscrit ? <Link to="/connexion">Se connecter</Link></> : <>Pas encore de compte ? <Link to="/inscription">Créer un compte</Link></>}</p>
+      <p className="muted">{isRegister ? <>Déjà inscrit ? <Link to={`/connexion${retourQuery}`}>Se connecter</Link></> : <>Pas encore de compte ? <Link to={`/inscription${retourQuery}`}>Créer un compte</Link></>}</p>
     </section>
   );
 }

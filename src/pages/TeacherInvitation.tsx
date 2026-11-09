@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
+import { forgetInvitation, rememberInvitation } from "../lib/invitation";
 
 type Preview = { email: string } | "invalid" | null;
 
@@ -13,6 +14,9 @@ export default function TeacherInvitation() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+
+  const returnQuery = `?retour=${encodeURIComponent(`/enseignant/invitation?token=${token}`)}`;
+  useEffect(() => { if (token) rememberInvitation(`/enseignant/invitation?token=${encodeURIComponent(token)}`); }, [token]);
 
   useEffect(() => {
     let active = true;
@@ -38,7 +42,7 @@ export default function TeacherInvitation() {
       p_motivation: String(form.get("motivation") ?? ""),
     });
     setBusy(false);
-    if (failure) setError(failure.message); else setDone(true);
+    if (failure) setError(failure.message); else { forgetInvitation(); setDone(true); }
   }
 
   const wrongAccount = preview && preview !== "invalid" && session?.user.email?.toLowerCase() !== preview.email.toLowerCase();
@@ -49,7 +53,7 @@ export default function TeacherInvitation() {
       {!token && <p className="notice error" role="alert">Ce lien est incomplet. Demandez un nouveau lien à l'administration de Nexus science.</p>}
       {token && loading && <p className="muted" role="status">Chargement…</p>}
       {token && !loading && !session && (
-        <p className="notice">Pour continuer, <Link to="/connexion">connectez-vous</Link> ou <Link to="/inscription">créez un compte</Link> avec l'adresse e-mail qui a reçu l'invitation, puis rouvrez ce même lien.</p>
+        <p className="notice">Pour continuer, <Link to={`/connexion${returnQuery}`}>connectez-vous</Link> ou <Link to={`/inscription${returnQuery}`}>créez un compte</Link> avec l'adresse e-mail qui a reçu l'invitation : vous reviendrez ensuite ici pour envoyer votre candidature.</p>
       )}
       {token && session && preview === null && <p className="muted" role="status">Vérification de l'invitation…</p>}
       {preview === "invalid" && <p className="notice error" role="alert">Cette invitation est invalide, expirée ou déjà utilisée. Demandez un nouveau lien à l'administration.</p>}
