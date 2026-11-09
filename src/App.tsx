@@ -8,6 +8,8 @@ import Account from "./pages/Account";
 import AdminGuard from "./components/admin/AdminGuard";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminTeachers from "./pages/admin/AdminTeachers";
+import { CoursesRoute, StudentsRoute } from "./pages/admin/routes";
 
 function Header() {
   const { session, profile } = useAuth();
@@ -43,6 +45,9 @@ export default function App() {
           <Route path="/compte" element={<Account />} />
           <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
             <Route index element={<AdminDashboard />} />
+            <Route path="formations" element={<CoursesRoute />} />
+            <Route path="eleves" element={<StudentsRoute />} />
+            <Route path="enseignants" element={<AdminTeachers />} />
           </Route>
           <Route path="*" element={<section className="wrap page"><h1>Page introuvable</h1><p><Link to="/">Retour aux cours</Link></p></section>} />
         </Routes>
