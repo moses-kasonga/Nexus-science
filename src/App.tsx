@@ -6,11 +6,13 @@ import Home from "./pages/Home";
 import CoursePage from "./pages/CoursePage";
 import AuthPage from "./pages/AuthPage";
 import Account from "./pages/Account";
+import CandidateApplicationPage from "./pages/CandidateApplication";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherInvitation from "./pages/TeacherInvitation";
 import AdminGuard from "./components/admin/AdminGuard";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminApplications from "./pages/admin/AdminApplications";
 import AdminTeachers from "./pages/admin/AdminTeachers";
 import { CoursesRoute, StudentsRoute } from "./pages/admin/routes";
 
@@ -97,10 +99,12 @@ export default function App() {
           <Route path="/inscription" element={<AuthPage mode="register" />} />
           <Route path="/mot-de-passe-oublie" element={<AuthPage mode="reset" />} />
           <Route path="/compte" element={<Account />} />
+          <Route path="/candidature" element={<CandidateApplicationPage />} />
           <Route path="/espace-etudiant" element={<StudentDashboard />} />
           <Route path="/enseignant/invitation" element={<TeacherInvitation />} />
           <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
             <Route index element={<AdminDashboard />} />
+            <Route path="candidatures" element={<AdminApplications />} />
             <Route path="formations" element={<CoursesRoute />} />
             <Route path="eleves" element={<StudentsRoute />} />
             <Route path="enseignants" element={<AdminTeachers />} />
