@@ -106,7 +106,7 @@ export default function CoursePage({ language }: { language: Language }) {
             <li key={lesson.id}>
               <details>
                 <summary>{lesson.title}</summary>
-                <div className="lesson-body">{lesson.content ? lesson.content.split(/\\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>) : <p className="muted">{labels.noContent}</p>}</div>
+                <div className="lesson-body">{lesson.content ? lesson.content.split(/\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>) : <p className="muted">{labels.noContent}</p>}</div>
               </details>
             </li>
           ))}
