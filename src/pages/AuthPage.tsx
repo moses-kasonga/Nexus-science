@@ -42,7 +42,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const back = safeReturnPath(searchParams.get("retour"));
-  const destination = back ?? "/compte";
+  const destination = back ?? (mode === "register" ? "/candidature" : "/compte");
   const retourQuery = back ? "?retour=" + encodeURIComponent(back) : "";
   const isRegister = mode === "register";
   const isReset = mode === "reset";
