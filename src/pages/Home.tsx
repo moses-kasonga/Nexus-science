@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchPublishedCourses, formatRange, sessionState, sessionStateLabel, type Course } from "../lib/courses";
+import { fetchPublishedCourses, formatRange, sessionState, sessionStateLabel, type Course, type Language } from "../lib/courses";
 import { useAuth } from "../lib/auth";
 
-type Language = "fr" | "en" | "pt" | "es";
 const copy = {
   fr: {
     eyebrow:"NEXUS SCIENCE", title:"Un environnement d’apprentissage scientifique structuré, accessible et conçu pour accompagner votre progression.",
@@ -62,9 +61,9 @@ export default function Home({ language, search }: { language: Language; search:
   const [error, setError] = useState("");
   useEffect(() => {
     let active = true;
-    fetchPublishedCourses().then((list) => { if (active) setCourses(list); }).catch((cause: Error) => { if (active) setError(cause.message); });
+    fetchPublishedCourses(language).then((list) => { if (active) setCourses(list); }).catch((cause: Error) => { if (active) setError(cause.message); });
     return () => { active = false; };
-  }, []);
+  }, [language]);
   const filteredCourses = useMemo(() => (courses ?? []).filter(course => `${course.name} ${course.category} ${course.description ?? ""}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())), [courses, search]);
   return (
     <>
@@ -141,7 +140,7 @@ export default function Home({ language, search }: { language: Language; search:
               {course.description && <p className="clamp">{course.description}</p>}
               <ul className="sessions" aria-label="Sessions">
                 {course.course_schedules.length === 0 && <li className="muted">Aucune session publiée</li>}
-                {course.course_schedules.map((item) => { const state = sessionState(item); return <li key={item.start_date + item.end_date}><span className={`pill ${state}`}>{sessionStateLabel[state]}</span> {formatRange(item)}</li>; })}
+                {course.course_schedules.map((item) => { const state = sessionState(item); return <li key={item.start_date + item.end_date}><span className={`pill ${state}`}>{sessionStateLabel[language][state]}</span> {formatRange(item, language)}</li>; })}
               </ul>
               <Link className="more" to={`/cours/${course.id}`}>{t.learnMore} →</Link>
             </li>
