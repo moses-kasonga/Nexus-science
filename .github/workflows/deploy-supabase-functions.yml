@@ -2,12 +2,6 @@ name: Deploy Nexus Science translation function
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - feature/site-nexus
-    paths:
-      - "supabase/functions/translate-published-course/**"
-      - ".github/workflows/deploy-supabase-functions.yml"
 
 permissions:
   contents: read
