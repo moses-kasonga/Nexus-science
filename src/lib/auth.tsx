@@ -3,7 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 
 export type Role = "student" | "teacher" | "admin";
-export type Profile = { id: string; first_name: string | null; last_name: string | null; email: string | null; role: Role; preferred_language: "fr" | "en" | "pt" | "es" };
+export type Profile = { id: string; first_name: string | null; last_name: string | null; email: string | null; role: Role; preferred_language?: "fr" | "en" | "pt" | "es" };
 
 type AuthState = { session: Session | null; profile: Profile | null; loading: boolean; signOut: () => Promise<void> };
 const AuthContext = createContext<AuthState | null>(null);
@@ -39,8 +39,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!userId) return;
     let active = true;
     setLoading(true);
-    supabase.from("profiles").select("id, first_name, last_name, email, role, preferred_language").eq("id", userId).maybeSingle()
-      .then(({ data }) => { if (active) { setProfile((data as Profile | null) ?? null); setLoading(false); } });
+    const loadProfile = async () => {
+      let result = await supabase.from("profiles").select("id, first_name, last_name, email, role, preferred_language").eq("id", userId).maybeSingle();
+      // Compatibilité temporaire tant que la migration de préférence linguistique n'est pas appliquée.
+      if (result.error && (result.error.code === "42703" || result.error.code === "PGRST204")) {
+        result = await supabase.from("profiles").select("id, first_name, last_name, email, role").eq("id", userId).maybeSingle();
+      }
+      if (active) { setProfile((result.data as Profile | null) ?? null); setLoading(false); }
+    };
+    void loadProfile();
     return () => { active = false; };
   }, [userId]);
 
