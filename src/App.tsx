@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "./lib/auth";
-import { supabaseConfigured } from "./lib/supabase";
+import { supabase, supabaseConfigured } from "./lib/supabase";
 import Home from "./pages/Home";
 import CoursePage from "./pages/CoursePage";
 import AuthPage from "./pages/AuthPage";
@@ -117,9 +117,11 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
 }
 export default function App() {
   const location = useLocation();
+  const { session, profile } = useAuth();
   const studentArea = location.pathname.startsWith("/espace-etudiant");
   const [language, setLanguage] = useState<Language>(() => { const saved = window.localStorage.getItem("nexus-language"); return saved === "en" || saved === "pt" || saved === "es" ? saved : "fr"; });
-  const changeLanguage = (value: Language) => { window.localStorage.setItem("nexus-language", value); setLanguage(value); };
+  const changeLanguage = (value: Language) => { window.localStorage.setItem("nexus-language", value); setLanguage(value); if (session) void supabase.from("profiles").update({ preferred_language: value }).eq("id", session.user.id); };
+  useEffect(() => { const preferred = profile?.preferred_language; if (preferred === "fr" || preferred === "en" || preferred === "pt" || preferred === "es") { setLanguage(preferred); window.localStorage.setItem("nexus-language", preferred); } }, [profile?.preferred_language]);
   const [dark, setDark] = useState(() => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false);
   const [search, setSearch] = useState("");
   useEffect(() => { document.documentElement.dataset.theme = dark ? "dark" : "light"; }, [dark]);
