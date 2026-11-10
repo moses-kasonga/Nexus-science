@@ -365,3 +365,60 @@ h1, h2, h3 { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-seri
   .hero-art { display: flex; max-width: min(82vw, 330px); margin: 18px auto 0; }
   .hero-copy h1 { max-width: 20ch; }
 }
+
+
+/* ---- Navigation publique : panneau latéral et commandes utiles ---- */
+.header-tools{gap:10px}
+.header-icon-button{display:grid;place-items:center;font-size:1.65rem;line-height:1}
+.menu-toggle{min-width:44px;min-height:44px;justify-content:center}
+.header-search-panel{display:grid;gap:7px;padding:0 0 16px}
+.header-search-panel>label{font-weight:700;color:var(--ink)}
+.header-search-control{display:flex;gap:8px}
+.header-search-control input{min-width:0;flex:1;min-height:46px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);padding:0 14px;font:inherit}
+.header-search-control button{width:48px;min-height:46px;border:0;border-radius:12px;background:var(--brand);color:var(--brand-ink);font-size:1.6rem;cursor:pointer}
+.header-search-panel small{color:var(--muted);font-size:.78rem}
+.public-menu-backdrop{position:fixed;inset:0;z-index:28;border:0;background:rgba(10,20,35,.48);backdrop-filter:blur(2px);cursor:pointer}
+.public-menu{position:fixed;z-index:29;inset:0 auto 0 0;width:min(520px,92vw);max-height:100dvh;height:100dvh;overflow-y:auto;overscroll-behavior:contain;padding:24px clamp(18px,4vw,30px) 20px;background:var(--surface);color:var(--ink);border:0;border-right:1px solid var(--line);border-radius:0 20px 20px 0;box-shadow:18px 0 60px rgba(8,20,40,.18);animation:public-menu-in .22s ease-out}
+@keyframes public-menu-in{from{transform:translateX(-18px);opacity:.7}to{transform:translateX(0);opacity:1}}
+.public-menu-top{position:sticky;top:-24px;z-index:2;min-height:72px;margin:-24px 0 14px;padding:18px 0 14px;background:var(--surface);display:flex;align-items:center;justify-content:space-between;gap:14px;border-bottom:1px solid var(--line)}
+.public-menu-top strong{font-size:1.12rem;font-weight:800}
+.public-menu-actions{display:flex;align-items:center;gap:10px}
+.public-menu-top .menu-close{border:0;background:transparent;color:var(--ink);font:700 .9rem var(--sans);padding:9px 4px;cursor:pointer}
+.menu-theme{display:inline-flex;align-items:center;gap:7px;margin:0;padding:8px 11px;border:1px solid var(--line);border-radius:12px;background:var(--soft);color:var(--ink);font:700 .82rem var(--sans);cursor:pointer}
+.menu-theme:hover{border-color:var(--brand);color:var(--brand)}
+.public-menu nav{display:grid;gap:5px;padding:12px 0 18px}
+.public-menu nav a{display:flex;align-items:center;min-height:52px;padding:12px 10px;border-radius:11px;font-size:1rem;font-weight:750}
+.public-menu nav a:before{content:"";width:8px;height:8px;margin-right:16px;border-radius:50%;background:var(--brand);flex:0 0 8px}
+.public-menu-groups{padding-top:12px}
+.public-menu-groups details{border-bottom:1px solid var(--line)}
+.public-menu-groups summary{min-height:58px;display:flex;align-items:center;padding:13px 8px;font-size:.98rem}
+.public-menu-groups summary:after{content:"⌄";margin-left:auto;padding-left:12px;font-size:1.2rem}
+.public-menu-groups details[open] summary:after{content:"⌃"}
+.public-menu-groups details>a{padding:10px 14px 10px 24px;font-size:.92rem}
+.public-menu-footer{display:grid;gap:3px;margin-top:22px;padding:18px 6px 4px;border-top:1px solid var(--line);color:var(--brand);font-weight:800}
+.public-menu-footer small{color:var(--muted);font-size:.75rem;font-weight:500}
+html[data-theme="dark"] .public-menu-backdrop{background:rgba(0,0,0,.62)}
+@media(max-width:720px){
+ .header-row{min-height:68px;gap:6px}
+ .header-tools{gap:5px}
+ .brand{font-size:.98rem}
+ .brand-mark{width:38px;height:38px}
+ .header-icon-button{width:38px;min-height:40px}
+ .language-picker{padding:5px 4px}
+ .language-picker select{max-width:40px}
+ .menu-toggle{width:42px;min-width:42px;min-height:42px;padding:6px}
+ .menu-toggle>span:last-child{display:none}
+ .public-menu{width:min(520px,91vw);padding:22px 18px 18px;border-radius:0 18px 18px 0}
+ .public-menu-top{top:-22px;margin-top:-22px}
+ .public-menu nav a{min-height:54px}
+ .header-search-panel{padding:0 0 14px}
+}
+@media(max-width:390px){
+ .header-tools{gap:3px}
+ .brand{gap:5px;font-size:.9rem}
+ .brand-mark{width:34px;height:34px}
+ .language-picker{gap:2px}
+ .menu-theme span{display:none}
+ .menu-theme{width:40px;justify-content:center}
+}
+@media(prefers-reduced-motion:reduce){.public-menu{animation:none}}
