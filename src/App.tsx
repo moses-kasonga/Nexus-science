@@ -25,6 +25,17 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
   const { session } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") setMenuOpen(false); };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
   const labels = {
     fr: { home: "Accueil", search: "Rechercher", menu: "Menu", close: "Fermer", calendar: "Candidature", catalog: "Catalogue des formations", faq: "Créer un compte candidat", login: "Se connecter", logout: "Mon compte", discover: "Découvrez", journey: "Construire son parcours scientifique", find: "Trouver une formation", learn: "Apprendre et s’évaluer", success: "Préparer sa réussite scientifique", mission: "Notre mission", platform: "La plateforme", disciplines: "Disciplines scientifiques", path: "Votre parcours", courses: "Les formations", practice: "Apprendre par la pratique", theme: "Mode sombre / clair" },
     en: { home: "Home", search: "Search", menu: "Menu", close: "Close", calendar: "Application", catalog: "Course catalogue", faq: "Create candidate account", login: "Sign in", logout: "My account", discover: "Discover", journey: "Build your scientific journey", find: "Find a course", learn: "Learn and assess", success: "Prepare for scientific success", mission: "Our mission", platform: "The platform", disciplines: "Scientific disciplines", path: "Your journey", courses: "Courses", practice: "Learn through practice", theme: "Dark / light mode" },
@@ -40,7 +51,6 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
           <span>NEXUS <em>SCIENCE</em></span>
         </Link>
         <div className="header-tools">
-          <button className="theme-toggle" type="button" onClick={toggleTheme} aria-label={dark ? "Activer le thème clair" : "Activer le thème sombre"}>{dark ? "☀️" : "🌙"}</button>
           <button className="header-icon-button" type="button" onClick={() => setSearchOpen(v => !v)} aria-label={labels.search}>⌕</button>
           <label className="language-picker" aria-label="Choisir la langue">
             <span aria-hidden="true">{language === "fr" ? "🇫🇷" : language === "en" ? "🇬🇧" : language === "pt" ? "🇵🇹" : "🇪🇸"}</span>
@@ -53,9 +63,29 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
           </button>
         </div>
       </div>
-      {searchOpen && <div className="header-search-panel wrap"><label>{labels.search}<input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder={labels.search + "…"} /></label></div>}
-      {menuOpen && <div className="public-menu" id="public-menu">
-        <div className="public-menu-top"><strong>{labels.menu}</strong><button type="button" onClick={closeMenu}>{labels.close} ×</button></div>
+      {searchOpen && <form className="header-search-panel wrap" role="search" onSubmit={event => {
+        event.preventDefault();
+        setSearchOpen(false);
+        if (window.location.pathname !== "/") window.location.assign("/#formations");
+        else document.getElementById("formations")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }}>
+        <label htmlFor="public-course-search">{labels.search}</label>
+        <div className="header-search-control">
+          <input id="public-course-search" autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder={labels.search + "…"} />
+          <button type="submit" aria-label={labels.search}>⌕</button>
+        </div>
+        <small>{language === "fr" ? "Rechercher dans le catalogue des formations" : language === "pt" ? "Pesquisar no catálogo de cursos" : language === "es" ? "Buscar en el catálogo de cursos" : "Search the course catalogue"}</small>
+      </form>}
+      {menuOpen && <>
+        <button className="public-menu-backdrop" type="button" aria-label={labels.close} onClick={closeMenu} />
+        <aside className="public-menu" id="public-menu" role="dialog" aria-modal="true" aria-label={labels.menu}>
+        <div className="public-menu-top">
+          <strong>{labels.menu}</strong>
+          <div className="public-menu-actions">
+            <button className="menu-theme" type="button" onClick={toggleTheme} aria-label={dark ? "Activer le thème clair" : "Activer le thème sombre"} title={labels.theme}>{dark ? "☀️" : "🌙"}<span>{dark ? (language === "fr" ? "Clair" : language === "pt" ? "Claro" : language === "es" ? "Claro" : "Light") : (language === "fr" ? "Sombre" : language === "pt" ? "Escuro" : language === "es" ? "Oscuro" : "Dark")}</span></button>
+            <button className="menu-close" type="button" onClick={closeMenu}>{labels.close} ×</button>
+          </div>
+        </div>
         <nav aria-label="Menu principal">
           <Link to="/" onClick={closeMenu}>{labels.home}</Link>
           <Link to="/#formations" onClick={closeMenu}>{labels.catalog}</Link>
@@ -76,8 +106,12 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
           <details><summary>{labels.learn}</summary><Link to="/#apprendre" onClick={closeMenu}>{labels.practice}</Link></details>
           <details><summary>{labels.success}</summary><Link to="/#parcours" onClick={closeMenu}>{labels.path}</Link></details>
         </div>
-        <button className="menu-theme" type="button" onClick={toggleTheme}>◐　{labels.theme}</button>
-      </div>}
+        <div className="public-menu-footer">
+          <span>🧬 NEXUS SCIENCE</span>
+          <small>{language === "fr" ? "Apprendre · Comprendre · Progresser" : language === "pt" ? "Aprender · Compreender · Progredir" : language === "es" ? "Aprender · Comprender · Progresar" : "Learn · Understand · Progress"}</small>
+        </div>
+        </aside>
+      </>}
     </header>
   );
 }
