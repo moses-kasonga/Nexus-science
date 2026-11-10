@@ -302,3 +302,66 @@ textarea, select { padding: 10px 12px; border-radius: 12px; border: 1.5px solid 
   .auth-page { width: 100%; padding: 18px 12px 40px; }
   .auth-card { padding: 22px 18px; border-radius: 18px; }
 }
+
+
+/* ---- Identité visuelle NEXUS SCIENCE : référence bleue et blanche ---- */
+html[data-theme="light"] {
+  --bg: #f2f5fb;
+  --surface: #ffffff;
+  --ink: #14213d;
+  --muted: #64748b;
+  --line: #e1e8f2;
+  --brand: #1768c5;
+  --brand-ink: #ffffff;
+  --accent: #1768c5;
+  --soft: #eaf2ff;
+  --ok-bg: #e7f6ed;
+  --ok-ink: #17633a;
+  --err-bg: #fff0ef;
+  --err-ink: #9d2921;
+}
+html[data-theme="dark"] {
+  --bg: #0d1728;
+  --surface: #14233a;
+  --ink: #edf3ff;
+  --muted: #a8b7ce;
+  --line: #2a3b55;
+  --brand: #75adff;
+  --brand-ink: #0b1c34;
+  --accent: #8dbaff;
+  --soft: #1c3454;
+  --ok-bg: #153b2c;
+  --ok-ink: #b8f0ce;
+  --err-bg: #452321;
+  --err-ink: #ffc1bb;
+}
+body { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; background: var(--bg); }
+h1, h2, h3 { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; font-weight: 750; letter-spacing: -.025em; }
+.site-header { background: color-mix(in srgb, var(--surface) 94%, transparent); border-bottom-color: var(--line); }
+.brand { font-family: Inter, "Segoe UI", system-ui, sans-serif; font-weight: 800; letter-spacing: -.02em; }
+.brand-mark { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 13px; background: var(--soft); }
+.hero { background: linear-gradient(125deg, var(--surface) 0%, var(--soft) 100%); border-bottom: 0; }
+.hero-grid { min-height: 470px; padding-block: clamp(36px, 7vw, 76px); }
+.hero-copy h1 { max-width: 18ch; font-size: clamp(2.2rem, 5.5vw, 3.65rem); font-weight: 800; line-height: 1.08; }
+.hero-tagline { margin-top: 16px; font-family: inherit; font-size: clamp(1.1rem, 2vw, 1.35rem); font-weight: 700; }
+.hero-art { max-width: 360px; opacity: 1; }
+.btn { min-height: 48px; padding-inline: 20px; border-radius: 12px; font-weight: 700; }
+.btn.primary { box-shadow: 0 8px 20px rgb(23 104 197 / 16%); }
+.card, .feature-card, .showcase-card, .benefit-grid > article, .steps-grid > li {
+  border-color: var(--line);
+  border-radius: 18px;
+  box-shadow: 0 8px 26px rgb(25 47 83 / 5%);
+}
+.feature-card, .showcase-card, .benefit-grid > article, .steps-grid > li { background: var(--surface); }
+.section-heading h2 { font-size: clamp(1.65rem, 4vw, 2.35rem); font-weight: 800; }
+.start-section, .showcase-section { background: var(--soft); }
+.site-footer { background: #14213d; color: #eaf2ff; border-top: 0; }
+.site-footer a { color: #ffffff; }
+.auth-card { box-shadow: 0 18px 55px rgb(17 43 81 / 9%); }
+.auth-google { transition: background .18s ease, border-color .18s ease; }
+.auth-google:hover { background: var(--soft); border-color: var(--brand); }
+@media (max-width: 720px) {
+  .hero-grid { min-height: 0; }
+  .hero-art { display: flex; max-width: min(82vw, 330px); margin: 18px auto 0; }
+  .hero-copy h1 { max-width: 20ch; }
+}
