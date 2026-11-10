@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, Route, Routes } from "react-router-dom";
+import { Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { displayName, useAuth } from "./lib/auth";
 import { supabaseConfigured } from "./lib/supabase";
 import Home from "./pages/Home";
 import CoursePage from "./pages/CoursePage";
 import AuthPage from "./pages/AuthPage";
 import Account from "./pages/Account";
+import StudentDashboard from "./pages/StudentDashboard";
 import TeacherInvitation from "./pages/TeacherInvitation";
 import AdminGuard from "./components/admin/AdminGuard";
 import AdminLayout from "./components/admin/AdminLayout";
@@ -51,14 +52,15 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
 }
 
 export default function App() {
+  const location = useLocation();
+  const studentArea = location.pathname.startsWith("/espace-etudiant");
   const [language, setLanguage] = useState<Language>("fr");
   const [dark, setDark] = useState(() => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false);
   const [search, setSearch] = useState("");
   useEffect(() => { document.documentElement.dataset.theme = dark ? "dark" : "light"; }, [dark]);
   return (
     <>
-      <a href="#contenu" className="skip">Aller au contenu</a>
-      <Header language={language} setLanguage={setLanguage} dark={dark} toggleTheme={() => setDark(value => !value)} search={search} setSearch={setSearch} />
+      {!studentArea && <><a href="#contenu" className="skip">Aller au contenu</a><Header language={language} setLanguage={setLanguage} dark={dark} toggleTheme={() => setDark(value => !value)} search={search} setSearch={setSearch} /></>}
       <main id="contenu">
         {!supabaseConfigured && <div className="wrap"><p className="notice error" role="alert">La connexion à la base de données n'est pas configurée (variables VITE_SUPABASE_URL et VITE_SUPABASE_PUBLISHABLE_KEY).</p></div>}
         <Routes>
@@ -67,6 +69,7 @@ export default function App() {
           <Route path="/connexion" element={<AuthPage mode="login" />} />
           <Route path="/inscription" element={<AuthPage mode="register" />} />
           <Route path="/compte" element={<Account />} />
+          <Route path="/espace-etudiant" element={<StudentDashboard />} />
           <Route path="/enseignant/invitation" element={<TeacherInvitation />} />
           <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
             <Route index element={<AdminDashboard />} />
@@ -77,7 +80,7 @@ export default function App() {
           <Route path="*" element={<section className="wrap page"><h1>Page introuvable</h1><p><Link to="/">Retour à l’accueil</Link></p></section>} />
         </Routes>
       </main>
-      <footer className="site-footer"><div className="wrap footer-brand"><strong>🧬 NEXUS SCIENCE</strong><span>Plateforme d’apprentissage scientifique</span><span>Apprendre · Comprendre · Progresser</span></div></footer>
+      {!studentArea && <footer className="site-footer"><div className="wrap footer-brand"><strong>🧬 NEXUS SCIENCE</strong><span>Plateforme d’apprentissage scientifique</span><span>Apprendre · Comprendre · Progresser</span></div></footer>}
     </>
   );
 }
