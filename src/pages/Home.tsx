@@ -14,8 +14,8 @@ const copy = {
     student:"Un environnement étudiant", studentText:"Une plateforme pensée pour organiser votre parcours et vos apprentissages.", practiceTitle:"Apprendre par la pratique", practiceBody:"Leçons, exercices et évaluations pour transformer les connaissances en compétences.", science:"Les sciences au cœur du parcours", scienceText:"Biologie, chimie, physiologie et autres disciplines scientifiques réunies dans un même espace.",
     platform:"Une plateforme conçue autour de votre parcours scientifique", platformText:"NEXUS SCIENCE organise l’apprentissage autour de contenus structurés, d’activités d’entraînement et d’un suivi progressif.",
     understand:"Comprendre les sciences", understandText:"Retrouvez des ressources organisées pour aborder les notions essentielles avec méthode.", pace:"Travailler à votre rythme", paceText:"Avancez étape par étape et revenez sur les notions qui nécessitent davantage d’entraînement.", tools:"Des outils numériques", toolsText:"La plateforme est conçue pour accueillir progressivement des outils d’apprentissage et d’assistance intelligents.",
-    start:"Comment commencer ?", discoverStep:"Découvrez", account:"Créez votre compte", learn:"Apprenez et progressez", step1:"Explorez la présentation, les disciplines et les ressources depuis le menu.", step2:"Accédez à l’inscription lorsque vous êtes prêt à commencer votre parcours.", step3:"Retrouvez ensuite vos cours, évaluations et progression dans votre espace étudiant.",
-    available:"Cours disponibles", loading:"Chargement des cours…", none:"Aucun cours n’est publié pour le moment. Revenez bientôt.", view:"Voir les cours", signup:"Créer un compte", learnMore:"Explorer les cours", footer:"Apprendre · Comprendre · Progresser"
+    start:"Comment commencer ?", discoverStep:"Découvrez", account:"Créez votre compte candidat", learn:"Apprenez et progressez", step1:"Explorez la présentation, les disciplines et les ressources depuis le menu.", step2:"Accédez à l’inscription lorsque vous êtes prêt à commencer votre parcours.", step3:"Retrouvez ensuite vos cours, évaluations et progression dans votre espace étudiant.",
+    available:"Cours disponibles", loading:"Chargement des cours…", none:"Aucun cours n’est publié pour le moment. Revenez bientôt.", view:"Voir les cours", signup:"Créer mon compte candidat", login:"Se connecter", learnMore:"Explorer les cours", footer:"Apprendre · Comprendre · Progresser"
   },
   en: {
     eyebrow:"NEXUS SCIENCE", title:"A structured, accessible science-learning environment designed to support your progress.",
@@ -26,8 +26,8 @@ const copy = {
     student:"A student environment", studentText:"A platform designed to organize your learning journey.", practiceTitle:"Learn through practice", practiceBody:"Lessons, exercises and assessments that turn knowledge into skills.", science:"Science at the heart of learning", scienceText:"Biology, chemistry, physiology and other scientific disciplines in one place.",
     platform:"A platform built around your scientific journey", platformText:"NEXUS SCIENCE structures learning through organized content, practice activities and progressive tracking.",
     understand:"Understand science", understandText:"Find organized resources to approach essential concepts methodically.", pace:"Learn at your own pace", paceText:"Move step by step and revisit topics that need more practice.", tools:"Digital learning tools", toolsText:"The platform is designed to progressively welcome intelligent learning and support tools.",
-    start:"How to get started", discoverStep:"Explore", account:"Create your account", learn:"Learn and progress", step1:"Explore the presentation, disciplines and resources from the menu.", step2:"Sign up when you are ready to begin your journey.", step3:"Access your courses, assessments and progress in your student space.",
-    available:"Available courses", loading:"Loading courses…", none:"No courses are published yet. Please check back soon.", view:"View courses", signup:"Create an account", learnMore:"Explore courses", footer:"Learn · Understand · Progress"
+    start:"How to get started", discoverStep:"Explore", account:"Create your candidate account", learn:"Learn and progress", step1:"Explore the presentation, disciplines and resources from the menu.", step2:"Sign up when you are ready to begin your journey.", step3:"Access your courses, assessments and progress in your student space.",
+    available:"Available courses", loading:"Loading courses…", none:"No courses are published yet. Please check back soon.", view:"View courses", signup:"Create my candidate account", login:"Sign in", learnMore:"Explore courses", footer:"Learn · Understand · Progress"
   },
   pt: {
     eyebrow:"NEXUS SCIENCE", title:"Um ambiente de aprendizagem científica estruturado, acessível e criado para acompanhar o seu progresso.",
@@ -38,8 +38,8 @@ const copy = {
     student:"Um ambiente estudantil", studentText:"Uma plataforma pensada para organizar o seu percurso e a sua aprendizagem.", practiceTitle:"Aprender na prática", practiceBody:"Aulas, exercícios e avaliações para transformar conhecimentos em competências.", science:"As ciências no centro do percurso", scienceText:"Biologia, química, fisiologia e outras disciplinas científicas reunidas num só espaço.",
     platform:"Uma plataforma concebida para o seu percurso científico", platformText:"A NEXUS SCIENCE organiza a aprendizagem com conteúdos estruturados, atividades práticas e acompanhamento progressivo.",
     understand:"Compreender as ciências", understandText:"Encontre recursos organizados para abordar os conceitos essenciais com método.", pace:"Aprender ao seu ritmo", paceText:"Avance passo a passo e reveja os temas que precisam de mais prática.", tools:"Ferramentas digitais", toolsText:"A plataforma foi concebida para integrar progressivamente ferramentas inteligentes de aprendizagem e assistência.",
-    start:"Como começar?", discoverStep:"Descubra", account:"Crie a sua conta", learn:"Aprenda e progrida", step1:"Explore a apresentação, as disciplinas e os recursos no menu.", step2:"Aceda ao registo quando estiver pronto para começar.", step3:"Consulte os seus cursos, avaliações e progresso no espaço estudantil.",
-    available:"Cursos disponíveis", loading:"A carregar os cursos…", none:"Ainda não existem cursos publicados. Volte em breve.", view:"Ver cursos", signup:"Criar conta", learnMore:"Explorar cursos", footer:"Aprender · Compreender · Progredir"
+    start:"Como começar?", discoverStep:"Descubra", account:"Crie a sua conta de candidato", learn:"Aprenda e progrida", step1:"Explore a apresentação, as disciplinas e os recursos no menu.", step2:"Aceda ao registo quando estiver pronto para começar.", step3:"Consulte os seus cursos, avaliações e progresso no espaço estudantil.",
+    available:"Cursos disponíveis", loading:"A carregar os cursos…", none:"Ainda não existem cursos publicados. Volte em breve.", view:"Ver cursos", signup:"Criar a minha conta de candidato", login:"Iniciar sessão", learnMore:"Explorar cursos", footer:"Aprender · Compreender · Progredir"
   },
   es: {
     eyebrow:"NEXUS SCIENCE", title:"Un entorno de aprendizaje científico estructurado, accesible y diseñado para acompañar tu progreso.",
@@ -50,8 +50,8 @@ const copy = {
     student:"Un entorno estudiantil", studentText:"Una plataforma diseñada para organizar tu recorrido y aprendizaje.", practiceTitle:"Aprender con la práctica", practiceBody:"Lecciones, ejercicios y evaluaciones para convertir conocimientos en competencias.", science:"Las ciencias en el centro del recorrido", scienceText:"Biología, química, fisiología y otras disciplinas científicas reunidas en un mismo espacio.",
     platform:"Una plataforma diseñada para tu recorrido científico", platformText:"NEXUS SCIENCE organiza el aprendizaje con contenidos estructurados, actividades prácticas y seguimiento progresivo.",
     understand:"Comprender las ciencias", understandText:"Encuentra recursos organizados para abordar los conceptos esenciales con método.", pace:"Aprender a tu ritmo", paceText:"Avanza paso a paso y vuelve a los temas que necesitan más práctica.", tools:"Herramientas digitales", toolsText:"La plataforma está diseñada para incorporar progresivamente herramientas inteligentes de aprendizaje y asistencia.",
-    start:"¿Cómo empezar?", discoverStep:"Descubre", account:"Crea tu cuenta", learn:"Aprende y progresa", step1:"Explora la presentación, las disciplinas y los recursos desde el menú.", step2:"Regístrate cuando estés listo para comenzar tu recorrido.", step3:"Consulta tus cursos, evaluaciones y progreso en tu espacio estudiantil.",
-    available:"Cursos disponibles", loading:"Cargando cursos…", none:"Todavía no hay cursos publicados. Vuelve pronto.", view:"Ver cursos", signup:"Crear una cuenta", learnMore:"Explorar cursos", footer:"Aprender · Comprender · Progresar"
+    start:"¿Cómo empezar?", discoverStep:"Descubre", account:"Crea tu cuenta de candidato", learn:"Aprende y progresa", step1:"Explora la presentación, las disciplinas y los recursos desde el menú.", step2:"Regístrate cuando estés listo para comenzar tu recorrido.", step3:"Consulta tus cursos, evaluaciones y progreso en tu espacio estudiantil.",
+    available:"Cursos disponibles", loading:"Cargando cursos…", none:"Todavía no hay cursos publicados. Vuelve pronto.", view:"Ver cursos", signup:"Crear mi cuenta de candidato", login:"Iniciar sesión", learnMore:"Explorar cursos", footer:"Aprender · Comprender · Progresar"
   }
 } as const;
 
@@ -77,7 +77,7 @@ export default function Home({ language, search }: { language: Language; search:
             <p className="lead">{t.intro}</p>
             <div className="actions">
               <a className="btn primary" href="#decouvrir">{t.discover}</a>
-              {!session && <Link className="btn" to="/inscription">{t.signup}</Link>}
+              {!session && <><Link className="btn primary" to="/inscription">{t.signup}</Link><Link className="btn" to="/connexion">{t.login}</Link></>}
             </div>
           </div>
           <div className="hero-art anatomical-heart-stage">
@@ -108,7 +108,7 @@ export default function Home({ language, search }: { language: Language; search:
         </div>
       </section>
 
-      <section className="wrap home-section">
+      <section className="wrap home-section" id="apprendre">
         <div className="section-heading"><p className="eyebrow">LEARNING PATH</p><h2>{t.platform}</h2><p>{t.platformText}</p></div>
         <div className="benefit-grid">
           <article><span>🧬</span><div><h3>{t.understand}</h3><p>{t.understandText}</p></div></article>
@@ -146,7 +146,7 @@ export default function Home({ language, search }: { language: Language; search:
             </li>
           ))}
         </ul>
-        <div className="courses-cta"><a className="btn primary" href="#cours">{t.view}</a></div>
+        <div className="courses-cta"><a className="btn primary" href="#formations">{t.view}</a></div>
       </section>
     </>
   );
