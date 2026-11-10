@@ -14,7 +14,7 @@ async function contentHash(value: unknown): Promise<string> {
 }
 
 async function getTranslations(type: "course" | "lesson", ids: string[], language: Language): Promise<Map<string, TranslationRow>> {
-  if (language === "fr" || ids.length === 0) return new Map();
+  if (ids.length === 0) return new Map();
   const { data, error } = await supabase.from("content_translations")
     .select("entity_id, source_hash, source_language, translated_content")
     .eq("entity_type", type).eq("target_language", language).in("entity_id", ids);
