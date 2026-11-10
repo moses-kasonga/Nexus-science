@@ -24,6 +24,8 @@ create index if not exists candidate_applications_status_created_idx
   on public.candidate_applications(status, created_at desc);
 
 alter table public.candidate_applications enable row level security;
+revoke all on table public.candidate_applications from anon, authenticated;
+grant select on table public.candidate_applications to authenticated;
 
 drop policy if exists candidate_applications_select_own on public.candidate_applications;
 create policy candidate_applications_select_own
