@@ -76,7 +76,7 @@ export async function fetchCourse(id: string, language: Language = "fr"): Promis
   if (!data) return null;
   const course = data as Course;
   const cache = await getTranslations("course", [course.id], language);
-  return publishedSessions(await translatedCourse(course, language, cache));
+  return publishedSessions(await translatedCourse(course, cache));
 }
 
 /** Les règles RLS ne renvoient les leçons qu'aux inscrits, aux enseignants du cours et aux administrateurs. */
