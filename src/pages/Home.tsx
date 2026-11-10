@@ -68,7 +68,7 @@ export default function Home({ language, search }: { language: Language; search:
   const filteredCourses = useMemo(() => (courses ?? []).filter(course => `${course.name} ${course.category} ${course.description ?? ""}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())), [courses, search]);
   return (
     <>
-      <section className="hero">
+      <section className="hero" id="mission">
         <div className="wrap hero-grid">
           <div className="hero-copy">
             <p className="eyebrow">🔬 {t.eyebrow}</p>
@@ -88,7 +88,7 @@ export default function Home({ language, search }: { language: Language; search:
         </div>
       </section>
 
-      <section className="wrap home-section" id="decouvrir">
+      <section className="wrap home-section" id="plateforme">
         <div className="section-heading"><p className="eyebrow">NEXUS SCIENCE</p><h2>{t.featuresTitle}</h2><p>{t.featuresIntro}</p></div>
         <div className="feature-grid">
           <article className="feature-card"><span className="feature-icon">📚</span><h3>{t.courses}</h3><p>{t.coursesText}</p></article>
@@ -97,7 +97,7 @@ export default function Home({ language, search }: { language: Language; search:
         </div>
       </section>
 
-      <section className="showcase-section">
+      <section className="showcase-section" id="decouvrir">
         <div className="wrap home-section">
           <div className="section-heading"><p className="eyebrow">EXPLORE · DISCOVER · LEARN</p><h2>{t.exploreTitle}</h2><p>{t.exploreIntro}</p></div>
           <div className="showcase-grid">
@@ -117,7 +117,7 @@ export default function Home({ language, search }: { language: Language; search:
         </div>
       </section>
 
-      <section className="start-section">
+      <section className="start-section" id="parcours">
         <div className="wrap home-section">
           <div className="section-heading"><p className="eyebrow">YOUR JOURNEY</p><h2>{t.start}</h2></div>
           <ol className="steps-grid">
@@ -128,7 +128,7 @@ export default function Home({ language, search }: { language: Language; search:
         </div>
       </section>
 
-      <section id="cours" className="wrap home-section courses-section" aria-labelledby="titre-cours">
+      <section id="formations" className="wrap home-section courses-section" aria-labelledby="titre-cours">
         <div className="section-heading"><p className="eyebrow">NEXUS SCIENCE</p><h2 id="titre-cours">{t.available}</h2></div>
         {error && <p className="notice error" role="alert">{error}</p>}
         {!error && courses === null && <p className="muted" role="status">{t.loading}</p>}
