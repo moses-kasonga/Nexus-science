@@ -22,7 +22,7 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
   language: Language; setLanguage: (value: Language) => void;
   dark: boolean; toggleTheme: () => void; search: string; setSearch: (value: string) => void;
 }) {
-  const { session } = useAuth();
+  const { session, profile } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   useEffect(() => {
@@ -93,6 +93,7 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
           {!session && <Link to="/inscription" onClick={closeMenu}>{labels.faq}</Link>}
           {session && <Link to="/candidature" onClick={closeMenu}>Mon dossier de candidature</Link>}
           {session ? <Link to="/compte" onClick={closeMenu}>{labels.logout}</Link> : <Link to="/connexion" onClick={closeMenu}>{labels.login} ↗</Link>}
+          {profile?.role === "admin" && <Link to="/admin" onClick={closeMenu}>Administration</Link>}
         </nav>
         <div className="public-menu-groups">
           <details open>
