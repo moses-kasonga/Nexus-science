@@ -6,8 +6,8 @@ export default function Account() {
   const { session, profile, loading, signOut } = useAuth();
   if (loading) return <section className="wrap page"><p className="muted" role="status">Chargement…</p></section>;
   if (!session) return <Navigate to="/connexion" replace />;
-  if (profile?.role === "student") return <Navigate to="/espace-etudiant" replace />;
   const invitation = profile?.role === "student" ? pendingInvitation() : null;
+  if (profile?.role === "student" && !invitation) return <Navigate to="/espace-etudiant" replace />;
   return (
     <section className="wrap page narrow">
       <h1>Mon compte</h1>
