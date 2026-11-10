@@ -14,7 +14,8 @@ export async function fetchAdminSummary(): Promise<AdminSummary> {
     supabase.from("candidate_applications").select("id", { count: "exact", head: true }).in("status", ["submitted", "under_review"]),
   ]);
 
-  const errors = [courses.error, sessions.error, teacherApplications.error, candidateApplications.error].filter(Boolean);
+  const candidateTableMissing = candidateApplications.error?.code === "PGRST205" || candidateApplications.error?.code === "42P01";
+  const errors = [courses.error, sessions.error, teacherApplications.error, candidateApplications.error && !candidateTableMissing ? candidateApplications.error : null].filter(Boolean);
   if (errors.length) {
     throw new Error("Certaines statistiques ne sont pas accessibles avec les autorisations actuelles.");
   }
@@ -22,6 +23,6 @@ export async function fetchAdminSummary(): Promise<AdminSummary> {
   return {
     courses: courses.count ?? 0,
     sessions: sessions.count ?? 0,
-    pendingApplications: (teacherApplications.count ?? 0) + (candidateApplications.count ?? 0),
+    pendingApplications: (teacherApplications.count ?? 0) + (candidateTableMissing ? 0 : candidateApplications.count ?? 0),
   };
 }
