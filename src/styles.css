@@ -178,3 +178,49 @@ textarea, select { padding: 10px 12px; border-radius: 12px; border: 1.5px solid 
 :root[data-theme="light"] { color-scheme:light; --bg:#f6f3ec;--surface:#fffdf8;--ink:#14232c;--muted:#5b6b73;--line:#ddd6c6;--brand:#0f5b63;--brand-ink:#ffffff;--accent:#c9792b;--soft:#e6f0ee;--ok-bg:#e4f3ea;--ok-ink:#14532d;--err-bg:#fbe9e7;--err-ink:#8a1f11; }
 
 .linklike { background: none; border: 0; padding: 0; color: var(--brand); text-decoration: underline; cursor: pointer; font: inherit; }
+
+
+/* Espace étudiant */
+.student-shell{min-height:100vh;display:grid;grid-template-columns:250px minmax(0,1fr);background:var(--bg);color:var(--ink)}
+.student-sidebar{position:sticky;top:0;height:100vh;padding:26px 18px;background:#102a33;color:#eaf2f2;display:flex;flex-direction:column;gap:28px}
+.student-brand{display:flex;align-items:center;gap:10px;color:#f4fbfa;text-decoration:none;font:600 1.05rem var(--serif)}
+.student-brand span{font-size:1.4rem}.student-brand em{color:#75c7c4;font-style:normal}
+.student-nav-caption,.student-kicker{font:700 .72rem var(--sans);letter-spacing:.13em;color:#8caeb2;margin:0 0 10px}
+.student-sidebar nav{display:grid;gap:7px}
+.student-nav-link{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;color:#c9d9dc;text-decoration:none;font-size:.92rem}
+.student-nav-link.active,.student-nav-link:hover{background:#1d424b;color:#fff}
+.student-nav-link.disabled{opacity:.55;cursor:default}.student-nav-link small{margin-left:auto;font-size:.65rem;color:#a9c4c5}
+.student-sidebar-bottom{margin-top:auto;display:grid;gap:10px;border-top:1px solid #31515a;padding-top:18px}
+.student-sidebar-bottom a{color:#c9d9dc;text-decoration:none;font-size:.88rem}.student-sidebar-bottom a:hover{color:#fff}
+.student-main{width:min(1220px,100%);padding:30px clamp(18px,4vw,54px) 64px;margin:0 auto}
+.student-topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:28px}
+.student-topbar h1{font:600 clamp(1.45rem,3vw,2rem) var(--sans);margin:0;letter-spacing:-.03em}
+.student-topbar .student-kicker{color:var(--brand);margin-bottom:4px}
+.student-avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--brand);font-weight:700;text-decoration:none;border:1px solid var(--line)}
+.student-welcome{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:clamp(22px,4vw,38px);border-radius:20px;background:linear-gradient(120deg,#103c47,#17616a);color:#f3fbfa;overflow:hidden}
+.student-welcome .student-kicker{color:#a5d8d4}.student-welcome h2{font:600 clamp(1.6rem,3vw,2.25rem) var(--sans);margin:0 0 8px;color:#fff}
+.student-welcome p:last-child{margin:0;color:#d1e6e5}.student-welcome-mark{font-size:clamp(3rem,8vw,6rem);opacity:.9}
+.student-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:22px 0 36px}
+.student-stat{padding:19px 20px;border:1px solid var(--line);border-radius:15px;background:var(--surface);display:grid;gap:5px}
+.student-stat span{font-size:.84rem;color:var(--muted)}.student-stat strong{font:600 1.65rem var(--sans);color:var(--ink)}.student-stat small{font-size:.78rem;color:var(--muted)}
+.student-section{margin-top:34px;scroll-margin-top:22px}
+.student-section-heading{display:flex;align-items:end;justify-content:space-between;gap:14px;margin-bottom:16px}
+.student-section-heading .student-kicker,.student-next .student-kicker{color:var(--brand);margin-bottom:5px}
+.student-section-heading h2,.student-next h2{font:600 1.45rem var(--sans);margin:0}
+.student-section-heading>span{font-size:.82rem;color:var(--muted)}
+.student-course-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.student-course-card{padding:21px;border:1px solid var(--line);border-radius:16px;background:var(--surface);display:flex;flex-direction:column;min-height:220px}
+.student-course-category{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);font-weight:700}
+.student-course-card h3{font:600 1.15rem var(--sans);margin:10px 0 6px}
+.student-course-card p{font-size:.9rem;color:var(--muted);margin:0 0 18px}
+.student-course-card>a{margin-top:auto;color:var(--brand);font-weight:700;text-decoration:none}.student-course-card>a:hover{text-decoration:underline}
+.student-empty,.student-session{padding:24px;border:1px dashed var(--line);border-radius:16px;background:var(--surface);color:var(--muted)}
+.student-empty strong{color:var(--ink);font-size:1.05rem}.student-empty p{max-width:65ch}
+.student-button{display:inline-flex;padding:10px 16px;border-radius:999px;background:var(--brand);color:var(--brand-ink);text-decoration:none;font-weight:600}
+.student-alert{padding:13px 16px;border-radius:12px;background:var(--err-bg);color:var(--err-ink)}
+.student-next{padding:22px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.student-session{display:grid;gap:5px;margin-top:14px;border-style:solid}
+.student-session strong{color:var(--ink)}.student-session span,.student-muted{color:var(--muted);font-size:.9rem}.student-session a{color:var(--brand);font-weight:600;text-decoration:none;margin-top:4px}
+.student-loading{min-height:70vh;display:grid;place-items:center;color:var(--muted)}
+@media(max-width:850px){.student-shell{grid-template-columns:1fr}.student-sidebar{position:relative;height:auto;padding:14px 18px;gap:14px}.student-sidebar nav{display:flex;overflow-x:auto}.student-nav-caption{margin:0}.student-nav-link{white-space:nowrap}.student-nav-link.disabled{display:none}.student-sidebar-bottom{display:flex;justify-content:space-between;margin-top:0;padding-top:10px}.student-main{padding-top:22px}}
+@media(max-width:560px){.student-stats{grid-template-columns:1fr;gap:10px}.student-stat{grid-template-columns:1fr auto;align-items:center}.student-stat small{grid-column:1/-1}.student-welcome-mark{font-size:2.7rem}.student-topbar{margin-bottom:18px}.student-course-grid{grid-template-columns:1fr}.student-section-heading{align-items:start;flex-direction:column}}
