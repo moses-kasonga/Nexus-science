@@ -17,17 +17,19 @@ async function getTranslations(type: "course" | "lesson", ids: string[], languag
   if (ids.length === 0) return new Map();
   const { data, error } = await supabase.from("content_translations")
     .select("entity_id, source_hash, source_language, translated_content")
-    .eq("entity_type", type).eq("target_language", language).in("entity_id", ids);
+    .eq("entity_type", type).eq("target_language", language).in("entity_id", ids).order("updated_at", { ascending: false });
   if (error) {
     // Le site reste utilisable avec les textes originaux si la migration n'est pas encore appliquée.
     if (error.code === "42P01" || error.code === "PGRST205") return new Map();
     console.warn("NEXUS SCIENCE: traductions indisponibles", error.message);
     return new Map();
   }
-  return new Map(((data ?? []) as TranslationRow[]).map((row) => [row.entity_id, row]));
+  const latest = new Map<string, TranslationRow>();
+  for (const row of (data ?? []) as TranslationRow[]) if (!latest.has(row.entity_id)) latest.set(row.entity_id, row);
+  return latest;
 }
 
-async function translatedCourse(course: Course, language: Language, cache: Map<string, TranslationRow>): Promise<Course> {
+async function translatedCourse(course: Course, cache: Map<string, TranslationRow>): Promise<Course> {
   const row = cache.get(course.id);
   if (!row) return course;
   const expected = await contentHash({ sourceLanguage: row.source_language, fields: { name: course.name, category: course.category, description: course.description } });
@@ -35,7 +37,7 @@ async function translatedCourse(course: Course, language: Language, cache: Map<s
   return { ...course, ...row.translated_content };
 }
 
-async function translatedLesson(lesson: Lesson, language: Language, cache: Map<string, TranslationRow>): Promise<Lesson> {
+async function translatedLesson(lesson: Lesson, cache: Map<string, TranslationRow>): Promise<Lesson> {
   const row = cache.get(lesson.id);
   if (!row) return lesson;
   const expected = await contentHash({ sourceLanguage: row.source_language, fields: { title: lesson.title, content: lesson.content } });
@@ -60,7 +62,7 @@ export async function fetchPublishedCourses(language: Language = "fr"): Promise<
   }
   const courses = (data ?? []) as Course[];
   const cache = await getTranslations("course", courses.map((course) => course.id), language);
-  return Promise.all(courses.map(async (course) => publishedSessions(await translatedCourse(course, language, cache))));
+  return Promise.all(courses.map(async (course) => publishedSessions(await translatedCourse(course, cache))));
 }
 
 export async function fetchCourse(id: string, language: Language = "fr"): Promise<Course | null> {
@@ -86,7 +88,7 @@ export async function fetchLessons(courseId: string, language: Language = "fr"):
   }
   const lessons = (data ?? []) as Lesson[];
   const cache = await getTranslations("lesson", lessons.map((lesson) => lesson.id), language);
-  return Promise.all(lessons.map((lesson) => translatedLesson(lesson, language, cache)));
+  return Promise.all(lessons.map((lesson) => translatedLesson(lesson, cache)));
 }
 
 const dateFormats: Record<Language, Intl.DateTimeFormat> = {
