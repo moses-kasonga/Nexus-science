@@ -28,12 +28,21 @@ export async function listAllCourses(): Promise<AdminCourse[]> {
   return ((data ?? []) as AdminCourse[]).map((course) => ({ ...course, course_schedules: [...course.course_schedules].sort((a, b) => a.start_date.localeCompare(b.start_date)) }));
 }
 
+async function prepareCourseTranslations(courseId: string): Promise<void> {
+  const { error } = await supabase.functions.invoke("translate-published-course", { body: { course_id: courseId } });
+  if (error) {
+    // La publication du cours ne doit jamais être annulée par une panne du moteur de traduction.
+    console.warn("NEXUS SCIENCE: traduction automatique non terminée. Le contenu original reste disponible.", error.message);
+  }
+}
+
 export async function saveCourse(input: { id?: string; name: string; category: string; description: string; published: boolean }, adminId: string): Promise<void> {
   const row = { name: input.name.trim(), category: input.category.trim(), description: input.description.trim() || null, published: input.published, updated_at: new Date().toISOString() };
-  const { error } = input.id
-    ? await supabase.from("courses").update(row).eq("id", input.id)
-    : await supabase.from("courses").insert({ ...row, admin_id: adminId });
-  if (error) fail(error, "Le cours n'a pas pu être enregistré.");
+  const result = input.id
+    ? await supabase.from("courses").update(row).eq("id", input.id).select("id").single()
+    : await supabase.from("courses").insert({ ...row, admin_id: adminId }).select("id").single();
+  if (result.error) fail(result.error, "Le cours n'a pas pu être enregistré.");
+  if (input.published && result.data?.id) await prepareCourseTranslations(result.data.id);
 }
 
 export async function deleteCourse(id: string): Promise<void> {
@@ -82,6 +91,7 @@ export async function saveLesson(input: { id?: string; course_id: string; title:
     ? await supabase.from("lessons").update(row).eq("id", input.id).eq("course_id", input.course_id)
     : await supabase.from("lessons").insert({ ...row, course_id: input.course_id });
   if (error) fail(error, "La leçon n'a pas pu être enregistrée.");
+  if (input.published) await prepareCourseTranslations(input.course_id);
 }
 
 export async function deleteLesson(id: string, courseId: string): Promise<void> {
