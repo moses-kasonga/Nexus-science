@@ -112,6 +112,11 @@ Deno.serve(async (request) => {
     const sourceHash = await hash({ sourceLanguage, fields: entity.fields });
     for (const target of LANGUAGES) {
       if (target === sourceLanguage) continue;
+      const { data: cached } = await service.from("content_translations").select("id")
+        .eq("entity_type", entity.type).eq("entity_id", entity.id)
+        .eq("source_hash", sourceHash).eq("target_language", target).maybeSingle();
+      if (cached) continue;
+
       const translated: Record<string, string | null> = {};
       try {
         for (const [field, value] of Object.entries(entity.fields)) {
