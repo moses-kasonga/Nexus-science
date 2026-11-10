@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { fetchCourse, fetchLessons, formatRange, sessionState, sessionStateLabel, type Course, type Lesson } from "../lib/courses";
+import { fetchCourse, fetchLessons, formatRange, sessionState, sessionStateLabel, type Course, type Lesson, type Language } from "../lib/courses";
 import { useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 
-export default function CoursePage() {
+export default function CoursePage({ language }: { language: Language }) {
   const { id = "" } = useParams();
   const { session, profile, loading: authLoading } = useAuth();
   const [enrolled, setEnrolled] = useState<boolean | null>(null);
@@ -19,9 +19,9 @@ export default function CoursePage() {
   useEffect(() => {
     let active = true;
     setCourse(undefined); setError("");
-    fetchCourse(id).then((value) => { if (active) setCourse(value); }).catch((cause: Error) => { if (active) { setError(cause.message); setCourse(null); } });
+    fetchCourse(id, language).then((value) => { if (active) setCourse(value); }).catch((cause: Error) => { if (active) { setError(cause.message); setCourse(null); } });
     return () => { active = false; };
-  }, [id]);
+  }, [id, language]);
 
   const userId = session?.user.id;
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function CoursePage() {
     setLessons(null);
     setLessonsError("");
     if (!userId) return;
-    fetchLessons(id)
+    fetchLessons(id, language)
       .then((value) => { if (active) setLessons(value); })
       .catch((cause: Error) => {
         if (active) {
@@ -38,7 +38,7 @@ export default function CoursePage() {
         }
       });
     return () => { active = false; };
-  }, [id, userId, reload]);
+  }, [id, userId, reload, language]);
 
   useEffect(() => {
     let active = true;
@@ -69,7 +69,7 @@ export default function CoursePage() {
       <h2>Sessions</h2>
       <ul className="sessions big">
         {course.course_schedules.length === 0 && <li className="muted">Aucune session publiée pour l'instant.</li>}
-        {course.course_schedules.map((item) => { const state = sessionState(item); return <li key={item.start_date + item.end_date}><span className={`pill ${state}`}>{sessionStateLabel[state]}</span> {formatRange(item)}</li>; })}
+        {course.course_schedules.map((item) => { const state = sessionState(item); return <li key={item.start_date + item.end_date}><span className={`pill ${state}`}>{sessionStateLabel[language][state]}</span> {formatRange(item, language)}</li>; })}
       </ul>
 
       {session && profile?.role === "student" && enrolled === false && (
