@@ -27,4 +27,4 @@ jobs:
             echo "Missing required GitHub Actions secrets."
             exit 1
           fi
-          supabase functions deploy translate-published-course --project-ref "$SUPABASE_PROJECT_ID"
+          supabase functions deploy translate-published-course --project-ref "$SUPABASE_PROJECT_ID" --yes
