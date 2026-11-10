@@ -153,7 +153,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
       }
     } catch (cause) {
       const failure = cause && typeof cause === "object" ? cause as AuthFailure : { message: String(cause) };
-      setError(friendlyError(typeof failure.message === "string" ? failure.message : "Erreur inconnue"));
+      setError(friendlyError(typeof failure.message === "string" ? failure.message : "Erreur inconnue", typeof failure.code === "string" ? failure.code : undefined, typeof failure.status === "number" ? failure.status : undefined, "login"));
       setBusy(false);
     }
   }
