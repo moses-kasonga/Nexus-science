@@ -95,6 +95,7 @@ export default function App() {
           <Route path="/cours/:id" element={<CoursePage />} />
           <Route path="/connexion" element={<AuthPage mode="login" />} />
           <Route path="/inscription" element={<AuthPage mode="register" />} />
+          <Route path="/mot-de-passe-oublie" element={<AuthPage mode="reset" />} />
           <Route path="/compte" element={<Account />} />
           <Route path="/espace-etudiant" element={<StudentDashboard />} />
           <Route path="/enseignant/invitation" element={<TeacherInvitation />} />
