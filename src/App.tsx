@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
-import { displayName, useAuth } from "./lib/auth";
+import { Link, Route, Routes, useLocation } from "react-router-dom";
+import { useAuth } from "./lib/auth";
 import { supabaseConfigured } from "./lib/supabase";
 import Home from "./pages/Home";
 import CoursePage from "./pages/CoursePage";
@@ -20,7 +20,7 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
   language: Language; setLanguage: (value: Language) => void;
   dark: boolean; toggleTheme: () => void; search: string; setSearch: (value: string) => void;
 }) {
-  const { session, profile } = useAuth();
+  const { session } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const labels = {
