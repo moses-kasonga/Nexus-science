@@ -10,6 +10,8 @@ export default function AdminLayout() {
         <Link className="admin-brand" to="/admin">Nexus <em>science</em><span>Administration</span></Link>
         <nav className="admin-nav">
           <NavLink to="/admin" end>Vue d’ensemble</NavLink>
+          <span className="admin-nav-label">Admissions</span>
+          <NavLink to="/admin/candidatures">Dossiers candidats</NavLink>
           <span className="admin-nav-label">Gestion</span>
           <span className="admin-nav-item is-planned">Utilisateurs <small>À venir</small></span>
           <NavLink to="/admin/enseignants">Enseignants</NavLink>
