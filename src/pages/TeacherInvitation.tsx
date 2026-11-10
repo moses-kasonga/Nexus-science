@@ -18,17 +18,19 @@ export default function TeacherInvitation() {
   const returnQuery = `?retour=${encodeURIComponent(`/enseignant/invitation?token=${token}`)}`;
   useEffect(() => { if (token) rememberInvitation(`/enseignant/invitation?token=${encodeURIComponent(token)}`); }, [token]);
 
+  // On dépend de l'identifiant, pas de l'objet session : celui-ci change à chaque renouvellement du jeton, ce qui relançait la vérification en boucle.
+  const userId = session?.user.id;
   useEffect(() => {
     let active = true;
     setPreview(null);
-    if (!token || !session) return;
+    if (!token || !userId) return;
     supabase.rpc("redeem_teacher_invitation", { p_token: token }).then(({ data, error: failure }) => {
       if (!active) return;
       const row = Array.isArray(data) ? data[0] : null;
       setPreview(failure || !row ? "invalid" : { email: String(row.email) });
     });
     return () => { active = false; };
-  }, [token, session]);
+  }, [token, userId]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
