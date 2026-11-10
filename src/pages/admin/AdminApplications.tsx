@@ -7,7 +7,7 @@ type Application = {
   education_level: string; desired_program: string; motivation: string;
   status: "submitted" | "under_review" | "accepted" | "rejected";
   review_note: string | null; created_at: string;
-  profiles?: { first_name: string | null; last_name: string | null; email: string | null } | null;
+  first_name?: string | null; last_name?: string | null; email?: string | null;
 };
 
 const label: Record<Application["status"], string> = {
@@ -22,8 +22,15 @@ export default function AdminApplications() {
 
   async function reload() {
     const { data, error: cause } = await supabase.from("candidate_applications").select("*").order("created_at", { ascending: false });
-    if (cause) setError("Impossible de charger les dossiers. Vérifiez que la migration candidature est activée et que le compte possède le rôle administrateur.");
-    else setRows((data ?? []) as Application[]);
+    if (cause) { setError("Impossible de charger les dossiers. Vérifiez que la migration candidature est activée et que le compte possède le rôle administrateur."); return; }
+    const applications = (data ?? []) as Application[];
+    const ids = applications.map(row => row.user_id);
+    const { data: profiles, error: profileError } = ids.length
+      ? await supabase.from("profiles").select("id, first_name, last_name, email").in("id", ids)
+      : { data: [], error: null };
+    if (profileError) setError("Les dossiers sont chargés, mais les identités des candidats ne sont pas accessibles.");
+    const byId = new Map((profiles ?? []).map((profile: { id: string; first_name: string | null; last_name: string | null; email: string | null }) => [profile.id, profile]));
+    setRows(applications.map(row => ({ ...row, ...byId.get(row.user_id) })));
   }
   useEffect(() => { void reload(); }, []);
 
@@ -58,11 +65,11 @@ export default function AdminApplications() {
           {visible.map(row => (
             <article className="panel" key={row.id}>
               <div className="row between">
-                <div><strong>{row.nationality} · {row.city}</strong><p className="muted small-text">{label[row.status]} · {new Date(row.created_at).toLocaleDateString("fr-FR")}</p></div>
+                <div><strong>{[row.first_name, row.last_name].filter(Boolean).join(" ") || row.email || "Candidat"} · {row.city}</strong><p className="muted small-text">{row.email ?? row.user_id} · {label[row.status]} · {new Date(row.created_at).toLocaleDateString("fr-FR")}</p></div>
                 <span className="pill">{label[row.status]}</span>
               </div>
               <dl className="facts">
-                <div><dt>Identifiant candidat</dt><dd>{row.user_id}</dd></div>
+                <div><dt>Date de naissance</dt><dd>{row.birth_date ? new Date(row.birth_date).toLocaleDateString("fr-FR") : "Non renseignée"}</dd></div>
                 <div><dt>Téléphone</dt><dd>{row.phone}</dd></div>
                 <div><dt>Nationalité / résidence</dt><dd>{row.nationality} / {row.country_of_residence}</dd></div>
                 <div><dt>Études</dt><dd>{row.education_level}</dd></div>
