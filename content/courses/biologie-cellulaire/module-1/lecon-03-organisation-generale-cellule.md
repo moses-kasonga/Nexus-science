@@ -1,0 +1,140 @@
+# Biologie cellulaire — Module 1
+## Leçon 3 : Organisation générale de la cellule
+
+**Niveau :** enseignement secondaire supérieur / initiation aux études de santé  
+**Durée indicative :** 60 à 75 minutes  
+**Prérequis :** Leçons 1 et 2 du module
+
+---
+
+## 1. Objectifs d’apprentissage
+
+À la fin de cette leçon, l'apprenant doit être capable de :
+
+1. décrire les grandes régions d'une cellule ;
+2. expliquer le rôle général de la membrane plasmique, du cytoplasme et du matériel génétique ;
+3. distinguer le cytosol des organites ;
+4. reconnaître les principaux éléments d'une cellule eucaryote sur un schéma ;
+5. expliquer pourquoi les cellules possèdent une organisation interne compartimentée.
+
+## 2. Introduction
+
+Une cellule n'est pas une simple poche remplie de liquide. C'est un système biologique organisé, dans lequel différentes structures assurent des fonctions complémentaires.
+
+L'organisation varie selon le type de cellule. Une bactérie ne possède pas de noyau délimité par une membrane, alors qu'une cellule animale ou végétale en possède généralement un. Dans cette leçon, nous présentons d'abord le plan général d'une cellule, puis nous approfondirons les différences entre les grands types cellulaires dans la leçon suivante.
+
+## 3. Les grandes régions d'une cellule
+
+Dans une représentation générale, on distingue trois éléments fondamentaux :
+
+1. la membrane plasmique, qui délimite la cellule ;
+2. le cytoplasme, qui contient le cytosol et diverses structures ;
+3. le matériel génétique, qui porte l'information nécessaire au fonctionnement et à la reproduction cellulaire.
+
+Cette présentation est générale : la localisation et l'organisation du matériel génétique diffèrent entre cellules procaryotes et eucaryotes.
+
+## 4. La membrane plasmique
+
+La membrane plasmique forme une limite sélective entre la cellule et son environnement.
+
+Ses fonctions principales sont :
+- délimiter et protéger le contenu cellulaire ;
+- contrôler l'entrée et la sortie de nombreuses substances ;
+- participer à la réception de signaux chimiques ;
+- contribuer à la reconnaissance et aux interactions entre cellules.
+
+Elle est principalement constituée d'une bicouche de phospholipides dans laquelle se trouvent différentes protéines. Certains glucides et le cholestérol participent également à son organisation, notamment dans les membranes des cellules animales.
+
+La membrane est dite sélectivement perméable : certaines substances la traversent facilement, d'autres nécessitent des protéines de transport, et certaines ne la traversent pas librement.
+
+## 5. Le cytoplasme
+
+Dans une cellule eucaryote, le cytoplasme correspond à l'ensemble situé entre la membrane plasmique et l'enveloppe nucléaire. Il comprend le cytosol, les organites et diverses structures cellulaires.
+
+### 5.1. Le cytosol
+
+Le cytosol est la phase aqueuse du cytoplasme. Il contient de l'eau, des ions, des protéines, des nutriments et de nombreuses molécules. Plusieurs réactions métaboliques s'y déroulent.
+
+### 5.2. Les organites
+
+Les organites sont des structures spécialisées qui remplissent des fonctions particulières dans la cellule eucaryote. Parmi les principaux organites figurent le noyau, les mitochondries, le réticulum endoplasmique, l'appareil de Golgi et les lysosomes.
+
+Ils seront étudiés en détail dans une leçon ultérieure. Toutes les structures cellulaires ne sont cependant pas des organites délimités par une membrane : les ribosomes, par exemple, ne possèdent pas de membrane.
+
+## 6. Le matériel génétique
+
+L'ADN porte l'information génétique. Il contient des séquences qui contribuent à déterminer les caractéristiques de la cellule et à guider la fabrication de nombreuses protéines.
+
+Chez les cellules eucaryotes, la majeure partie de l'ADN est située dans le noyau. Les mitochondries possèdent également une petite quantité d'ADN. Chez les cellules procaryotes, l'ADN principal se trouve dans une région appelée nucléoïde, qui n'est pas entourée d'une enveloppe nucléaire.
+
+L'information génétique est utilisée par la cellule selon des mécanismes régulés. Toutes les cellules n'expriment pas les mêmes gènes au même moment, ce qui contribue à leur spécialisation.
+
+## 7. Les ribosomes : fabrication des protéines
+
+Les ribosomes sont présents dans les cellules procaryotes et eucaryotes. Ils lisent l'information portée par les ARN messagers et assemblent les acides aminés pour former des protéines.
+
+Les protéines produites peuvent servir à construire des structures, accélérer des réactions chimiques, transporter des substances ou transmettre des signaux.
+
+Dans les cellules eucaryotes, les ribosomes peuvent être libres dans le cytosol ou associés au réticulum endoplasmique rugueux.
+
+## 8. Pourquoi une organisation compartimentée ?
+
+Dans les cellules eucaryotes, les compartiments permettent de séparer certaines réactions et de créer des conditions adaptées à des fonctions précises.
+
+Par exemple, les lysosomes contiennent des enzymes impliquées dans la dégradation de molécules, tandis que les mitochondries participent à la production d'ATP par la respiration cellulaire.
+
+La compartimentation contribue donc à l'efficacité, à la régulation et à la coordination des activités cellulaires.
+
+## 9. Schéma fonctionnel à savoir décrire
+
+Sur un schéma simplifié d'une cellule eucaryote, l'apprenant doit pouvoir identifier :
+- la membrane plasmique, à la périphérie ;
+- le cytoplasme, à l'intérieur de la membrane ;
+- le noyau, qui contient la majeure partie de l'ADN ;
+- les mitochondries, impliquées dans la production d'ATP ;
+- les ribosomes, impliqués dans la synthèse des protéines ;
+- le réticulum endoplasmique et l'appareil de Golgi, qui participent notamment à la fabrication, à la maturation et au transport de molécules.
+
+Attention : ce schéma représente une cellule eucaryote typique. Une cellule procaryote ne possède ni noyau ni organites membranaires comparables à ceux des cellules eucaryotes.
+
+## 10. Vocabulaire essentiel
+
+- **Membrane plasmique :** limite sélective qui sépare la cellule de son environnement.
+- **Cytoplasme :** région située entre la membrane plasmique et le noyau dans une cellule eucaryote ; elle comprend le cytosol et les structures qu'il contient.
+- **Cytosol :** phase aqueuse du cytoplasme.
+- **Organite :** structure cellulaire spécialisée, souvent délimitée par une membrane chez les eucaryotes.
+- **Matériel génétique :** ensemble de l'information héréditaire portée principalement par l'ADN.
+- **Ribosome :** structure assurant la synthèse des protéines.
+- **Compartimentation :** organisation de la cellule en espaces spécialisés.
+
+## 11. Synthèse de la leçon
+
+La cellule possède une organisation interne structurée. La membrane plasmique délimite la cellule et contrôle les échanges. Le cytoplasme contient le cytosol et différentes structures, dont les organites dans les cellules eucaryotes. Le matériel génétique porte l'information nécessaire au fonctionnement cellulaire. Les ribosomes assurent la synthèse des protéines. La compartimentation des cellules eucaryotes permet de spécialiser et de coordonner certaines activités.
+
+## 12. Évaluation formative
+
+1. Cite les trois grands éléments du plan général d'une cellule.
+2. Donne trois fonctions de la membrane plasmique.
+3. Quelle différence existe-t-il entre le cytosol et le cytoplasme ?
+4. Où se trouve la majeure partie de l'ADN dans une cellule eucaryote ?
+5. Quel est le rôle des ribosomes ?
+6. Pourquoi la compartimentation est-elle utile aux cellules eucaryotes ?
+7. Une bactérie possède-t-elle un noyau entouré d'une enveloppe ? Explique.
+8. Cite deux organites et associe chacun à une fonction.
+
+### Corrigé indicatif — réservé à l'enseignant ou à l'autoévaluation
+
+1. La membrane plasmique, le cytoplasme et le matériel génétique.
+2. Délimitation, contrôle sélectif des échanges, réception de signaux et interactions cellulaires.
+3. Le cytosol est la phase aqueuse ; le cytoplasme comprend le cytosol et les structures situées hors du noyau dans une cellule eucaryote.
+4. Dans le noyau.
+5. Ils assurent la synthèse des protéines à partir de l'information portée par les ARN messagers.
+6. Elle sépare certaines réactions, crée des conditions adaptées et facilite la régulation des fonctions.
+7. Non. L'ADN principal d'une bactérie se trouve dans le nucléoïde, qui n'est pas entouré d'une enveloppe nucléaire.
+8. Exemple : mitochondrie — production d'ATP ; appareil de Golgi — modification, tri et acheminement de molécules.
+
+**Barème proposé :** 2 points par question, soit 16 points au total.
+
+## 13. Préparation de la leçon suivante
+
+**Leçon 4 : Cellules procaryotes et cellules eucaryotes.** Nous comparerons leur organisation, leur matériel génétique, leurs structures internes et des exemples d'organismes qui les possèdent.
