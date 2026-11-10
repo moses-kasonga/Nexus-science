@@ -9,6 +9,8 @@ import Account from "./pages/Account";
 import CandidateApplicationPage from "./pages/CandidateApplication";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherInvitation from "./pages/TeacherInvitation";
+import TeacherDashboard from "./pages/teacher/TeacherDashboard";
+import TeacherCourse from "./pages/teacher/TeacherCourse";
 import AdminGuard from "./components/admin/AdminGuard";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -94,6 +96,7 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
           {session && <Link to="/candidature" onClick={closeMenu}>Mon dossier de candidature</Link>}
           {session ? <Link to="/compte" onClick={closeMenu}>{labels.logout}</Link> : <Link to="/connexion" onClick={closeMenu}>{labels.login} ↗</Link>}
           {profile?.role === "admin" && <Link to="/admin" onClick={closeMenu}>Administration</Link>}
+          {profile?.role === "teacher" && <Link to="/enseignant" onClick={closeMenu}>Espace enseignant</Link>}
         </nav>
         <div className="public-menu-groups">
           <details open>
@@ -141,6 +144,8 @@ export default function App() {
           <Route path="/candidature" element={<CandidateApplicationPage />} />
           <Route path="/espace-etudiant" element={<StudentDashboard />} />
           <Route path="/enseignant/invitation" element={<TeacherInvitation />} />
+          <Route path="/enseignant" element={<TeacherDashboard />} />
+          <Route path="/enseignant/cours/:id" element={<TeacherCourse />} />
           <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
             <Route index element={<AdminDashboard />} />
             <Route path="candidatures" element={<AdminApplications />} />

@@ -18,6 +18,7 @@ export default function Account() {
         <div><dt>Rôle</dt><dd>{profile ? roleLabel[profile.role] : "Élève"}</dd></div>
       </dl>
       {profile?.role === "admin" && <p><Link className="btn" to="/admin">Accéder à l’administration</Link></p>}
+      {profile?.role === "teacher" && <p><Link className="btn primary" to="/enseignant">Accéder à mon espace enseignant</Link></p>}
       <p><Link className="btn" to="/">Voir les cours</Link> <button className="btn" onClick={() => void signOut()}>Se déconnecter</button></p>
     </section>
   );
