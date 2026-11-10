@@ -118,18 +118,19 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
 export default function App() {
   const location = useLocation();
   const studentArea = location.pathname.startsWith("/espace-etudiant");
-  const [language, setLanguage] = useState<Language>("fr");
+  const [language, setLanguage] = useState<Language>(() => { const saved = window.localStorage.getItem("nexus-language"); return saved === "en" || saved === "pt" || saved === "es" ? saved : "fr"; });
+  const changeLanguage = (value: Language) => { window.localStorage.setItem("nexus-language", value); setLanguage(value); };
   const [dark, setDark] = useState(() => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false);
   const [search, setSearch] = useState("");
   useEffect(() => { document.documentElement.dataset.theme = dark ? "dark" : "light"; }, [dark]);
   return (
     <>
-      {!studentArea && <><a href="#contenu" className="skip">Aller au contenu</a><Header language={language} setLanguage={setLanguage} dark={dark} toggleTheme={() => setDark(value => !value)} search={search} setSearch={setSearch} /></>}
+      {!studentArea && <><a href="#contenu" className="skip">Aller au contenu</a><Header language={language} setLanguage={changeLanguage} dark={dark} toggleTheme={() => setDark(value => !value)} search={search} setSearch={setSearch} /></>}
       <main id="contenu">
         {!supabaseConfigured && <div className="wrap"><p className="notice error" role="alert">La connexion à la base de données n'est pas configurée (variables VITE_SUPABASE_URL et VITE_SUPABASE_PUBLISHABLE_KEY).</p></div>}
         <Routes>
           <Route path="/" element={<Home language={language} search={search} />} />
-          <Route path="/cours/:id" element={<CoursePage />} />
+          <Route path="/cours/:id" element={<CoursePage language={language} />} />
           <Route path="/connexion" element={<AuthPage mode="login" />} />
           <Route path="/inscription" element={<AuthPage mode="register" />} />
           <Route path="/mot-de-passe-oublie" element={<AuthPage mode="reset" />} />
