@@ -59,8 +59,9 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
         <nav aria-label="Menu principal">
           <Link to="/" onClick={closeMenu}>{labels.home}</Link>
           <Link to="/#formations" onClick={closeMenu}>{labels.catalog}</Link>
-          <Link to="/inscription" onClick={closeMenu}>{labels.calendar}</Link>
+          <Link to={session ? "/candidature" : "/inscription"} onClick={closeMenu}>{labels.calendar}</Link>
           {!session && <Link to="/inscription" onClick={closeMenu}>{labels.faq}</Link>}
+          {session && <Link to="/candidature" onClick={closeMenu}>Mon dossier de candidature</Link>}
           {session ? <Link to="/compte" onClick={closeMenu}>{labels.logout}</Link> : <Link to="/connexion" onClick={closeMenu}>{labels.login} ↗</Link>}
         </nav>
         <div className="public-menu-groups">
