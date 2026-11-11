@@ -1,6 +1,9 @@
 -- Ressources pédagogiques privées attachées aux leçons (images, vidéos et PDF).
 begin;
 
+alter table public.lessons drop constraint if exists lessons_id_course_id_key;
+alter table public.lessons add constraint lessons_id_course_id_key unique (id, course_id);
+
 create table if not exists public.lesson_assets (
   id uuid primary key default gen_random_uuid(),
   lesson_id uuid not null references public.lessons(id) on delete cascade,
@@ -17,10 +20,6 @@ create table if not exists public.lesson_assets (
     references public.lessons(id, course_id) deferrable initially deferred
 );
 
--- La clé composite ci-dessus exige une contrainte unique correspondante sur lessons.
-alter table public.lessons drop constraint if exists lessons_id_course_id_key;
-alter table public.lessons add constraint lessons_id_course_id_key unique (id, course_id);
-
 create index if not exists lesson_assets_lesson_idx on public.lesson_assets(lesson_id, created_at);
 
 alter table public.lesson_assets enable row level security;
@@ -34,8 +33,8 @@ for select to authenticated using (
   or public.is_course_teacher(course_id)
   or exists (
     select 1 from public.lessons l
-    where l.id = lesson_id and l.course_id = course_id
-      and l.published = true and public.has_course_access(course_id)
+    where l.id = lesson_assets.lesson_id and l.course_id = lesson_assets.course_id
+      and l.published = true and public.has_course_access(lesson_assets.course_id)
   )
 );
 
@@ -44,7 +43,7 @@ create policy lesson_assets_teacher_insert on public.lesson_assets
 for insert to authenticated with check (
   created_by = auth.uid()
   and (public.is_admin() or public.is_assigned_teacher(course_id))
-  and exists (select 1 from public.lessons l where l.id = lesson_id and l.course_id = course_id)
+  and exists (select 1 from public.lessons l where l.id = lesson_assets.lesson_id and l.course_id = lesson_assets.course_id)
 );
 
 drop policy if exists lesson_assets_teacher_update on public.lesson_assets;
