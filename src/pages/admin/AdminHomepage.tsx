@@ -36,7 +36,7 @@ export default function AdminHomepage() {
         setDraft(initial);setSaved(JSON.stringify(initial));setReady(true);
       } catch(cause) {
         if(!active)return;
-        setError(cause instanceof Error?cause.message:t.schema);
+        setError(cause instanceof Error&&cause.message.toLowerCase().includes("migration")?t.schema:(cause instanceof Error?cause.message:t.schema));
         setDraft(publicContent);setSaved("");setReady(false);
       } finally { if(active)setLoading(false); }
     })();
