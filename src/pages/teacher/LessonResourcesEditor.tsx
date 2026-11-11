@@ -11,6 +11,7 @@ export default function LessonResourcesEditor({ courseId, lessonId, content, onC
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [imageCaption, setImageCaption] = useState("");
 
   async function loadAssets() {
     const { data, error: failure } = await supabase.from("lesson_assets")
@@ -40,10 +41,10 @@ export default function LessonResourcesEditor({ courseId, lessonId, content, onC
       const { data, error: insertError } = await supabase.from("lesson_assets").insert({
         course_id: courseId, lesson_id: lessonId, asset_type: type, object_path: path,
         file_name: file.name, mime_type: file.type, file_size: file.size,
-        caption: type === "image" ? file.name.replace(/\.[^.]+$/, "") : null, created_by: (await supabase.auth.getUser()).data.user?.id,
+        caption: type === "image" ? (imageCaption.trim() || file.name.replace(/\.[^.]+$/, "")) : null, created_by: (await supabase.auth.getUser()).data.user?.id,
       }).select("id").single();
       if (insertError) { await supabase.storage.from("lesson-assets").remove([path]); throw insertError; }
-      if (type === "image") onContentChange(`${content.trim()}\n\n![${file.name.replace(/\.[^.]+$/, "")}](lesson-asset:${data.id})\n`);
+      if (type === "image") { const caption = (imageCaption.trim() || file.name.replace(/\.[^.]+$/, "")).replace(/[\[\]]/g, ""); onContentChange(`${content.trim()}\n\n![${caption}](lesson-asset:${data.id})\n`); setImageCaption(""); }
       await loadAssets();
       setNotice(type === "image" ? "Image ajoutée. Son emplacement est inséré dans le contenu." : "Ressource ajoutée à la leçon.");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Le fichier n'a pas pu être envoyé."); }
@@ -65,10 +66,11 @@ export default function LessonResourcesEditor({ courseId, lessonId, content, onC
     finally { setBusy(false); }
   }
 
-  return <section className="panel form" aria-label="Ressources pédagogiques">
+  return <section className="teacher-resource-panel" aria-label="Ressources pédagogiques">
     <h4>Ressources pédagogiques</h4>
     <p className="muted small-text">Ajoutez des illustrations, une vidéo ou un document PDF. Les fichiers sont privés et accessibles aux élèves inscrits lorsque la leçon est publiée.</p>
-    <div className="grid">
+    <label className="teacher-resource-caption">Légende de la prochaine image<input value={imageCaption} onChange={(event) => setImageCaption(event.target.value)} maxLength={180} placeholder="Ex. : Schéma de la structure cellulaire" /></label>
+    <div className="teacher-resource-upload-grid">
       <label>Ajouter une image (JPG, PNG, WebP, AVIF · 5 Mo max)
         <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={busy} onChange={(event) => void upload(event, "image")} />
       </label>
@@ -82,7 +84,7 @@ export default function LessonResourcesEditor({ courseId, lessonId, content, onC
     {busy && <p className="muted" role="status">Téléversement en cours…</p>}
     {error && <p className="notice error" role="alert">{error}</p>}
     {notice && <p className="notice" role="status">{notice}</p>}
-    {assets.length > 0 && <ul className="stack tight">{assets.map((asset) => <li key={asset.id} className="row between panel">
+    {assets.length > 0 && <ul className="teacher-resource-list">{assets.map((asset) => <li key={asset.id} className="row between">
       <span><strong>{asset.asset_type === "image" ? "Image" : asset.asset_type === "video" ? "Vidéo" : "PDF"} :</strong> {asset.file_name}</span>
       <button className="btn small" type="button" disabled={busy} onClick={() => void remove(asset)}>Supprimer</button>
     </li>)}</ul>}
