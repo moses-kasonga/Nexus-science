@@ -198,3 +198,40 @@ end;
 $$;
 revoke all on function public.get_my_assessment_review(uuid) from public,anon;
 grant execute on function public.get_my_assessment_review(uuid) to authenticated;
+
+
+-- Correction des réponses écrites par l'enseignant ; le total est recalculé côté serveur.
+create or replace function public.grade_assessment_written_response(
+  p_response_id uuid, p_points numeric, p_feedback text default null
+) returns void language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_course uuid; v_question_points numeric; v_attempt uuid; v_assessment uuid; v_student uuid;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise'; end if;
+  select a.course_id,q.points,r.attempt_id,at.assessment_id,at.student_id
+    into v_course,v_question_points,v_attempt,v_assessment,v_student
+  from public.assessment_responses r
+  join public.assessment_questions q on q.id=r.question_id
+  join public.assessment_attempts at on at.id=r.attempt_id
+  join public.assessments a on a.id=at.assessment_id
+  where r.id=p_response_id and q.question_type='written';
+  if v_course is null then raise exception 'Réponse écrite introuvable'; end if;
+  if not (public.is_admin() or public.is_assigned_teacher(v_course)) then
+    raise exception 'Correction réservée à l''enseignant titulaire';
+  end if;
+  if p_points is null or p_points < 0 or p_points > v_question_points then
+    raise exception 'La note doit être comprise entre 0 et %',v_question_points;
+  end if;
+  update public.assessment_responses set points_awarded=p_points,
+    teacher_feedback=left(nullif(btrim(p_feedback),''),2000),graded_by=auth.uid(),graded_at=now()
+  where id=p_response_id;
+  update public.assessment_results ar set score=(
+    select coalesce(sum(r.points_awarded),0) from public.assessment_responses r where r.attempt_id=v_attempt
+  ),graded_by=auth.uid(),graded_at=now()
+  where ar.assessment_id=v_assessment and ar.student_id=v_student
+    and not exists(select 1 from public.assessment_responses r where r.attempt_id=v_attempt and r.points_awarded is null);
+end;
+$$;
+revoke all on function public.grade_assessment_written_response(uuid,numeric,text) from public,anon;
+grant execute on function public.grade_assessment_written_response(uuid,numeric,text) to authenticated;
