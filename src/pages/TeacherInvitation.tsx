@@ -3,10 +3,13 @@ import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { forgetInvitation, rememberInvitation } from "../lib/invitation";
+import { useT } from "../lib/i18n";
+import { pagesText } from "../lib/translations";
 
 type Preview = { email: string } | "invalid" | null;
 
 export default function TeacherInvitation() {
+  const t = useT(pagesText);
   const [params] = useSearchParams();
   const token = params.get("token") ?? "";
   const { session, loading, signOut } = useAuth();
@@ -51,26 +54,26 @@ export default function TeacherInvitation() {
 
   return (
     <section className="wrap page narrow">
-      <h1>Invitation enseignant</h1>
-      {session && <p className="muted small-text">Connecté en tant que {session.user.email}. <button className="linklike" type="button" onClick={() => void signOut()}>Changer de compte</button></p>}
-      {!token && <p className="notice error" role="alert">Ce lien est incomplet. Demandez un nouveau lien à l'administration de Nexus science.</p>}
-      {token && loading && <p className="muted" role="status">Chargement…</p>}
+      <h1>{t.inviteTitle}</h1>
+      {session && <p className="muted small-text">{t.connectedAs} {session.user.email}. <button className="linklike" type="button" onClick={() => void signOut()}>{t.changeAccount}</button></p>}
+      {!token && <p className="notice error" role="alert">{t.inviteIncomplete}</p>}
+      {token && loading && <p className="muted" role="status">{t.loading}</p>}
       {token && !loading && !session && (
-        <p className="notice">Pour continuer, <Link to={`/connexion${returnQuery}`}>connectez-vous</Link> ou <Link to={`/inscription${returnQuery}`}>créez un compte</Link> avec l'adresse e-mail qui a reçu l'invitation : vous reviendrez ensuite ici pour envoyer votre candidature.</p>
+        <p className="notice">{t.toContinue} <Link to={`/connexion${returnQuery}`}>{t.signInOr}</Link> {t.or} <Link to={`/inscription${returnQuery}`}>{t.createAccount}</Link> {t.withInvited}</p>
       )}
-      {token && session && preview === null && <p className="muted" role="status">Vérification de l'invitation…</p>}
-      {preview === "invalid" && <p className="notice error" role="alert">Cette invitation est invalide, expirée ou déjà utilisée. Demandez un nouveau lien à l'administration.</p>}
-      {wrongAccount && preview !== "invalid" && preview && <p className="notice error" role="alert">Cette invitation est destinée à {preview.email}. Vous êtes connecté avec une autre adresse : déconnectez-vous puis utilisez le bon compte.</p>}
-      {done && <p className="notice" role="status">Candidature envoyée. L'administration l'examinera ; vous deviendrez enseignant une fois qu'elle sera approuvée.</p>}
+      {token && session && preview === null && <p className="muted" role="status">{t.checking}</p>}
+      {preview === "invalid" && <p className="notice error" role="alert">{t.inviteInvalid}</p>}
+      {wrongAccount && preview !== "invalid" && preview && <p className="notice error" role="alert">{t.inviteFor} {preview.email}. {t.otherAddress}</p>}
+      {done && <p className="notice" role="status">{t.sentApplication}</p>}
       {preview && preview !== "invalid" && !wrongAccount && !done && (
         <form className="form" onSubmit={submit}>
-          <p className="muted">Invitation pour {preview.email}. Présentez-vous en quelques lignes.</p>
-          <label>Spécialité<input name="specialty" required maxLength={300} /></label>
-          <label>Qualifications<textarea name="qualifications" rows={3} required maxLength={2000} /></label>
-          <label>Expérience<textarea name="experience" rows={3} maxLength={2000} /></label>
-          <label>Motivation<textarea name="motivation" rows={3} maxLength={2000} /></label>
+          <p className="muted">{t.inviteForLine} {preview.email}. {t.introduce}</p>
+          <label>{t.specialty}<input name="specialty" required maxLength={300} /></label>
+          <label>{t.qualifications}<textarea name="qualifications" rows={3} required maxLength={2000} /></label>
+          <label>{t.experience}<textarea name="experience" rows={3} maxLength={2000} /></label>
+          <label>{t.teacherMotivation}<textarea name="motivation" rows={3} maxLength={2000} /></label>
           {error && <p className="notice error" role="alert">{error}</p>}
-          <button className="btn primary" type="submit" disabled={busy}>{busy ? "Envoi…" : "Envoyer ma candidature"}</button>
+          <button className="btn primary" type="submit" disabled={busy}>{busy ? t.sendingShort : t.sendApplication}</button>
         </form>
       )}
     </section>

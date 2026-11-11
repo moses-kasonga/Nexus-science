@@ -2,6 +2,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { supabase, supabaseConfigured } from "../lib/supabase";
+import { dateLocale, useLanguage, useT } from "../lib/i18n";
+import { pagesText } from "../lib/translations";
 
 type CandidateApplication = {
   id: string;
@@ -18,15 +20,11 @@ type CandidateApplication = {
   created_at: string;
 };
 
-const statusLabels: Record<CandidateApplication["status"], string> = {
-  submitted: "Dossier transmis",
-  under_review: "En cours d’examen",
-  accepted: "Candidature acceptée",
-  rejected: "À compléter / refusée",
-};
-
 export default function CandidateApplicationPage() {
   const { session, profile, loading } = useAuth();
+  const t = useT(pagesText);
+  const locale = dateLocale[useLanguage()];
+  const statusLabels: Record<CandidateApplication["status"], string> = { submitted: t.statusSubmitted, under_review: t.statusReview, accepted: t.statusAccepted, rejected: t.statusRejected };
   const [application, setApplication] = useState<CandidateApplication | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -39,14 +37,14 @@ export default function CandidateApplicationPage() {
     supabase.from("candidate_applications").select("*").eq("user_id", session.user.id).maybeSingle()
       .then(({ data, error: cause }) => {
         if (!active) return;
-        if (cause) setError("Le dossier de candidature n’est pas encore activé sur la base de données. L’équipe doit d’abord appliquer la migration dédiée.");
+        if (cause) setError(t.migrationPending);
         else setApplication((data as CandidateApplication | null) ?? null);
         setLoaded(true);
       });
     return () => { active = false; };
   }, [session]);
 
-  if (loading || (session && !loaded)) return <section className="wrap page"><p className="muted" role="status">Chargement de votre dossier…</p></section>;
+  if (loading || (session && !loaded)) return <section className="wrap page"><p className="muted" role="status">{t.loadingFile}</p></section>;
   if (!session) return <Navigate to="/connexion?retour=%2Fcandidature" replace />;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -64,12 +62,12 @@ export default function CandidateApplicationPage() {
       p_motivation: String(form.get("motivation") ?? "").trim(),
     });
     if (cause) setError(cause.message.includes("schema cache") || cause.message.includes("does not exist")
-      ? "Le module de candidature attend encore l’activation de sa migration dans Supabase."
+      ? t.moduleWaiting
       : cause.message);
     else {
       const { data: saved } = await supabase.from("candidate_applications").select("*").eq("id", data).single();
       if (saved) setApplication(saved as CandidateApplication);
-      setNotice("Votre dossier a été transmis à l’administration de NEXUS SCIENCE.");
+      setNotice(t.transmitted);
     }
     setBusy(false);
   }
@@ -78,48 +76,48 @@ export default function CandidateApplicationPage() {
   return (
     <section className="wrap page narrow">
       <div className="auth-heading">
-        <p className="eyebrow">ESPACE CANDIDAT</p>
-        <h1>Mon dossier de candidature</h1>
-        <p className="muted">Complétez les informations nécessaires à l’étude de votre admission. Vos données restent liées à votre compte.</p>
+        <p className="eyebrow">{t.candidateSpace}</p>
+        <h1>{t.myFile}</h1>
+        <p className="muted">{t.fileIntro}</p>
       </div>
       {application && (
         <div className="panel">
           <strong>{statusLabels[application.status]}</strong>
-          <p className="muted small-text">Dossier transmis le {new Date(application.created_at).toLocaleDateString("fr-FR")}.</p>
+          <p className="muted small-text">{t.sentOn} {new Date(application.created_at).toLocaleDateString(locale)}.</p>
           {application.review_note && <p>{application.review_note}</p>}
-          {locked && <p className="muted small-text">Votre dossier est verrouillé pendant son traitement. Vous pouvez contacter l’administration si une correction est nécessaire.</p>}
+          {locked && <p className="muted small-text">{t.locked}</p>}
         </div>
       )}
       {error && <p className="notice error" role="alert">{error}</p>}
       {notice && <p className="notice" role="status">{notice}</p>}
-      {!supabaseConfigured && <p className="notice error">La base de données n’est pas configurée.</p>}
+      {!supabaseConfigured && <p className="notice error">{t.dbMissing}</p>}
       {!locked && (
         <form className="form panel" onSubmit={submit}>
-          <h2>Informations personnelles</h2>
+          <h2>{t.personalInfo}</h2>
           <div className="two">
-            <label>Prénom<input value={profile?.first_name ?? ""} readOnly /></label>
-            <label>Nom<input value={profile?.last_name ?? ""} readOnly /></label>
+            <label>{t.firstName}<input value={profile?.first_name ?? ""} readOnly /></label>
+            <label>{t.lastName}<input value={profile?.last_name ?? ""} readOnly /></label>
           </div>
-          <label>Adresse e-mail<input value={session.user.email ?? ""} readOnly /></label>
+          <label>{t.email}<input value={session.user.email ?? ""} readOnly /></label>
           <div className="two">
-            <label>Téléphone / WhatsApp<input name="phone" required maxLength={40} defaultValue={application?.phone ?? ""} placeholder="+244…" /></label>
-            <label>Date de naissance<input name="birth_date" type="date" defaultValue={application?.birth_date ?? ""} /></label>
+            <label>{t.phone}<input name="phone" required maxLength={40} defaultValue={application?.phone ?? ""} placeholder="+244…" /></label>
+            <label>{t.birth}<input name="birth_date" type="date" defaultValue={application?.birth_date ?? ""} /></label>
           </div>
           <div className="two">
-            <label>Nationalité<input name="nationality" required maxLength={100} defaultValue={application?.nationality ?? ""} /></label>
-            <label>Pays de résidence<input name="country_of_residence" required maxLength={100} defaultValue={application?.country_of_residence ?? ""} /></label>
+            <label>{t.nationality}<input name="nationality" required maxLength={100} defaultValue={application?.nationality ?? ""} /></label>
+            <label>{t.residenceCountry}<input name="country_of_residence" required maxLength={100} defaultValue={application?.country_of_residence ?? ""} /></label>
           </div>
-          <label>Ville de résidence<input name="city" required maxLength={120} defaultValue={application?.city ?? ""} /></label>
-          <h2>Projet de formation</h2>
+          <label>{t.city}<input name="city" required maxLength={120} defaultValue={application?.city ?? ""} /></label>
+          <h2>{t.project}</h2>
           <div className="two">
-            <label>Dernier niveau d’études<input name="education_level" required maxLength={120} defaultValue={application?.education_level ?? ""} placeholder="Ex. : secondaire, terminale…" /></label>
-            <label>Formation souhaitée<input name="desired_program" required maxLength={160} defaultValue={application?.desired_program ?? ""} placeholder="Nom de la formation" /></label>
+            <label>{t.education}<input name="education_level" required maxLength={120} defaultValue={application?.education_level ?? ""} placeholder={t.educationPh} /></label>
+            <label>{t.program}<input name="desired_program" required maxLength={160} defaultValue={application?.desired_program ?? ""} placeholder={t.programPh} /></label>
           </div>
-          <label>Motivation<textarea name="motivation" required minLength={40} maxLength={5000} rows={6} defaultValue={application?.motivation ?? ""} placeholder="Présentez votre parcours, votre projet et vos objectifs (40 caractères minimum)." /></label>
-          <button className="btn" type="submit" disabled={busy || !supabaseConfigured}>{busy ? "Transmission…" : application ? "Renvoyer le dossier corrigé" : "Transmettre ma candidature"}</button>
+          <label>{t.motivation}<textarea name="motivation" required minLength={40} maxLength={5000} rows={6} defaultValue={application?.motivation ?? ""} placeholder={t.motivationPh} /></label>
+          <button className="btn" type="submit" disabled={busy || !supabaseConfigured}>{busy ? t.sending : application ? t.resend : t.submit}</button>
         </form>
       )}
-      <p className="muted small-text">Besoin d’aide ? <Link to="/">Retour à l’accueil NEXUS SCIENCE</Link>.</p>
+      <p className="muted small-text">{t.needHelp} <Link to="/">{t.backHome}</Link>.</p>
     </section>
   );
 }
