@@ -12,7 +12,7 @@ type Student = { id: string; name: string; email: string; status: string; since:
 export default function TeacherCourse() {
   const { id = "" } = useParams();
   const t = useT({
-    fr: { back:"← Mes formations", loading:"Chargement…", loadingCourse:"Chargement de la formation…", missing:"Formation introuvable", noAccess:"{t.noAccess}", lessons:"Leçons", noLessons:"{t.noLessons}", published:"Publiée", draft:"Brouillon", up:"Monter", down:"Descendre", edit:"Modifier", addLesson:"Ajouter une leçon", newLesson:"Nouvelle leçon", editLesson:"Modifier la leçon", title:"Titre", content:"Contenu", publish:"Publier cette leçon (visible par les élèves)", saving:"Enregistrement…", save:"Enregistrer", cancel:"Annuler", students:"Élèves inscrits", noStudents:"{t.noStudents}", active:"Actif", removed:"Accès retiré", student:"Élève", required:"Le titre de la leçon est obligatoire.", saved:"Leçon enregistrée.", enrolled:"inscrit le" },
+    fr: { back:"← Mes formations", loading:"Chargement…", loadingCourse:"Chargement de la formation…", missing:"Formation introuvable", noAccess:"Cette formation n'existe pas ou ne vous est pas attribuée.", lessons:"Leçons", noLessons:"Aucune leçon pour l'instant.", published:"Publiée", draft:"Brouillon", up:"Monter", down:"Descendre", edit:"Modifier", addLesson:"Ajouter une leçon", newLesson:"Nouvelle leçon", editLesson:"Modifier la leçon", title:"Titre", content:"Contenu", publish:"Publier cette leçon (visible par les élèves)", saving:"Enregistrement…", save:"Enregistrer", cancel:"Annuler", students:"Élèves inscrits", noStudents:"Aucun élève inscrit à cette formation pour le moment.", active:"Actif", removed:"Accès retiré", student:"Élève", required:"Le titre de la leçon est obligatoire.", saved:"Leçon enregistrée.", enrolled:"inscrit le" },
     en: { back:"← My courses", loading:"Loading…", loadingCourse:"Loading course…", missing:"Course not found", noAccess:"This course does not exist or has not been assigned to you.", lessons:"Lessons", noLessons:"No lessons yet.", published:"Published", draft:"Draft", up:"Move up", down:"Move down", edit:"Edit", addLesson:"Add a lesson", newLesson:"New lesson", editLesson:"Edit lesson", title:"Title", content:"Content", publish:"Publish this lesson (visible to students)", saving:"Saving…", save:"Save", cancel:"Cancel", students:"Enrolled students", noStudents:"No students are enrolled in this course yet.", active:"Active", removed:"Access revoked", student:"Student", required:"The lesson title is required.", saved:"Lesson saved.", enrolled:"enrolled on" },
     pt: { back:"← Os meus cursos", loading:"A carregar…", loadingCourse:"A carregar o curso…", missing:"Curso não encontrado", noAccess:"Este curso não existe ou não lhe foi atribuído.", lessons:"Aulas", noLessons:"Ainda não existem aulas.", published:"Publicado", draft:"Rascunho", up:"Mover para cima", down:"Mover para baixo", edit:"Editar", addLesson:"Adicionar uma aula", newLesson:"Nova aula", editLesson:"Editar aula", title:"Título", content:"Conteúdo", publish:"Publicar esta aula (visível para os alunos)", saving:"A guardar…", save:"Guardar", cancel:"Cancelar", students:"Alunos inscritos", noStudents:"Ainda não há alunos inscritos neste curso.", active:"Ativo", removed:"Acesso removido", student:"Aluno", required:"O título da aula é obrigatório.", saved:"Aula guardada.", enrolled:"inscrito em" },
     es: { back:"← Mis cursos", loading:"Cargando…", loadingCourse:"Cargando el curso…", missing:"Curso no encontrado", noAccess:"Este curso no existe o no te ha sido asignado.", lessons:"Lecciones", noLessons:"Todavía no hay lecciones.", published:"Publicada", draft:"Borrador", up:"Subir", down:"Bajar", edit:"Editar", addLesson:"Añadir una lección", newLesson:"Nueva lección", editLesson:"Editar lección", title:"Título", content:"Contenido", publish:"Publicar esta lección (visible para los alumnos)", saving:"Guardando…", save:"Guardar", cancel:"Cancelar", students:"Alumnos inscritos", noStudents:"Todavía no hay alumnos inscritos en este curso.", active:"Activo", removed:"Acceso revocado", student:"Alumno", required:"El título de la lección es obligatorio.", saved:"Lección guardada.", enrolled:"inscrito el" }
@@ -100,17 +100,17 @@ export default function TeacherCourse() {
   if (!session) return <Navigate to="/connexion" replace />;
   if (!isTeacher) return <Navigate to="/enseignant" replace />;
   if (courseName === undefined) return <section className="wrap page"><p className="muted" role="status">{t.loadingCourse}</p></section>;
-  if (courseName === null) return <section className="wrap page narrow"><h1>{t.missing}</h1>{error && <p className="notice error" role="alert">{error}</p>}<p className="muted">Cette formation n'existe pas ou ne vous est pas attribuée.</p><p><Link to="/enseignant">{t.back}</Link></p></section>;
+  if (courseName === null) return <section className="wrap page narrow"><h1>{t.missing}</h1>{error && <p className="notice error" role="alert">{error}</p>}<p className="muted">{t.noAccess}</p><p><Link to="/enseignant">{t.back}</Link></p></section>;
 
   return (
     <section className="wrap page">
-      <p><Link to="/enseignant">← Mes formations</Link></p>
+      <p><Link to="/enseignant">{t.back}</Link></p>
       <h1>{courseName}</h1>
       <Feedback error={error} notice={notice} />
 
       <h2>{t.lessons}</h2>
-      {lessons === null && <p className="muted" role="status">Chargement…</p>}
-      {lessons?.length === 0 && <p className="notice">Aucune leçon pour l'instant.</p>}
+      {lessons === null && <p className="muted" role="status">{t.loading}</p>}
+      {lessons?.length === 0 && <p className="notice">{t.noLessons}</p>}
       <ol className="stack">
         {lessons?.map((lesson, index) => (
           <li key={lesson.id} className="panel row between">
@@ -137,8 +137,8 @@ export default function TeacherCourse() {
       {students && <TeacherAssessments courseId={id} students={students.map((student) => ({ id: student.id, name: student.name, email: student.email, status: student.status }))} />}
 
       <h2>{t.students}</h2>
-      {students === null && <p className="muted" role="status">Chargement…</p>}
-      {students?.length === 0 && <p className="notice">Aucun élève inscrit à cette formation pour le moment.</p>}
+      {students === null && <p className="muted" role="status">{t.loading}</p>}
+      {students?.length === 0 && <p className="notice">{t.noStudents}</p>}
       <ul className="stack tight">
         {students?.map((student) => (
           <li key={student.id} className="panel row between">
