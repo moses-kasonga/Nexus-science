@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
 import { Feedback, dateTimeLabel, errorText } from "../admin/shared";
+import TeacherAssessments from "./TeacherAssessments";
 
 type LessonRow = { id: string; title: string; content: string | null; order_index: number; published: boolean };
 type Student = { id: string; name: string; email: string; status: string; since: string };
@@ -125,6 +126,8 @@ export default function TeacherCourse() {
           <div className="row"><button className="btn primary" type="submit" disabled={busy}>{busy ? "Enregistrement…" : "Enregistrer"}</button><button className="btn" type="button" onClick={() => setEditing(null)}>Annuler</button></div>
         </form>
       )}
+
+      {students && <TeacherAssessments courseId={id} students={students.map((student) => ({ id: student.id, name: student.name, email: student.email, status: student.status }))} />}
 
       <h2>Élèves inscrits</h2>
       {students === null && <p className="muted" role="status">Chargement…</p>}

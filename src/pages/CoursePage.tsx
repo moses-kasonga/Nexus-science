@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { fetchCourse, fetchLessons, formatRange, sessionState, sessionStateLabel, type Course, type Lesson, type Language } from "../lib/courses";
 import { useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
+import CourseAssessments from "../components/CourseAssessments";
 
 const pageCopy = {
   fr: { loading: "Chargement du cours…", missing: "Cours introuvable", back: "← Tous les cours", sessions: "Sessions", noSessions: "Aucune session publiée pour l'instant.", lessons: "Leçons", signup: "Inscrivez-vous pour accéder aux leçons. Votre évaluation sera coordonnée par l'enseignant titulaire du cours et suivie par l'administration.", enroll: "M'inscrire à cette formation", enrolling: "Inscription…", enrolled: "Vous êtes inscrit à cette formation.", reserved: "Les leçons sont réservées aux élèves inscrits.", login: "Connectez-vous", or: "ou", register: "créez un compte", continue: "pour continuer.", loadingLessons: "Chargement des leçons…", noLessons: "Aucune leçon accessible pour ce cours pour le moment.", noContent: "Cette leçon n'a pas encore de contenu.", loadError: "Impossible de charger les leçons. Détail :", unknownError: "Une erreur inconnue est survenue." },
@@ -112,6 +113,8 @@ export default function CoursePage({ language }: { language: Language }) {
           ))}
         </ol>
       )}
+
+      {session && enrolled === true && <CourseAssessments courseId={id} language={language} />}
     </section>
   );
 }

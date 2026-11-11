@@ -17,6 +17,7 @@ export default function AdminLayout() {
           <NavLink to="/admin/enseignants">Enseignants</NavLink>
           <NavLink to="/admin/formations">Formations</NavLink>
           <NavLink to="/admin/eleves">Accès des élèves</NavLink>
+          <NavLink to="/admin/evaluations">Évaluations</NavLink>
           <span className="admin-nav-item is-planned">Calendrier <small>À venir</small></span>
           <span className="admin-nav-item is-planned">Feedback <small>À venir</small></span>
         </nav>

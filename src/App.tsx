@@ -16,6 +16,7 @@ import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminApplications from "./pages/admin/AdminApplications";
 import AdminTeachers from "./pages/admin/AdminTeachers";
+import AdminAssessments from "./pages/admin/AdminAssessments";
 import { CoursesRoute, StudentsRoute } from "./pages/admin/routes";
 
 type Language = "fr" | "en" | "pt" | "es";
@@ -152,6 +153,7 @@ export default function App() {
             <Route path="formations" element={<CoursesRoute />} />
             <Route path="eleves" element={<StudentsRoute />} />
             <Route path="enseignants" element={<AdminTeachers />} />
+            <Route path="evaluations" element={<AdminAssessments />} />
           </Route>
           <Route path="*" element={<section className="wrap page"><h1>Page introuvable</h1><p><Link to="/">Retour à l’accueil</Link></p></section>} />
         </Routes>
