@@ -235,3 +235,35 @@ end;
 $$;
 revoke all on function public.grade_assessment_written_response(uuid,numeric,text) from public,anon;
 grant execute on function public.grade_assessment_written_response(uuid,numeric,text) to authenticated;
+
+
+-- Empêche la publication d'une évaluation incomplète ou d'un résultat non corrigé.
+create or replace function public.validate_assessment_publication()
+returns trigger language plpgsql set search_path = ''
+as $$
+begin
+  if new.published and not old.published then
+    if not exists(select 1 from public.assessment_questions q where q.assessment_id=new.id) then
+      raise exception 'Ajoutez au moins une question avant de publier l''évaluation';
+    end if;
+    if exists(select 1 from public.assessment_questions q where q.assessment_id=new.id and
+      ((q.question_type='multiple_choice' and (not new.allow_multiple_choice or
+        (select count(*) from public.assessment_options o where o.question_id=q.id)<2 or
+        not exists(select 1 from public.assessment_answer_keys k where k.question_id=q.id and cardinality(k.correct_option_ids)>0)))
+       or (q.question_type='written' and not new.allow_written))) then
+      raise exception 'Certaines questions sont incomplètes ou leur type de réponse est désactivé';
+    end if;
+  end if;
+  if new.results_published and not old.results_published then
+    if exists(select 1 from public.assessment_responses r
+      join public.assessment_attempts at on at.id=r.attempt_id
+      where at.assessment_id=new.id and r.points_awarded is null) then
+      raise exception 'Corrigez toutes les réponses écrites avant de publier les résultats';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists validate_assessment_publication on public.assessments;
+create trigger validate_assessment_publication before update on public.assessments
+for each row execute function public.validate_assessment_publication();
