@@ -84,7 +84,12 @@ with check (exists (select 1 from public.assessment_questions q join public.asse
   where q.id=question_id and not a.published and (public.is_admin() or public.is_assigned_teacher(a.course_id))));
 
 drop policy if exists assessment_keys_teacher_only on public.assessment_answer_keys;
-create policy assessment_keys_teacher_only on public.assessment_answer_keys for all to authenticated
+drop policy if exists assessment_keys_teacher_read on public.assessment_answer_keys;
+create policy assessment_keys_teacher_read on public.assessment_answer_keys for select to authenticated
+using (exists (select 1 from public.assessment_questions q join public.assessments a on a.id=q.assessment_id
+  where q.id=question_id and (public.is_admin() or public.is_course_teacher(a.course_id))));
+drop policy if exists assessment_keys_teacher_write on public.assessment_answer_keys;
+create policy assessment_keys_teacher_write on public.assessment_answer_keys for all to authenticated
 using (exists (select 1 from public.assessment_questions q join public.assessments a on a.id=q.assessment_id
   where q.id=question_id and not a.published and (public.is_admin() or public.is_assigned_teacher(a.course_id))))
 with check (exists (select 1 from public.assessment_questions q join public.assessments a on a.id=q.assessment_id
@@ -163,8 +168,10 @@ begin
     raise exception 'Toutes les questions doivent recevoir une réponse';
   end if;
   insert into public.assessment_results(assessment_id,student_id,score,comment)
-  select p_assessment_id,v_student,coalesce(sum(points_awarded),0),null
-  from public.assessment_responses where attempt_id=v_attempt and points_awarded is not null;
+  select p_assessment_id,v_student,
+    case when exists(select 1 from public.assessment_responses where attempt_id=v_attempt and points_awarded is null)
+      then null else coalesce(sum(points_awarded),0) end,null
+  from public.assessment_responses where attempt_id=v_attempt;
 end;
 $$;
 revoke all on function public.submit_assessment_answers(uuid,jsonb) from public,anon;
@@ -242,6 +249,12 @@ create or replace function public.validate_assessment_publication()
 returns trigger language plpgsql set search_path = ''
 as $$
 begin
+  if old.published and (new.allow_multiple_choice is distinct from old.allow_multiple_choice or new.allow_written is distinct from old.allow_written) then
+    raise exception 'Les modes de réponse ne peuvent plus être modifiés après publication';
+  end if;
+  if new.results_published and not new.published then
+    raise exception 'Publiez d''abord l''évaluation avant ses résultats';
+  end if;
   if new.published and not old.published then
     if not exists(select 1 from public.assessment_questions q where q.assessment_id=new.id) then
       raise exception 'Ajoutez au moins une question avant de publier l''évaluation';
