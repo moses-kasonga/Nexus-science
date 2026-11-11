@@ -51,10 +51,13 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
     const max = Number(String(form.get("max_score") ?? "20").replace(",", "."));
     if (!title) { setError(t.required); return; }
     if (!Number.isFinite(max) || max <= 0) { setError(t.positive); return; }
+    const allowMultipleChoice = form.get("allow_multiple_choice") === "on";
+    const allowWritten = form.get("allow_written") === "on";
+    if (!allowMultipleChoice && !allowWritten) { setError("Activez au moins un mode de réponse."); return; }
     const payload = {
       title, description: String(form.get("description") ?? "").trim() || null, kind: String(form.get("kind") ?? "devoir"),
       max_score: max, due_date: String(form.get("due_date") ?? "") || null,
-      allow_multiple_choice: form.get("allow_multiple_choice") === "on", allow_written: form.get("allow_written") === "on",
+      allow_multiple_choice: allowMultipleChoice, allow_written: allowWritten,
     };
     setBusy(true); setError(""); setNotice("");
     try {
