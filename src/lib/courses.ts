@@ -104,6 +104,17 @@ export function formatRange(item: Schedule, language: Language = "fr"): string {
   return `${labels[language]} ${formatDay(item.start_date, language)} ${until[language]} ${formatDay(item.end_date, language)}`;
 }
 
+
+export type FeaturedCourseSession = { course: Course; schedule: Schedule };
+
+/** Choisit uniquement les sessions publiées à partir de leurs dates réelles. */
+export function selectFeaturedSessions(courses: Course[], today = (() => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`; })()): { current: FeaturedCourseSession | null; next: FeaturedCourseSession | null } {
+  const sessions = courses.flatMap((course) => (course.course_schedules ?? []).filter((schedule) => schedule.status === "published").map((schedule) => ({ course, schedule })));
+  const current = sessions.filter(({ schedule }) => schedule.start_date <= today && schedule.end_date >= today).sort((a, b) => a.schedule.start_date.localeCompare(b.schedule.start_date) || a.course.name.localeCompare(b.course.name))[0] ?? null;
+  const next = sessions.filter(({ schedule }) => schedule.start_date > today).sort((a, b) => a.schedule.start_date.localeCompare(b.schedule.start_date) || a.course.name.localeCompare(b.course.name))[0] ?? null;
+  return { current, next };
+}
+
 export type SessionState = "upcoming" | "ongoing" | "past";
 export function sessionState(item: Schedule, today = new Date().toISOString().slice(0, 10)): SessionState {
   if (item.end_date < today) return "past";
