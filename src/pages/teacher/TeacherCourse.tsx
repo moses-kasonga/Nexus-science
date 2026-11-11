@@ -145,7 +145,7 @@ export default function TeacherCourse() {
           <p className="muted small-text">Le statut de publication reste contrôlé par l'administration.</p>
           <button className="btn primary" type="submit" disabled={busy}>{busy ? "Enregistrement…" : "Enregistrer les informations"}</button>
         </form>
-      </details>
+      </details>}
 
       <h2>{t.lessons}</h2>
       {lessons === null && <p className="muted" role="status">{t.loading}</p>}
