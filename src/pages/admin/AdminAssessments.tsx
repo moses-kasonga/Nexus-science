@@ -42,10 +42,10 @@ export default function AdminAssessments() {
   return (
     <div>
       <h2>{t.title}</h2>
-      <p className="muted">Vue d'ensemble des évaluations créées par les enseignants titulaires : avancement de la notation et moyennes.</p>
+      <p className="muted">{t.intro}</p>
       <Feedback error={error} />
       {rows === null && <p className="muted" role="status">{t.loading}</p>}
-      {rows?.length === 0 && !error && <p className="notice">Aucune évaluation n'a encore été créée.</p>}
+      {rows?.length === 0 && !error && <p className="notice">{t.empty}</p>}
       <ul className="stack">
         {rows?.map((row) => (
           <li key={row.id} className="panel">
