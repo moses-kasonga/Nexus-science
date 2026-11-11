@@ -125,7 +125,7 @@ export default function TeacherCourse() {
     } catch (cause) { setError(errorText(cause)); } finally { setBusy(false); }
   }
 
-  if (loading) return <section className="wrap page"><p className="muted" role="status">{t.loading}</p></section>;
+  if (loading) return <section className="wrap page teacher-course-page"><p className="muted" role="status">{t.loading}</p></section>;
   if (!session) return <Navigate to="/connexion" replace />;
   if (!isTeacher) return <Navigate to="/enseignant" replace />;
   if (courseName === undefined) return <section className="wrap page"><p className="muted" role="status">{t.loadingCourse}</p></section>;
@@ -169,14 +169,42 @@ export default function TeacherCourse() {
       </ol>
       {!editing && <button className="btn primary" type="button" onClick={() => { setEditing("new"); setLessonTitle(""); setLessonContent(""); setPreviewOpen(false); setNotice(""); }}>{t.addLesson}</button>}
       {editing && (
-        <form className="panel form" onSubmit={saveLesson} key={editing === "new" ? "new" : editing.id}>
-          <h3>{editing === "new" ? t.newLesson : t.editLesson}</h3>
-          <label>{t.title}<input name="title" required maxLength={200} value={lessonTitle} onChange={(event) => setLessonTitle(event.target.value)} /></label>
-          <label>{t.content}<textarea name="content" rows={12} value={lessonContent} onChange={(event) => setLessonContent(event.target.value)} placeholder="Rédigez votre leçon ici. Vous pouvez insérer des illustrations depuis les ressources pédagogiques." /></label>
-          {editing !== "new" && <LessonResourcesEditor courseId={id} lessonId={editing.id} content={lessonContent} onContentChange={setLessonContent} />}
-          {editing === "new" && <p className="muted small-text">Enregistrez d’abord la leçon comme brouillon pour pouvoir y ajouter des images, des vidéos et des documents PDF. Vous pourrez ensuite la modifier pour joindre ses ressources.</p>}
-          <label className="check"><input type="checkbox" name="published" defaultChecked={editing === "new" ? false : editing.published} /> {t.publish}</label>
-          <div className="row"><button className="btn" type="button" onClick={() => setPreviewOpen(true)} disabled={!lessonTitle.trim()}>Aperçu avant publication</button><button className="btn primary" type="submit" disabled={busy}>{busy ? t.saving : t.save}</button><button className="btn" type="button" onClick={() => { setEditing(null); setLessonTitle(""); setLessonContent(""); setPreviewOpen(false); }}>{t.cancel}</button></div>
+        <form className="teacher-lesson-editor" onSubmit={saveLesson} key={editing === "new" ? "new" : editing.id}>
+          <div className="teacher-editor-heading">
+            <div>
+              <p className="eyebrow">ESPACE ENSEIGNANT · CONSTRUCTION DU COURS</p>
+              <h2>{editing === "new" ? t.newLesson : t.editLesson}</h2>
+              <p className="muted small-text">Préparez le contenu, ajoutez vos supports, puis vérifiez le rendu avant publication.</p>
+            </div>
+            <span className={editing === "new" || !editing.published ? "pill past" : "pill ongoing"}>{editing === "new" || !editing.published ? "Brouillon" : "Publiée"}</span>
+          </div>
+
+          <div className="teacher-editor-main">
+            <section className="teacher-editor-section">
+              <div className="teacher-section-heading"><span className="teacher-section-number">1</span><div><h3>Contenu de la leçon</h3><p className="muted small-text">Donnez un titre clair et structurez votre explication.</p></div></div>
+              <label>{t.title}<input name="title" required maxLength={200} value={lessonTitle} onChange={(event) => setLessonTitle(event.target.value)} placeholder="Ex. : La cellule, unité fondamentale du vivant" /></label>
+              <label>{t.content}<textarea className="teacher-lesson-content-input" name="content" rows={16} value={lessonContent} onChange={(event) => setLessonContent(event.target.value)} placeholder="Commencez à rédiger votre leçon ici…&#10;&#10;Présentez les notions essentielles, les explications et les exemples." /></label>
+            </section>
+
+            <section className="teacher-editor-section teacher-editor-resources">
+              <div className="teacher-section-heading"><span className="teacher-section-number">2</span><div><h3>Supports pédagogiques</h3><p className="muted small-text">Illustrez la leçon avec des images, des vidéos et des documents.</p></div></div>
+              {editing !== "new" && <LessonResourcesEditor courseId={id} lessonId={editing.id} content={lessonContent} onContentChange={setLessonContent} />}
+              {editing === "new" && <p className="teacher-editor-hint">Enregistrez d’abord cette leçon en brouillon. Vous pourrez ensuite ajouter ses images, vidéos et fichiers PDF depuis le même espace.</p>}
+            </section>
+          </div>
+
+          <aside className="teacher-editor-settings">
+            <div className="teacher-section-heading"><span className="teacher-section-number">3</span><div><h3>Publication</h3><p className="muted small-text">Contrôlez la visibilité de cette leçon.</p></div></div>
+            <label className="teacher-publish-option"><input type="checkbox" name="published" defaultChecked={editing === "new" ? false : editing.published} /><span><strong>Publier cette leçon</strong><small>Visible par les élèves inscrits après enregistrement.</small></span></label>
+            <p className="muted small-text">Vous pouvez prévisualiser votre travail sans le publier. L’aperçu ne change jamais le statut de la leçon.</p>
+          </aside>
+
+          <div className="teacher-editor-actions">
+            <button className="btn" type="button" onClick={() => setPreviewOpen(true)} disabled={!lessonTitle.trim()}>Aperçu avant publication</button>
+            <span className="teacher-editor-action-spacer" />
+            <button className="btn" type="button" onClick={() => { setEditing(null); setLessonTitle(""); setLessonContent(""); setPreviewOpen(false); }}>{t.cancel}</button>
+            <button className="btn primary" type="submit" disabled={busy}>{busy ? t.saving : t.save}</button>
+          </div>
           {previewOpen && <TeacherLessonPreview courseId={id} lessonId={editing === "new" ? null : editing.id} title={lessonTitle} content={lessonContent} onClose={() => setPreviewOpen(false)} />}
         </form>
       )}
