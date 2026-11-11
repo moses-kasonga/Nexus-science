@@ -7,6 +7,7 @@ import { Feedback, dateTimeLabel, errorText } from "../admin/shared";
 import TeacherAssessments from "./TeacherAssessments";
 
 type LessonRow = { id: string; title: string; content: string | null; order_index: number; published: boolean };
+type CourseInfo = { name: string; category: string; subcategory: string | null; level: string | null; course_type: string; duration_minutes: number | null; published: boolean };
 type Student = { id: string; name: string; email: string; status: string; since: string };
 
 export default function TeacherCourse() {
@@ -22,6 +23,7 @@ export default function TeacherCourse() {
   const userId = session?.user.id;
   const isTeacher = profile?.role === "teacher";
   const [courseName, setCourseName] = useState<string | null | undefined>(undefined);
+  const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null);
   const [lessons, setLessons] = useState<LessonRow[] | null>(null);
   const [students, setStudents] = useState<Student[] | null>(null);
   const [editing, setEditing] = useState<LessonRow | "new" | null>(null);
@@ -36,7 +38,7 @@ export default function TeacherCourse() {
       if (linkError) throw linkError;
       if (!link) { setCourseName(null); return; }
       const [course, lessonRows, enrollRows] = await Promise.all([
-        supabase.from("courses").select("name").eq("id", id).maybeSingle(),
+        supabase.from("courses").select("name, category, subcategory, level, course_type, duration_minutes, published").eq("id", id).maybeSingle(),
         supabase.from("lessons").select("id, title, content, order_index, published").eq("course_id", id).order("order_index"),
         supabase.from("enrollments").select("student_id, status, created_at").eq("course_id", id).order("created_at"),
       ]);
@@ -44,6 +46,7 @@ export default function TeacherCourse() {
       if (lessonRows.error) throw lessonRows.error;
       if (enrollRows.error) throw enrollRows.error;
       setCourseName(course.data?.name ?? null);
+      setCourseInfo(course.data as CourseInfo | null);
       setLessons((lessonRows.data ?? []) as LessonRow[]);
       const ids = (enrollRows.data ?? []).map((row) => row.student_id as string);
       const people = new Map<string, { first_name: string | null; last_name: string | null; email: string | null }>();
@@ -60,6 +63,26 @@ export default function TeacherCourse() {
     } catch (cause) { setError(errorText(cause)); setCourseName((current) => current ?? null); setLessons((current) => current ?? []); setStudents((current) => current ?? []); }
   }, [id, userId]);
   useEffect(() => { if (isTeacher) void load(); }, [isTeacher, load]);
+
+  async function saveCourseInfo(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const name = String(form.get("name") ?? "").trim();
+    const category = String(form.get("category") ?? "").trim();
+    const durationRaw = String(form.get("duration_minutes") ?? "").trim();
+    const duration = durationRaw ? Number(durationRaw) : null;
+    if (!name || !category || (duration !== null && (!Number.isInteger(duration) || duration <= 0))) { setError("Vérifiez le titre, la discipline et la durée."); return; }
+    setBusy(true); setError(""); setNotice("");
+    const { error: failure } = await supabase.from("courses").update({
+      name, category, subcategory: String(form.get("subcategory") ?? "").trim() || null,
+      level: String(form.get("level") ?? "").trim() || null, course_type: String(form.get("course_type") ?? "Leçon"),
+      duration_minutes: duration, updated_at: new Date().toISOString(),
+    }).eq("id", id);
+    setBusy(false);
+    if (failure) { setError(errorText(failure)); return; }
+    setNotice("Informations de la formation enregistrées.");
+    await load();
+  }
 
   async function saveLesson(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -108,6 +131,21 @@ export default function TeacherCourse() {
       <p><Link to="/enseignant">{t.back}</Link></p>
       <h1>{courseName}</h1>
       <Feedback error={error} notice={notice} />
+
+      {courseInfo && <details className="panel" open>
+        <summary><strong>Informations du cours</strong></summary>
+        <form className="form" onSubmit={saveCourseInfo}>
+          <label>Titre<input name="name" required maxLength={200} defaultValue={courseInfo.name} /></label>
+          <label>Discipline<input name="category" required defaultValue={courseInfo.category} /></label>
+          <label>Sous-discipline<input name="subcategory" defaultValue={courseInfo.subcategory ?? ""} /></label>
+          <label>Niveau<select name="level" defaultValue={courseInfo.level ?? "Débutant"}><option>Débutant</option><option>Intermédiaire</option><option>Avancé</option></select></label>
+          <label>Type<select name="course_type" defaultValue={courseInfo.course_type || "Leçon"}><option>Leçon</option><option>Formation</option><option>Atelier</option><option>Module</option></select></label>
+          <label>Durée (minutes)<input name="duration_minutes" type="number" min="1" step="1" defaultValue={courseInfo.duration_minutes ?? 30} /></label>
+          <label>Statut<input value={courseInfo.published ? "Publié" : "Brouillon"} readOnly /></label>
+          <p className="muted small-text">Le statut de publication reste contrôlé par l'administration.</p>
+          <button className="btn primary" type="submit" disabled={busy}>{busy ? "Enregistrement…" : "Enregistrer les informations"}</button>
+        </form>
+      </details>
 
       <h2>{t.lessons}</h2>
       {lessons === null && <p className="muted" role="status">{t.loading}</p>}
