@@ -12,7 +12,7 @@ export default function AssessmentQuestionComposer({ assessmentId, allowMultiple
   const [questions, setQuestions] = useState<Question[]>([]);
   const [options, setOptions] = useState<Option[]>([]);
   const [keys, setKeys] = useState<Record<string, Key>>({});
-  const [type, setType] = useState<"multiple_choice" | "written">("multiple_choice");
+  const [type, setType] = useState<"multiple_choice" | "written">(allowMultipleChoice ? "multiple_choice" : "written");
   const [prompt, setPrompt] = useState("");
   const [points, setPoints] = useState("1");
   const [choices, setChoices] = useState(["", "", "", ""]);
@@ -47,8 +47,8 @@ export default function AssessmentQuestionComposer({ assessmentId, allowMultiple
     const cleanPrompt = prompt.trim();
     const score = Number(points.replace(",", "."));
     if (!cleanPrompt || !Number.isFinite(score) || score <= 0) { setError("Saisissez une question et un nombre de points positif."); return; }
-    const cleanChoices = choices.map((value) => value.trim()).filter(Boolean);
-    if (type === "multiple_choice" && (cleanChoices.length < 2 || correct.length === 0)) {
+    const cleanChoices = choices.map((value) => value.trim());
+    if (type === "multiple_choice" && (cleanChoices.length < 2 || cleanChoices.some((value) => !value) || correct.length === 0)) {
       setError("Ajoutez au moins deux propositions et sélectionnez au moins une bonne réponse."); return;
     }
     setBusy(true); setError(""); setNotice("");
