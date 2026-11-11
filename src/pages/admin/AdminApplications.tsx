@@ -11,13 +11,9 @@ type Application = {
   first_name?: string | null; last_name?: string | null; email?: string | null;
 };
 
-const label: Record<Application["status"], string> = {
-  submitted: "À examiner", under_review: "En examen", accepted: "Acceptée", rejected: "Refusée",
-};
-
 export default function AdminApplications() {
   const t = useT({
-    fr:{submitted:"À examiner",review:"En examen",accepted:"Acceptée",rejected:"Refusée",loadError:t.loadError,identityError:t.identityError,reason:"Motif ou éléments à compléter (facultatif) :",internal:"Note interne (facultatif) :",heading:"Dossiers de candidature",count:"dossier(s) enregistré(s)",filter:"Filtrer les dossiers",all:"Tous les statuts",none:"{t.none}",candidate:"Candidat",birth:"Date de naissance",notProvided:"Non renseignée",phone:"Téléphone",nationality:"Nationalité / résidence",studies:"Études",desired:"Formation souhaitée",motivation:"Motivation",reviewAction:"Mettre en examen",accept:"Accepter",refuse:"Refuser / demander correction"},
+    fr:{submitted:"À examiner",review:"En examen",accepted:"Acceptée",rejected:"Refusée",loadError:"Impossible de charger les dossiers. Vérifiez que la migration candidature est activée et que le compte possède le rôle administrateur.",identityError:"Les dossiers sont chargés, mais les identités des candidats ne sont pas accessibles.",reason:"Motif ou éléments à compléter (facultatif) :",internal:"Note interne (facultatif) :",heading:"Dossiers de candidature",count:"dossier(s) enregistré(s)",filter:"Filtrer les dossiers",all:"Tous les statuts",none:"Aucun dossier pour ce filtre.",candidate:"Candidat",birth:"Date de naissance",notProvided:"Non renseignée",phone:"Téléphone",nationality:"Nationalité / résidence",studies:"Études",desired:"Formation souhaitée",motivation:"Motivation",reviewAction:"Mettre en examen",accept:"Accepter",refuse:"Refuser / demander correction"},
     en:{submitted:"To review",review:"Under review",accepted:"Accepted",rejected:"Rejected",loadError:"Unable to load applications. Check that the application migration is enabled and that this account has the administrator role.",identityError:"Applications loaded, but candidate identities are unavailable.",reason:"Reason or details to complete (optional):",internal:"Internal note (optional):",heading:"Applications",count:"application(s) recorded",filter:"Filter applications",all:"All statuses",none:"No applications for this filter.",candidate:"Candidate",birth:"Date of birth",notProvided:"Not provided",phone:"Phone",nationality:"Nationality / residence",studies:"Education",desired:"Desired course",motivation:"Motivation",reviewAction:"Mark as under review",accept:"Accept",refuse:"Reject / request changes"},
     pt:{submitted:"Por analisar",review:"Em análise",accepted:"Aceite",rejected:"Recusada",loadError:"Não foi possível carregar as candidaturas. Verifique se a migração está ativa e se a conta tem o perfil de administrador.",identityError:"As candidaturas foram carregadas, mas as identidades dos candidatos não estão disponíveis.",reason:"Motivo ou elementos a completar (opcional):",internal:"Nota interna (opcional):",heading:"Candidaturas",count:"candidatura(s) registada(s)",filter:"Filtrar candidaturas",all:"Todos os estados",none:"Não existem candidaturas para este filtro.",candidate:"Candidato",birth:"Data de nascimento",notProvided:"Não indicada",phone:"Telefone",nationality:"Nacionalidade / residência",studies:"Estudos",desired:"Curso pretendido",motivation:"Motivação",reviewAction:"Colocar em análise",accept:"Aceitar",refuse:"Recusar / pedir correção"},
     es:{submitted:"Pendiente de revisión",review:"En revisión",accepted:"Aceptada",rejected:"Rechazada",loadError:"No se pudieron cargar las solicitudes. Comprueba que la migración esté activa y que la cuenta tenga el rol de administrador.",identityError:"Las solicitudes se han cargado, pero las identidades de los candidatos no están disponibles.",reason:"Motivo o información que debe completarse (opcional):",internal:"Nota interna (opcional):",heading:"Solicitudes",count:"solicitud(es) registrada(s)",filter:"Filtrar solicitudes",all:"Todos los estados",none:"No hay solicitudes para este filtro.",candidate:"Candidato",birth:"Fecha de nacimiento",notProvided:"No indicada",phone:"Teléfono",nationality:"Nacionalidad / residencia",studies:"Estudios",desired:"Curso solicitado",motivation:"Motivación",reviewAction:"Marcar en revisión",accept:"Aceptar",refuse:"Rechazar / solicitar corrección"}
@@ -31,13 +27,13 @@ export default function AdminApplications() {
 
   async function reload() {
     const { data, error: cause } = await supabase.from("candidate_applications").select("*").order("created_at", { ascending: false });
-    if (cause) { setError("Impossible de charger les dossiers. Vérifiez que la migration candidature est activée et que le compte possède le rôle administrateur."); return; }
+    if (cause) { setError(t.loadError); return; }
     const applications = (data ?? []) as Application[];
     const ids = applications.map(row => row.user_id);
     const { data: profiles, error: profileError } = ids.length
       ? await supabase.from("profiles").select("id, first_name, last_name, email").in("id", ids)
       : { data: [], error: null };
-    if (profileError) setError("Les dossiers sont chargés, mais les identités des candidats ne sont pas accessibles.");
+    if (profileError) setError(t.identityError);
     const byId = new Map((profiles ?? []).map((profile: { id: string; first_name: string | null; last_name: string | null; email: string | null }) => [profile.id, profile]));
     setRows(applications.map(row => ({ ...row, ...byId.get(row.user_id) })));
   }
@@ -69,16 +65,16 @@ export default function AdminApplications() {
           <option value="under_review">{t.review}</option><option value="accepted">{t.accepted}</option><option value="rejected">{t.rejected}</option>
         </select>
       </label>
-      {visible.length === 0 ? <p className="notice">Aucun dossier pour ce filtre.</p> : (
+      {visible.length === 0 ? <p className="notice">{t.none}</p> : (
         <div className="stack">
           {visible.map(row => (
             <article className="panel" key={row.id}>
               <div className="row between">
-                <div><strong>{[row.first_name, row.last_name].filter(Boolean).join(" ") || row.email || t.candidate} · {row.city}</strong><p className="muted small-text">{row.email ?? row.user_id} · {label[row.status]} · {new Date(row.created_at).toLocaleDateString(locale)}</p></div>
+                <div><strong>{[row.first_name, row.last_name].filter(Boolean).join(" ") || row.email || t.candidate} · {row.city}</strong><p className="muted small-text">{row.email ?? row.user_id} · {labels[row.status]} · {new Date(row.created_at).toLocaleDateString(locale)}</p></div>
                 <span className="pill">{label[row.status]}</span>
               </div>
               <dl className="facts">
-                <div><dt>{t.birth}</dt><dd>{row.birth_date ? new Date(row.birth_date).toLocaleDateString("fr-FR")  : t.notProvided}</dd></div>
+                <div><dt>{t.birth}</dt><dd>{row.birth_date ? new Date(row.birth_date).toLocaleDateString(locale)  : t.notProvided}</dd></div>
                 <div><dt>{t.phone}</dt><dd>{row.phone}</dd></div>
                 <div><dt>{t.nationality}</dt><dd>{row.nationality} / {row.country_of_residence}</dd></div>
                 <div><dt>{t.studies}</dt><dd>{row.education_level}</dd></div>
