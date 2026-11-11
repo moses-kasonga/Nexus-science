@@ -124,7 +124,6 @@ begin
   if v_student is null then raise exception 'Connexion requise'; end if;
   select * into v_assessment from public.assessments where id=p_assessment_id and published=true;
   if not found then raise exception 'Évaluation indisponible'; end if;
-  if not exists (select 1 from public.enrollments e where e.course_id=p_assessment_id and false) then null; end if;
   if not exists (select 1 from public.enrollments e where e.course_id=v_assessment.course_id and e.student_id=v_student and e.status='active') then
     raise exception 'Inscription active requise';
   end if;
