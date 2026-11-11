@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { displayName, useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
-import { dateLocale, useLanguage, useT } from "../lib/i18n";
+import { dateLocale, useLanguage, useSetLanguage, useT } from "../lib/i18n";
 import { pagesText } from "../lib/translations";
 
 type StudentCourse = {
@@ -26,7 +26,10 @@ const dateLabel = (value: string, locale: string) => new Intl.DateTimeFormat(loc
 export default function StudentDashboard() {
   const { session, profile, loading } = useAuth();
   const t = useT(pagesText);
-  const locale = dateLocale[useLanguage()];
+  const language = useLanguage();
+  const setLanguage = useSetLanguage();
+  const locale = dateLocale[language];
+  const languageLabel = { fr:"Langue", en:"Language", pt:"Idioma", es:"Idioma" }[language];
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
@@ -88,7 +91,15 @@ export default function StudentDashboard() {
       <main className="student-main" id="accueil">
         <header className="student-topbar">
           <div><span className="student-kicker">{t.studentSpace}</span><h1>{t.myLearningTitle}</h1></div>
-          <Link to="/compte" className="student-avatar" aria-label={t.openProfile}>{name.slice(0, 1).toUpperCase()}</Link>
+          <div className="row">
+            <label className="language-picker" aria-label={languageLabel}>
+              <span aria-hidden="true">{language.toUpperCase()}</span>
+              <select value={language} onChange={(event) => setLanguage(event.target.value as "fr" | "en" | "pt" | "es")}>
+                <option value="fr">FR</option><option value="en">EN</option><option value="pt">PT</option><option value="es">ES</option>
+              </select>
+            </label>
+            <Link to="/compte" className="student-avatar" aria-label={t.openProfile}>{name.slice(0, 1).toUpperCase()}</Link>
+          </div>
         </header>
 
         <section className="student-welcome">
