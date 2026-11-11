@@ -9,11 +9,12 @@ type Summary = Row & { graded: number; enrolled: number; average: number | null 
 export default function AdminAssessments() {
   const locale = dateLocale[useLanguage()];
   const t = useT({
-    fr:{title:"Suivi des évaluations",intro:"Vue d’ensemble des évaluations créées par les enseignants titulaires : avancement de la notation et moyennes.",loading:"Chargement…",empty:"Aucune évaluation n’a encore été créée.",course:"Formation",due:"pour le",published:"Publiée",draft:"Brouillon",results:"Résultats publiés",hidden:"Résultats masqués",grading:"Notation",students:"élèves",average:"Moyenne"},
-    en:{title:"Assessment overview",intro:"Overview of assessments created by course teachers, including grading progress and averages.",loading:"Loading…",empty:"No assessments have been created yet.",course:"Course",due:"due",published:"Published",draft:"Draft",results:"Results published",hidden:"Results hidden",grading:"Grading",students:"students",average:"Average"},
-    pt:{title:"Acompanhamento das avaliações",intro:"Visão geral das avaliações criadas pelos professores responsáveis: progresso da classificação e médias.",loading:"A carregar…",empty:"Ainda não foi criada nenhuma avaliação.",course:"Curso",due:"para",published:"Publicada",draft:"Rascunho",results:"Resultados publicados",hidden:"Resultados ocultos",grading:"Classificação",students:"alunos",average:"Média"},
-    es:{title:"Seguimiento de evaluaciones",intro:"Resumen de las evaluaciones creadas por los profesores responsables: progreso de la calificación y promedios.",loading:"Cargando…",empty:"Todavía no se ha creado ninguna evaluación.",course:"Curso",due:"para el",published:"Publicada",draft:"Borrador",results:"Resultados publicados",hidden:"Resultados ocultos",grading:"Calificación",students:"alumnos",average:"Promedio"}
+    fr:{title:"Suivi des évaluations",intro:"Vue d’ensemble des évaluations créées par les enseignants titulaires : avancement de la notation et moyennes.",loading:"Chargement…",empty:"Aucune évaluation n’a encore été créée.",course:"Formation",due:"pour le",published:"Publiée",draft:"Brouillon",results:"Résultats publiés",hidden:"Résultats masqués",grading:"Notation",students:"élèves",average:"Moyenne",quiz:"Quiz",homework:"Devoir",exam:"Examen"},
+    en:{title:"Assessment overview",intro:"Overview of assessments created by course teachers, including grading progress and averages.",loading:"Loading…",empty:"No assessments have been created yet.",course:"Course",due:"due",published:"Published",draft:"Draft",results:"Results published",hidden:"Results hidden",grading:"Grading",students:"students",average:"Average",quiz:"Quiz",homework:"Assignment",exam:"Exam"},
+    pt:{title:"Acompanhamento das avaliações",intro:"Visão geral das avaliações criadas pelos professores responsáveis: progresso da classificação e médias.",loading:"A carregar…",empty:"Ainda não foi criada nenhuma avaliação.",course:"Curso",due:"para",published:"Publicada",draft:"Rascunho",results:"Resultados publicados",hidden:"Resultados ocultos",grading:"Classificação",students:"alunos",average:"Média",quiz:"Questionário",homework:"Trabalho",exam:"Exame"},
+    es:{title:"Seguimiento de evaluaciones",intro:"Resumen de las evaluaciones creadas por los profesores responsables: progreso de la calificación y promedios.",loading:"Cargando…",empty:"Todavía no se ha creado ninguna evaluación.",course:"Curso",due:"para el",published:"Publicada",draft:"Borrador",results:"Resultados publicados",hidden:"Resultados ocultos",grading:"Calificación",students:"alumnos",average:"Promedio",quiz:"Cuestionario",homework:"Tarea",exam:"Examen"}
   });
+  const kindLabel: Record<string, string> = { quiz:t.quiz, devoir:t.homework, examen:t.exam };
   const [rows, setRows] = useState<Summary[] | null>(null);
   const [error, setError] = useState("");
 
@@ -51,7 +52,7 @@ export default function AdminAssessments() {
         {rows?.map((row) => (
           <li key={row.id} className="panel">
             <div className="row between">
-              <span><strong>{row.title}</strong> <span className="tag">{row.kind}</span><br /><span className="muted small-text">{row.courses?.name ?? t.course}{row.due_date && <> · {t.due} {dayLabel(row.due_date, locale)}</>}</span></span>
+              <span><strong>{row.title}</strong> <span className="tag">{kindLabel[row.kind] ?? row.kind}</span><br /><span className="muted small-text">{row.courses?.name ?? t.course}{row.due_date && <> · {t.due} {dayLabel(row.due_date, locale)}</>}</span></span>
               <span className="row">
                 <span className={`pill ${row.published ? "ongoing" : "past"}`}>{row.published ? t.published : t.draft}</span>
                 <span className={`pill ${row.results_published ? "ongoing" : "past"}`}>{row.results_published ? t.results : t.hidden}</span>
