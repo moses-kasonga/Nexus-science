@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../../lib/supabase";
 import { Feedback, dayLabel, errorText } from "../admin/shared";
-import { useT } from "../../lib/i18n";
+import { dateLocale, useLanguage, useT } from "../../lib/i18n";
 
 export type RosterStudent = { id: string; name: string; email: string; status: string };
 type Assessment = { id: string; title: string; description: string | null; kind: "quiz" | "devoir" | "examen"; max_score: number; due_date: string | null; published: boolean; results_published: boolean };
@@ -9,6 +9,7 @@ type Result = { student_id: string; score: number | null; comment: string | null
 type Draft = { score: string; comment: string };
 
 export default function TeacherAssessments({ courseId, students }: { courseId: string; students: RosterStudent[] }) {
+  const locale = dateLocale[useLanguage()];
   const t = useT({
     fr: { title:"Évaluations", intro:"Vous coordonnez l'évaluation de vos élèves ; l'administration suit l'ensemble. Les élèves ne voient une évaluation qu'une fois publiée, et leur note qu'une fois les résultats publiés.", loading:"Chargement…", empty:"Aucune évaluation pour l'instant.", published:"Publiée", draft:"Brouillon", resultsPublished:"Résultats publiés", resultsHidden:"Résultats masqués", unpublish:"Dépublier", publish:"Publier", hideResults:"Masquer les résultats", publishResults:"Publier les résultats", grades:"Saisir les notes", edit:"Modifier", remove:"Supprimer", create:"Créer une évaluation", newTitle:"Nouvelle évaluation", editTitle:"Modifier l'évaluation", fieldTitle:"Titre", kind:"Type", scale:"Barème (note maximale)", due:"Date limite (facultatif)", instructions:"Consignes (facultatif)", saving:"Enregistrement…", save:"Enregistrer", cancel:"Annuler", close:"Fermer", noActive:"Aucun élève actif à noter.", grade:"Note", comment:"Commentaire", required:"Le titre est obligatoire.", positive:"Le barème doit être un nombre positif.", saved:"Évaluation enregistrée.", deleted:"Évaluation supprimée.", confirmDelete:"Supprimer « {title} » et toutes ses notes ?", gradeRange:"La note de {name} doit être comprise entre 0 et {max}.", gradeSaved:"Note de {name} enregistrée.", over:"sur", duePrefix:"pour le", quiz:"Quiz", homework:"Devoir", exam:"Examen", gradeHeading:"Notes" },
     en: { title:"Assessments", intro:"You coordinate your students' assessments; the administration oversees the whole platform. Students can see an assessment only after it is published, and their grades only after results are published.", loading:"Loading…", empty:"No assessments yet.", published:"Published", draft:"Draft", resultsPublished:"Results published", resultsHidden:"Results hidden", unpublish:"Unpublish", publish:"Publish", hideResults:"Hide results", publishResults:"Publish results", grades:"Enter grades", edit:"Edit", remove:"Delete", create:"Create assessment", newTitle:"New assessment", editTitle:"Edit assessment", fieldTitle:"Title", kind:"Type", scale:"Grading scale (maximum score)", due:"Due date (optional)", instructions:"Instructions (optional)", saving:"Saving…", save:"Save", cancel:"Cancel", close:"Close", noActive:"No active students to grade.", grade:"Grade", comment:"Comment", required:"The title is required.", positive:"The grading scale must be a positive number.", saved:"Assessment saved.", deleted:"Assessment deleted.", confirmDelete:"Delete “{title}” and all its grades?", gradeRange:"The grade for {name} must be between 0 and {max}.", gradeSaved:"Grade for {name} saved.", over:"out of", duePrefix:"due", quiz:"Quiz", homework:"Assignment", exam:"Exam", gradeHeading:"Grades" },
@@ -109,7 +110,7 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
         {items?.map((item) => (
           <li key={item.id} className="panel">
             <div className="row between">
-              <span><strong>{item.title}</strong> <span className="tag">{kindLabel[item.kind]}</span> {t.over} {item.max_score}{item.due_date && <> · {t.duePrefix} {dayLabel(item.due_date)}</>}</span>
+              <span><strong>{item.title}</strong> <span className="tag">{kindLabel[item.kind]}</span> {t.over} {item.max_score}{item.due_date && <> · {t.duePrefix} {dayLabel(item.due_date, locale)}</>}</span>
               <span className="row">
                 <span className={`pill ${item.published ? "ongoing" : "past"}`}>{item.published ? t.published : t.draft}</span>
                 <span className={`pill ${item.results_published ? "ongoing" : "past"}`}>{item.results_published ? t.resultsPublished : t.resultsHidden}</span>
