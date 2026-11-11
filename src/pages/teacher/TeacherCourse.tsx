@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
+import { useT } from "../../lib/i18n";
 import { supabase } from "../../lib/supabase";
 import { Feedback, dateTimeLabel, errorText } from "../admin/shared";
 import TeacherAssessments from "./TeacherAssessments";
@@ -10,6 +11,12 @@ type Student = { id: string; name: string; email: string; status: string; since:
 
 export default function TeacherCourse() {
   const { id = "" } = useParams();
+  const t = useT({
+    fr: { back:"← Mes formations", loading:"Chargement…", loadingCourse:"Chargement de la formation…", missing:"Formation introuvable", noAccess:"{t.noAccess}", lessons:"Leçons", noLessons:"{t.noLessons}", published:"Publiée", draft:"Brouillon", up:"Monter", down:"Descendre", edit:"Modifier", addLesson:"Ajouter une leçon", newLesson:"Nouvelle leçon", editLesson:"Modifier la leçon", title:"Titre", content:"Contenu", publish:"Publier cette leçon (visible par les élèves)", saving:"Enregistrement…", save:"Enregistrer", cancel:"Annuler", students:"Élèves inscrits", noStudents:"{t.noStudents}", active:"Actif", removed:"Accès retiré", student:"Élève", required:"Le titre de la leçon est obligatoire.", saved:"Leçon enregistrée.", enrolled:"inscrit le" },
+    en: { back:"← My courses", loading:"Loading…", loadingCourse:"Loading course…", missing:"Course not found", noAccess:"This course does not exist or has not been assigned to you.", lessons:"Lessons", noLessons:"No lessons yet.", published:"Published", draft:"Draft", up:"Move up", down:"Move down", edit:"Edit", addLesson:"Add a lesson", newLesson:"New lesson", editLesson:"Edit lesson", title:"Title", content:"Content", publish:"Publish this lesson (visible to students)", saving:"Saving…", save:"Save", cancel:"Cancel", students:"Enrolled students", noStudents:"No students are enrolled in this course yet.", active:"Active", removed:"Access revoked", student:"Student", required:"The lesson title is required.", saved:"Lesson saved.", enrolled:"enrolled on" },
+    pt: { back:"← Os meus cursos", loading:"A carregar…", loadingCourse:"A carregar o curso…", missing:"Curso não encontrado", noAccess:"Este curso não existe ou não lhe foi atribuído.", lessons:"Aulas", noLessons:"Ainda não existem aulas.", published:"Publicado", draft:"Rascunho", up:"Mover para cima", down:"Mover para baixo", edit:"Editar", addLesson:"Adicionar uma aula", newLesson:"Nova aula", editLesson:"Editar aula", title:"Título", content:"Conteúdo", publish:"Publicar esta aula (visível para os alunos)", saving:"A guardar…", save:"Guardar", cancel:"Cancelar", students:"Alunos inscritos", noStudents:"Ainda não há alunos inscritos neste curso.", active:"Ativo", removed:"Acesso removido", student:"Aluno", required:"O título da aula é obrigatório.", saved:"Aula guardada.", enrolled:"inscrito em" },
+    es: { back:"← Mis cursos", loading:"Cargando…", loadingCourse:"Cargando el curso…", missing:"Curso no encontrado", noAccess:"Este curso no existe o no te ha sido asignado.", lessons:"Lecciones", noLessons:"Todavía no hay lecciones.", published:"Publicada", draft:"Borrador", up:"Subir", down:"Bajar", edit:"Editar", addLesson:"Añadir una lección", newLesson:"Nueva lección", editLesson:"Editar lección", title:"Título", content:"Contenido", publish:"Publicar esta lección (visible para los alumnos)", saving:"Guardando…", save:"Guardar", cancel:"Cancelar", students:"Alumnos inscritos", noStudents:"Todavía no hay alumnos inscritos en este curso.", active:"Activo", removed:"Acceso revocado", student:"Alumno", required:"El título de la lección es obligatorio.", saved:"Lección guardada.", enrolled:"inscrito el" }
+  });
   const { session, profile, loading } = useAuth();
   const userId = session?.user.id;
   const isTeacher = profile?.role === "teacher";
@@ -46,7 +53,7 @@ export default function TeacherCourse() {
       }
       setStudents((enrollRows.data ?? []).map((row) => {
         const person = people.get(row.student_id as string);
-        const name = [person?.first_name, person?.last_name].filter(Boolean).join(" ") || "Élève";
+        const name = [person?.first_name, person?.last_name].filter(Boolean).join(" ") || t.student;
         return { id: row.student_id as string, name, email: person?.email ?? "", status: row.status as string, since: row.created_at as string };
       }));
     } catch (cause) { setError(errorText(cause)); setCourseName((current) => current ?? null); setLessons((current) => current ?? []); setStudents((current) => current ?? []); }
@@ -59,7 +66,7 @@ export default function TeacherCourse() {
     const title = String(form.get("title") ?? "").trim();
     const content = String(form.get("content") ?? "").trim();
     const published = form.get("published") === "on";
-    if (!title) { setError("Le titre de la leçon est obligatoire."); return; }
+    if (!title) { setError(t.required); return; }
     setBusy(true); setError(""); setNotice("");
     try {
       if (editing && editing !== "new") {
@@ -70,7 +77,7 @@ export default function TeacherCourse() {
         const { error: failure } = await supabase.from("lessons").insert({ course_id: id, title, content: content || null, order_index: next, published });
         if (failure) throw failure;
       }
-      setNotice("Leçon enregistrée."); setEditing(null); await load();
+      setNotice(t.saved); setEditing(null); await load();
     } catch (cause) { setError(errorText(cause)); } finally { setBusy(false); }
   }
 
@@ -89,11 +96,11 @@ export default function TeacherCourse() {
     } catch (cause) { setError(errorText(cause)); } finally { setBusy(false); }
   }
 
-  if (loading) return <section className="wrap page"><p className="muted" role="status">Chargement…</p></section>;
+  if (loading) return <section className="wrap page"><p className="muted" role="status">{t.loading}</p></section>;
   if (!session) return <Navigate to="/connexion" replace />;
   if (!isTeacher) return <Navigate to="/enseignant" replace />;
-  if (courseName === undefined) return <section className="wrap page"><p className="muted" role="status">Chargement de la formation…</p></section>;
-  if (courseName === null) return <section className="wrap page narrow"><h1>Formation introuvable</h1>{error && <p className="notice error" role="alert">{error}</p>}<p className="muted">Cette formation n'existe pas ou ne vous est pas attribuée.</p><p><Link to="/enseignant">← Mes formations</Link></p></section>;
+  if (courseName === undefined) return <section className="wrap page"><p className="muted" role="status">{t.loadingCourse}</p></section>;
+  if (courseName === null) return <section className="wrap page narrow"><h1>{t.missing}</h1>{error && <p className="notice error" role="alert">{error}</p>}<p className="muted">Cette formation n'existe pas ou ne vous est pas attribuée.</p><p><Link to="/enseignant">{t.back}</Link></p></section>;
 
   return (
     <section className="wrap page">
@@ -101,42 +108,42 @@ export default function TeacherCourse() {
       <h1>{courseName}</h1>
       <Feedback error={error} notice={notice} />
 
-      <h2>Leçons</h2>
+      <h2>{t.lessons}</h2>
       {lessons === null && <p className="muted" role="status">Chargement…</p>}
       {lessons?.length === 0 && <p className="notice">Aucune leçon pour l'instant.</p>}
       <ol className="stack">
         {lessons?.map((lesson, index) => (
           <li key={lesson.id} className="panel row between">
-            <span><strong>{lesson.title}</strong> {lesson.published ? <span className="pill ongoing">Publiée</span> : <span className="pill past">Brouillon</span>}</span>
+            <span><strong>{lesson.title}</strong> {lesson.published ? <span className="pill ongoing">{t.published}</span> : <span className="pill past">{t.draft}</span>}</span>
             <span className="row">
-              <button className="btn small" type="button" disabled={busy || index === 0} onClick={() => void move(lesson, -1)} aria-label="Monter">↑</button>
-              <button className="btn small" type="button" disabled={busy || index === (lessons.length - 1)} onClick={() => void move(lesson, 1)} aria-label="Descendre">↓</button>
-              <button className="btn small" type="button" onClick={() => { setEditing(lesson); setNotice(""); }}>Modifier</button>
+              <button className="btn small" type="button" disabled={busy || index === 0} onClick={() => void move(lesson, -1)} aria-label={t.up}>↑</button>
+              <button className="btn small" type="button" disabled={busy || index === (lessons.length - 1)} onClick={() => void move(lesson, 1)} aria-label={t.down}>↓</button>
+              <button className="btn small" type="button" onClick={() => { setEditing(lesson); setNotice(""); }}>{t.edit}</button>
             </span>
           </li>
         ))}
       </ol>
-      {!editing && <button className="btn primary" type="button" onClick={() => { setEditing("new"); setNotice(""); }}>Ajouter une leçon</button>}
+      {!editing && <button className="btn primary" type="button" onClick={() => { setEditing("new"); setNotice(""); }}>{t.addLesson}</button>}
       {editing && (
         <form className="panel form" onSubmit={saveLesson} key={editing === "new" ? "new" : editing.id}>
-          <h3>{editing === "new" ? "Nouvelle leçon" : "Modifier la leçon"}</h3>
-          <label>Titre<input name="title" required maxLength={200} defaultValue={editing === "new" ? "" : editing.title} /></label>
-          <label>Contenu<textarea name="content" rows={10} defaultValue={editing === "new" ? "" : editing.content ?? ""} /></label>
-          <label className="check"><input type="checkbox" name="published" defaultChecked={editing === "new" ? false : editing.published} /> Publier cette leçon (visible par les élèves)</label>
-          <div className="row"><button className="btn primary" type="submit" disabled={busy}>{busy ? "Enregistrement…" : "Enregistrer"}</button><button className="btn" type="button" onClick={() => setEditing(null)}>Annuler</button></div>
+          <h3>{editing === "new" ? t.newLesson : t.editLesson}</h3>
+          <label>{t.title}<input name="title" required maxLength={200} defaultValue={editing === "new" ? "" : editing.title} /></label>
+          <label>{t.content}<textarea name="content" rows={10} defaultValue={editing === "new" ? "" : editing.content ?? ""} /></label>
+          <label className="check"><input type="checkbox" name="published" defaultChecked={editing === "new" ? false : editing.published} /> {t.publish}</label>
+          <div className="row"><button className="btn primary" type="submit" disabled={busy}>{busy ? t.saving : t.save}</button><button className="btn" type="button" onClick={() => setEditing(null)}>{t.cancel}</button></div>
         </form>
       )}
 
       {students && <TeacherAssessments courseId={id} students={students.map((student) => ({ id: student.id, name: student.name, email: student.email, status: student.status }))} />}
 
-      <h2>Élèves inscrits</h2>
+      <h2>{t.students}</h2>
       {students === null && <p className="muted" role="status">Chargement…</p>}
       {students?.length === 0 && <p className="notice">Aucun élève inscrit à cette formation pour le moment.</p>}
       <ul className="stack tight">
         {students?.map((student) => (
           <li key={student.id} className="panel row between">
-            <span>{student.name}<br /><span className="muted small-text">{student.email} · inscrit le {dateTimeLabel(student.since)}</span></span>
-            <span className={`pill ${student.status === "active" ? "ongoing" : "past"}`}>{student.status === "active" ? "Actif" : "Accès retiré"}</span>
+            <span>{student.name}<br /><span className="muted small-text">{student.email} · {t.enrolled} {dateTimeLabel(student.since)}</span></span>
+            <span className={`pill ${student.status === "active" ? "ongoing" : "past"}`}>{student.status === "active" ? t.active : t.removed}</span>
           </li>
         ))}
       </ul>
