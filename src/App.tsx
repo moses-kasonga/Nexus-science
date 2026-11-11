@@ -9,7 +9,7 @@ import Account from "./pages/Account";
 import CandidateApplicationPage from "./pages/CandidateApplication";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherInvitation from "./pages/TeacherInvitation";
-import { LanguageContext } from "./lib/i18n";
+import { LanguageContext, LanguageSetterContext } from "./lib/i18n";
 import { pagesText } from "./lib/translations";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import TeacherCourse from "./pages/teacher/TeacherCourse";
@@ -134,6 +134,7 @@ export default function App() {
   useEffect(() => { document.documentElement.dataset.theme = dark ? "dark" : "light"; }, [dark]);
   return (
     <LanguageContext.Provider value={language}>
+      <LanguageSetterContext.Provider value={changeLanguage}>
       {!studentArea && <><a href="#contenu" className="skip">{pagesText[language].skip}</a><Header language={language} setLanguage={changeLanguage} dark={dark} toggleTheme={() => setDark(value => !value)} search={search} setSearch={setSearch} /></>}
       <main id="contenu">
         {!supabaseConfigured && <div className="wrap"><p className="notice error" role="alert">{pagesText[language].notConfigured}</p></div>}
@@ -161,6 +162,7 @@ export default function App() {
         </Routes>
       </main>
       {!studentArea && <footer className="site-footer"><div className="wrap footer-brand"><strong>🧬 NEXUS SCIENCE</strong><span>{pagesText[language].footer1}</span><span>{pagesText[language].footer2}</span></div></footer>}
+      </LanguageSetterContext.Provider>
     </LanguageContext.Provider>
   );
 }
