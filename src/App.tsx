@@ -51,7 +51,7 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
   return (
     <header className="site-header">
       <div className="wrap header-row">
-        <Link to="/" className="brand" aria-label="Nexus science, accueil" onClick={closeMenu}>
+        <Link to="/" className="brand" aria-label={`Nexus Science — ${labels.home}`} onClick={closeMenu}>
           <span className="brand-mark" aria-hidden="true">🧬</span>
           <span>NEXUS <em>SCIENCE</em></span>
         </Link>
