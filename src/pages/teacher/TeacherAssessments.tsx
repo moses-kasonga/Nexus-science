@@ -8,6 +8,11 @@ export type RosterStudent = { id: string; name: string; email: string; status: s
 type Assessment = { id: string; title: string; description: string | null; kind: "quiz" | "devoir" | "examen"; max_score: number; due_date: string | null; published: boolean; results_published: boolean; allow_multiple_choice: boolean; allow_written: boolean };
 type Result = { student_id: string; score: number | null; comment: string | null };
 type Draft = { score: string; comment: string };
+type AnswerRow = { id: string; attempt_id: string; question_id: string; selected_option_ids: string[]; written_answer: string | null; points_awarded: number | null; teacher_feedback: string | null };
+type AnswerQuestion = { id: string; prompt: string; question_type: "multiple_choice" | "written"; points: number };
+type AnswerOption = { id: string; question_id: string; label: string };
+type AnswerKey = { question_id: string; correct_option_ids: string[]; expected_text: string | null; explanation: string | null };
+type StudentAnswer = { student_id: string; response: AnswerRow; question: AnswerQuestion; options: AnswerOption[]; key: AnswerKey | undefined };
 
 export default function TeacherAssessments({ courseId, students }: { courseId: string; students: RosterStudent[] }) {
   const locale = dateLocale[useLanguage()];
@@ -25,6 +30,8 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
   const [grading, setGrading] = useState<Assessment | null>(null);
   const [questionsFor, setQuestionsFor] = useState<Assessment | null>(null);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const [studentAnswers, setStudentAnswers] = useState<StudentAnswer[]>([]);
+  const [answerGrades, setAnswerGrades] = useState<Record<string, { score: string; feedback: string }>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -84,14 +91,44 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
 
   async function openGrading(item: Assessment) {
     setGrading(item); setError(""); setNotice("");
-    const { data, error: failure } = await supabase.from("assessment_results").select("student_id, score, comment").eq("assessment_id", item.id);
-    if (failure) { setError(failure.message); return; }
+    const [resultRows, attemptRows] = await Promise.all([
+      supabase.from("assessment_results").select("student_id, score, comment").eq("assessment_id", item.id),
+      supabase.from("assessment_attempts").select("id, student_id").eq("assessment_id", item.id),
+    ]);
+    if (resultRows.error || attemptRows.error) { setError(resultRows.error?.message ?? attemptRows.error?.message ?? "Erreur"); return; }
     const next: Record<string, Draft> = {};
-    for (const row of (data ?? []) as Result[]) next[row.student_id] = { score: row.score === null ? "" : String(row.score), comment: row.comment ?? "" };
+    for (const row of (resultRows.data ?? []) as Result[]) next[row.student_id] = { score: row.score === null ? "" : String(row.score), comment: row.comment ?? "" };
     setDrafts(next);
+    const attempts = attemptRows.data ?? [];
+    if (attempts.length) {
+      const attemptIds = attempts.map((row) => row.id as string);
+      const [responses, questions] = await Promise.all([
+        supabase.from("assessment_responses").select("id,attempt_id,question_id,selected_option_ids,written_answer,points_awarded,teacher_feedback").in("attempt_id", attemptIds),
+        supabase.from("assessment_questions").select("id,prompt,question_type,points").eq("assessment_id", item.id),
+      ]);
+      if (responses.error || questions.error) { setError(responses.error?.message ?? questions.error?.message ?? "Erreur"); return; }
+      const responseRows = (responses.data ?? []) as AnswerRow[];
+      const questionRows = (questions.data ?? []) as AnswerQuestion[];
+      const questionIds = questionRows.map((row) => row.id);
+      const [optionRows, keyRows] = questionIds.length ? await Promise.all([
+        supabase.from("assessment_options").select("id,question_id,label").in("question_id", questionIds),
+        supabase.from("assessment_answer_keys").select("question_id,correct_option_ids,expected_text,explanation").in("question_id", questionIds),
+      ]) : [{data:[],error:null},{data:[],error:null}];
+      if (optionRows.error || keyRows.error) { setError(optionRows.error?.message ?? keyRows.error?.message ?? "Erreur"); return; }
+      const studentByAttempt = new Map(attempts.map((row) => [row.id as string, row.student_id as string]));
+      const qMap = new Map(questionRows.map((row) => [row.id, row]));
+      const kMap = new Map(((keyRows.data ?? []) as AnswerKey[]).map((row) => [row.question_id, row]));
+      setStudentAnswers(responseRows.flatMap((response) => {
+        const question = qMap.get(response.question_id);
+        const student_id = studentByAttempt.get(response.attempt_id);
+        if (!question || !student_id) return [];
+        return [{ student_id, response, question, options: ((optionRows.data ?? []) as AnswerOption[]).filter((option) => option.question_id === question.id), key: kMap.get(question.id) }];
+      }));
+      setAnswerGrades(Object.fromEntries(responseRows.map((row) => [row.id, { score: row.points_awarded === null ? "" : String(row.points_awarded), feedback: row.teacher_feedback ?? "" }])));
+    } else { setStudentAnswers([]); setAnswerGrades({}); }
   }
 
-  async function saveGrade(item: Assessment, student: RosterStudent) {
+  async function saveAnswerGrade(answer: StudentAnswer) {\n    const draft = answerGrades[answer.response.id] ?? { score: "", feedback: "" };\n    const score = Number(draft.score.replace(",", "."));\n    if (!Number.isFinite(score) || score < 0 || score > answer.question.points) { setError("La note doit être comprise entre 0 et " + answer.question.points + "."); return; }\n    setBusy(true); setError(""); setNotice("");\n    const { error: failure } = await supabase.rpc("grade_assessment_written_response", { p_response_id: answer.response.id, p_points: score, p_feedback: draft.feedback });\n    setBusy(false);\n    if (failure) setError(failure.message); else { setNotice("Réponse écrite corrigée."); await openGrading(grading as Assessment); }\n  }\n\n  async function saveGrade(item: Assessment, student: RosterStudent) {
     const draft = drafts[student.id] ?? { score: "", comment: "" };
     const raw = draft.score.trim().replace(",", ".");
     const score = raw === "" ? null : Number(raw);
@@ -171,6 +208,25 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
               return (
                 <li key={student.id} className="panel">
                   <strong>{student.name}</strong> <span className="muted small-text">{student.email}</span>
+                  {studentAnswers.filter((answer) => answer.student_id === student.id).map((answer) => (
+                    <div className="panel" key={answer.response.id}>
+                      <strong>{answer.question.prompt}</strong>
+                      {answer.question.question_type === "written" ? <>
+                        <p><strong>Réponse de l'élève :</strong> {answer.response.written_answer || "—"}</p>
+                        {answer.key?.expected_text && <p><strong>Réponse attendue :</strong> {answer.key.expected_text}</p>}
+                        {answer.key?.explanation && <p className="muted small-text">{answer.key.explanation}</p>}
+                        <div className="inline-form">
+                          <label>Points (sur {answer.question.points})<input inputMode="decimal" value={answerGrades[answer.response.id]?.score ?? ""} onChange={(event) => setAnswerGrades((old) => ({ ...old, [answer.response.id]: { ...(old[answer.response.id] ?? { score: "", feedback: "" }), score: event.target.value } }))} /></label>
+                          <label>Retour à l'élève<input value={answerGrades[answer.response.id]?.feedback ?? ""} onChange={(event) => setAnswerGrades((old) => ({ ...old, [answer.response.id]: { ...(old[answer.response.id] ?? { score: "", feedback: "" }), feedback: event.target.value } }))} /></label>
+                          <button className="btn small" type="button" disabled={busy} onClick={() => void saveAnswerGrade(answer)}>Corriger</button>
+                        </div>
+                      </> : <>
+                        <p>Choix de l'élève : {answer.options.filter((option) => answer.response.selected_option_ids.includes(option.id)).map((option) => option.label).join(", ") || "—"}</p>
+                        <p>Réponse(s) correcte(s) : {answer.options.filter((option) => answer.key?.correct_option_ids.includes(option.id)).map((option) => option.label).join(", ") || "—"}</p>
+                        <p className="muted small-text">{answer.response.points_awarded ?? 0} / {answer.question.points} pt</p>
+                      </>}
+                    </div>
+                  ))}
                   <div className="inline-form">
                     <label>{t.grade}<input inputMode="decimal" value={draft.score} onChange={(event) => update({ score: event.target.value })} placeholder={`/ ${grading.max_score}`} /></label>
                     <label>{t.comment}<input value={draft.comment} maxLength={1000} onChange={(event) => update({ comment: event.target.value })} /></label>
