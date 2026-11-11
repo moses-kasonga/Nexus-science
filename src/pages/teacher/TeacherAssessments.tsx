@@ -128,7 +128,17 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
     } else { setStudentAnswers([]); setAnswerGrades({}); }
   }
 
-  async function saveAnswerGrade(answer: StudentAnswer) {\n    const draft = answerGrades[answer.response.id] ?? { score: "", feedback: "" };\n    const score = Number(draft.score.replace(",", "."));\n    if (!Number.isFinite(score) || score < 0 || score > answer.question.points) { setError("La note doit être comprise entre 0 et " + answer.question.points + "."); return; }\n    setBusy(true); setError(""); setNotice("");\n    const { error: failure } = await supabase.rpc("grade_assessment_written_response", { p_response_id: answer.response.id, p_points: score, p_feedback: draft.feedback });\n    setBusy(false);\n    if (failure) setError(failure.message); else { setNotice("Réponse écrite corrigée."); await openGrading(grading as Assessment); }\n  }\n\n  async function saveGrade(item: Assessment, student: RosterStudent) {
+  async function saveAnswerGrade(answer: StudentAnswer) {
+    const draft = answerGrades[answer.response.id] ?? { score: "", feedback: "" };
+    const score = Number(draft.score.replace(",", "."));
+    if (!Number.isFinite(score) || score < 0 || score > answer.question.points) { setError("La note doit être comprise entre 0 et " + answer.question.points + "."); return; }
+    setBusy(true); setError(""); setNotice("");
+    const { error: failure } = await supabase.rpc("grade_assessment_written_response", { p_response_id: answer.response.id, p_points: score, p_feedback: draft.feedback });
+    setBusy(false);
+    if (failure) setError(failure.message); else { setNotice("Réponse écrite corrigée."); await openGrading(grading as Assessment); }
+  }
+
+  async function saveGrade(item: Assessment, student: RosterStudent) {
     const draft = drafts[student.id] ?? { score: "", comment: "" };
     const raw = draft.score.trim().replace(",", ".");
     const score = raw === "" ? null : Number(raw);
