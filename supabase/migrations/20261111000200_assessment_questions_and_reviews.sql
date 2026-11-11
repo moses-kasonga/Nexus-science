@@ -69,8 +69,8 @@ using (exists (select 1 from public.assessments a where a.id = assessment_id and
   (public.is_admin() or public.is_course_teacher(a.course_id) or (a.published and public.has_course_access(a.course_id)))));
 drop policy if exists assessment_questions_teacher_write on public.assessment_questions;
 create policy assessment_questions_teacher_write on public.assessment_questions for all to authenticated
-using (exists (select 1 from public.assessments a where a.id = assessment_id and (public.is_admin() or public.is_assigned_teacher(a.course_id))))
-with check (exists (select 1 from public.assessments a where a.id = assessment_id and (public.is_admin() or public.is_assigned_teacher(a.course_id))));
+using (exists (select 1 from public.assessments a where a.id = assessment_id and not a.published and (public.is_admin() or public.is_assigned_teacher(a.course_id))))
+with check (exists (select 1 from public.assessments a where a.id = assessment_id and not a.published and (public.is_admin() or public.is_assigned_teacher(a.course_id))));
 
 drop policy if exists assessment_options_read_access on public.assessment_options;
 create policy assessment_options_read_access on public.assessment_options for select to authenticated
@@ -79,16 +79,16 @@ using (exists (select 1 from public.assessment_questions q join public.assessmen
 drop policy if exists assessment_options_teacher_write on public.assessment_options;
 create policy assessment_options_teacher_write on public.assessment_options for all to authenticated
 using (exists (select 1 from public.assessment_questions q join public.assessments a on a.id=q.assessment_id
-  where q.id=question_id and (public.is_admin() or public.is_assigned_teacher(a.course_id))))
+  where q.id=question_id and not a.published and (public.is_admin() or public.is_assigned_teacher(a.course_id))))
 with check (exists (select 1 from public.assessment_questions q join public.assessments a on a.id=q.assessment_id
-  where q.id=question_id and (public.is_admin() or public.is_assigned_teacher(a.course_id))));
+  where q.id=question_id and not a.published and (public.is_admin() or public.is_assigned_teacher(a.course_id))));
 
 drop policy if exists assessment_keys_teacher_only on public.assessment_answer_keys;
 create policy assessment_keys_teacher_only on public.assessment_answer_keys for all to authenticated
 using (exists (select 1 from public.assessment_questions q join public.assessments a on a.id=q.assessment_id
-  where q.id=question_id and (public.is_admin() or public.is_assigned_teacher(a.course_id))))
+  where q.id=question_id and not a.published and (public.is_admin() or public.is_assigned_teacher(a.course_id))))
 with check (exists (select 1 from public.assessment_questions q join public.assessments a on a.id=q.assessment_id
-  where q.id=question_id and (public.is_admin() or public.is_assigned_teacher(a.course_id))));
+  where q.id=question_id and not a.published and (public.is_admin() or public.is_assigned_teacher(a.course_id))));
 
 drop policy if exists assessment_attempts_teacher_read on public.assessment_attempts;
 create policy assessment_attempts_teacher_read on public.assessment_attempts for select to authenticated
