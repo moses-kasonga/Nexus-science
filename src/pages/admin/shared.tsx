@@ -16,10 +16,10 @@ export function Feedback({ error, notice }: { error?: string; notice?: string })
 
 export const sessionStatusLabel = { scheduled: "Planifiée", published: "Publiée", cancelled: "Annulée" } as const;
 
-export function dayLabel(value: string): string {
-  return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(value.slice(0, 10) + "T00:00:00Z"));
+export function dayLabel(value: string, locale = "fr-FR"): string {
+  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(value.slice(0, 10) + "T00:00:00Z"));
 }
 
-export function dateTimeLabel(value: string): string {
-  return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+export function dateTimeLabel(value: string, locale = "fr-FR"): string {
+  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
