@@ -171,7 +171,7 @@ export default function TeacherCourse() {
           <label>{t.title}<input name="title" required maxLength={200} defaultValue={editing === "new" ? "" : editing.title} /></label>
           <label>{t.content}<textarea name="content" rows={12} value={lessonContent} onChange={(event) => setLessonContent(event.target.value)} placeholder="Rédigez votre leçon ici. Vous pouvez insérer des illustrations depuis les ressources pédagogiques." /></label>
           {editing !== "new" && <LessonResourcesEditor courseId={id} lessonId={editing.id} content={lessonContent} onContentChange={setLessonContent} />}
-          {editing === "new" && <p className="muted small-text">Enregistrez d’abord la leçon comme brouillon pour pouvoir y ajouter des images, des vidéos et des documents PDF. Vous pourrez ensuite la modifier pour joindre ses ressources.</p>
+          {editing === "new" && <p className="muted small-text">Enregistrez d’abord la leçon comme brouillon pour pouvoir y ajouter des images, des vidéos et des documents PDF. Vous pourrez ensuite la modifier pour joindre ses ressources.</p>}
           <label className="check"><input type="checkbox" name="published" defaultChecked={editing === "new" ? false : editing.published} /> {t.publish}</label>
           <div className="row"><button className="btn primary" type="submit" disabled={busy}>{busy ? t.saving : t.save}</button><button className="btn" type="button" onClick={() => { setEditing(null); setLessonContent(""); }}>{t.cancel}</button></div>
         </form>
