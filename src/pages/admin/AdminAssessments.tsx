@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { Feedback, dayLabel, errorText } from "./shared";
-import { useT } from "../../lib/i18n";
+import { dateLocale, useLanguage, useT } from "../../lib/i18n";
 
 type Row = { id: string; title: string; kind: string; max_score: number; due_date: string | null; published: boolean; results_published: boolean; course_id: string; courses: { name: string } | null };
 type Summary = Row & { graded: number; enrolled: number; average: number | null };
 
 export default function AdminAssessments() {
+  const locale = dateLocale[useLanguage()];
   const t = useT({
     fr:{title:"Suivi des évaluations",intro:"Vue d’ensemble des évaluations créées par les enseignants titulaires : avancement de la notation et moyennes.",loading:"Chargement…",empty:"Aucune évaluation n’a encore été créée.",course:"Formation",due:"pour le",published:"Publiée",draft:"Brouillon",results:"Résultats publiés",hidden:"Résultats masqués",grading:"Notation",students:"élèves",average:"Moyenne"},
     en:{title:"Assessment overview",intro:"Overview of assessments created by course teachers, including grading progress and averages.",loading:"Loading…",empty:"No assessments have been created yet.",course:"Course",due:"due",published:"Published",draft:"Draft",results:"Results published",hidden:"Results hidden",grading:"Grading",students:"students",average:"Average"},
@@ -50,7 +51,7 @@ export default function AdminAssessments() {
         {rows?.map((row) => (
           <li key={row.id} className="panel">
             <div className="row between">
-              <span><strong>{row.title}</strong> <span className="tag">{row.kind}</span><br /><span className="muted small-text">{row.courses?.name ?? t.course}{row.due_date && <> · {t.due} {dayLabel(row.due_date)}</>}</span></span>
+              <span><strong>{row.title}</strong> <span className="tag">{row.kind}</span><br /><span className="muted small-text">{row.courses?.name ?? t.course}{row.due_date && <> · {t.due} {dayLabel(row.due_date, locale)}</>}</span></span>
               <span className="row">
                 <span className={`pill ${row.published ? "ongoing" : "past"}`}>{row.published ? t.published : t.draft}</span>
                 <span className={`pill ${row.results_published ? "ongoing" : "past"}`}>{row.results_published ? t.results : t.hidden}</span>
