@@ -449,3 +449,41 @@ html[data-theme="dark"] .public-menu-backdrop{background:rgba(0,0,0,.62)}
 @media(max-width:720px){.hero-programs-top{grid-template-columns:minmax(0,1fr) 104px;gap:12px}.hero-programs-heart{width:104px}.hero-programs-grid{grid-template-columns:1fr;gap:12px}.program-card{padding:17px}.hero-programs-footer{align-items:flex-start;flex-direction:column}.showcase-visual{height:175px}}
 @media(max-width:460px){.hero-programs-top{grid-template-columns:1fr}.hero-programs-heart{width:116px;justify-self:end;margin-top:-8px}.homepage-preview-courses{grid-template-columns:1fr}.homepage-image-editor{grid-template-columns:1fr}.homepage-upload-button{justify-self:start}.homepage-editor-actions>button{flex:1 1 100%}}
 @media(prefers-reduced-motion:reduce){.showcase-visual img{transition:none}}
+
+
+/* Ressources multimédias des leçons */
+.lesson-illustration,
+.lesson-media {
+  margin: 1.25rem 0;
+  text-align: center;
+}
+.lesson-illustration img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 560px;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 12px;
+  object-fit: contain;
+}
+.lesson-illustration figcaption,
+.lesson-media figcaption {
+  margin-top: .5rem;
+  color: var(--muted, #687386);
+  font-size: .9rem;
+}
+.lesson-media video {
+  display: block;
+  width: 100%;
+  max-height: 560px;
+  border-radius: 12px;
+  background: #000;
+}
+.lesson-document {
+  padding: .8rem 1rem;
+  border: 1px solid var(--border, #d9dee7);
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+.lesson-document a { font-weight: 600; }
