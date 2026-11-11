@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { approveApplication, createInvitation, listApplications, listInvitations, listPeople, personName, rejectApplication, revokeInvitation, type ApplicationRow, type InvitationRow, type PersonRow } from "../../lib/adminData";
 import { Feedback, dateTimeLabel, errorText } from "./shared";
-import { useT } from "../../lib/i18n";
+import { dateLocale, useLanguage, useT } from "../../lib/i18n";
 
 function invitationState(item: InvitationRow, now = Date.now()): "used" | "cancelled" | "expired" | "active" {
   if (item.used_at) return "used";
@@ -11,6 +11,7 @@ function invitationState(item: InvitationRow, now = Date.now()): "used" | "cance
 }
 
 export default function AdminTeachers() {
+  const locale = dateLocale[useLanguage()];
   const t = useT({
     fr:{title:"Enseignants",invite:"Inviter un enseignant",linkInfo:"Le lien est personnel : il ne fonctionne qu'avec l'adresse invitée, une seule fois, pendant 12 heures. Il n'est affiché qu'une fois, juste après sa création.",email:"Adresse e-mail de l'enseignant",create:"Créer le lien",linkFor:"Lien pour",validUntil:"valable jusqu'au",invitationLink:"Lien d'invitation",copy:"Copier le lien",copied:"Lien copié.",copyFail:"Copie impossible : sélectionnez le lien et copiez-le à la main.",hide:"Masquer",sendInfo:"Envoyez-le vous-même (WhatsApp, e-mail). Une fois masqué, il ne pourra plus être affiché : créez-en un nouveau si besoin.",recent:"Invitations récentes",loading:"Chargement…",noInvites:"Aucune invitation pour le moment.",created:"Créée le",cancel:"Annuler",cancelledNotice:"Invitation annulée.",pending:"Candidatures à examiner",noPending:"Aucune candidature en attente.",received:"reçue le",specialty:"Spécialité",qualifications:"Qualifications",experience:"Expérience",motivation:"Motivation",rejectReason:"Motif du refus (facultatif)",reject:"Refuser",confirmReject:"Refuser cette candidature ?",rejected:"Candidature refusée.",approve:"Approuver",confirmApprove:"Approuver {name} comme enseignant ?",approved:"Candidature approuvée : le compte est maintenant enseignant.",handled:"Candidatures traitées",used:"Utilisée",expired:"Expirée",active:"Active",statusCancelled:"Annulée",approvedStatus:"Approuvée",rejectedStatus:"Refusée"},
     en:{title:"Teachers",invite:"Invite a teacher",linkInfo:"This personal link only works for the invited email address, can be used once, and expires after 12 hours. It is displayed only once, immediately after creation.",email:"Teacher email address",create:"Create invitation link",linkFor:"Invitation link for",validUntil:"valid until",invitationLink:"Invitation link",copy:"Copy link",copied:"Link copied.",copyFail:"Unable to copy: select the link and copy it manually.",hide:"Hide",sendInfo:"Send it yourself (WhatsApp, email). Once hidden, it cannot be displayed again; create a new one if needed.",recent:"Recent invitations",loading:"Loading…",noInvites:"No invitations yet.",created:"Created",cancel:"Cancel",cancelledNotice:"Invitation cancelled.",pending:"Applications to review",noPending:"No pending applications.",received:"received",specialty:"Specialty",qualifications:"Qualifications",experience:"Experience",motivation:"Motivation",rejectReason:"Reason for rejection (optional)",reject:"Reject",confirmReject:"Reject this application?",rejected:"Application rejected.",approve:"Approve",confirmApprove:"Approve {name} as a teacher?",approved:"Application approved: this account is now a teacher.",handled:"Processed applications",used:"Used",expired:"Expired",active:"Active",statusCancelled:"Cancelled",approvedStatus:"Approved",rejectedStatus:"Rejected"},
@@ -70,7 +71,7 @@ export default function AdminTeachers() {
       </form>
       {link && (
         <div className="panel">
-          <p><strong>{t.linkFor} {link.email}</strong> ({t.validUntil} {dateTimeLabel(link.expiresAt)})</p>
+          <p><strong>{t.linkFor} {link.email}</strong> ({t.validUntil} {dateTimeLabel(link.expiresAt, locale)})</p>
           <input readOnly value={link.url} aria-label={t.invitationLink} onFocus={(event) => event.currentTarget.select()} />
           <div className="row"><button className="btn small" onClick={() => void copy(link.url)}>{t.copy}</button><button className="btn small" onClick={() => setLink(null)}>{t.hide}</button></div>
           <p className="muted small-text">{t.sendInfo}</p>
@@ -85,7 +86,7 @@ export default function AdminTeachers() {
           const state = invitationState(item);
           return (
             <li key={item.id} className="panel row between">
-              <span>{item.email} <span className={`pill ${state === "active" ? "ongoing" : "past"}`}>{state === "used" ? t.used : state === "cancelled" ? t.statusCancelled : state === "expired" ? t.expired : t.active}</span><br /><span className="muted small-text">{t.created} {dateTimeLabel(item.created_at)}</span></span>
+              <span>{item.email} <span className={`pill ${state === "active" ? "ongoing" : "past"}`}>{state === "used" ? t.used : state === "cancelled" ? t.statusCancelled : state === "expired" ? t.expired : t.active}</span><br /><span className="muted small-text">{t.created} {dateTimeLabel(item.created_at, locale)}</span></span>
               {state === "active" && <button className="btn small danger" disabled={busy} onClick={() => void run(() => revokeInvitation(item.id), t.cancelledNotice)}>{t.cancel}</button>}
             </li>
           );
