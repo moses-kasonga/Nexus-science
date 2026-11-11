@@ -11,9 +11,9 @@ type MyCourse = { id: string; name: string; category: string; published: boolean
 export default function TeacherDashboard() {
   const language = useLanguage();
   const labels = {
-    fr: ["Espace enseignant","Cet espace est réservé aux enseignants approuvés par l’administration.","Retour à l’accueil","Bonjour","Vos formations : gérez les leçons et les évaluations, et suivez les élèves inscrits.","Chargement de vos formations…","Aucune formation ne vous est encore attribuée. L’administration peut vous en affecter dans Administration, puis Formations.","Aucune session","Non publiée","Ouvrir"],
-    en: ["Teacher space","This space is reserved for teachers approved by the administration.","Back to home","Hello","Your courses: manage lessons and assessments, and follow your enrolled students.","Loading your courses…","No course has been assigned to you yet. The administration can assign one under Administration, then Courses.","No session","Unpublished","Open"],
-    pt: ["Espaço do professor","Este espaço é reservado aos professores aprovados pela administração.","Voltar ao início","Olá","Os seus cursos: gira as aulas e avaliações e acompanhe os alunos inscritos.","A carregar os seus cursos…","Ainda não lhe foi atribuído nenhum curso. A administração pode atribuí-lo em Administração e depois Cursos.","Nenhuma sessão","Não publicado","Abrir"],
+    fr: ["Espace enseignant","Cet espace est réservé aux enseignants approuvés par l’administration.","Retour à l’accueil","Bonjour","Vos formations : gérez les leçons et les évaluations, et suivez les élèves inscrits.","Chargement de vos formations…","Aucune formation ne vous est encore attribuée. L’administration peut vous en affecter dans Administration, puis Formations.","Aucune session","Non publiée","Ouvrir","Chargement…"],
+    en: ["Teacher space","This space is reserved for teachers approved by the administration.","Back to home","Hello","Your courses: manage lessons and assessments, and follow your enrolled students.","Loading your courses…","No course has been assigned to you yet. The administration can assign one under Administration, then Courses.","No session","Unpublished","Open","Loading…"],
+    pt: ["Espaço do professor","Este espaço é reservado aos professores aprovados pela administração.","Voltar ao início","Olá","Os seus cursos: gira as aulas e avaliações e acompanhe os alunos inscritos.","A carregar os seus cursos…","Ainda não lhe foi atribuído nenhum curso. A administração pode atribuí-lo em Administração e depois Cursos.","Nenhuma sessão","Não publicado","Abrir","A carregar…"],
     es: ["Espacio del profesor","Este espacio está reservado a los profesores aprobados por la administración.","Volver al inicio","Hola","Tus cursos: gestiona las lecciones y evaluaciones y sigue a los alumnos inscritos.","Cargando tus cursos…","Aún no tienes ningún curso asignado. La administración puede asignártelo en Administración y después Cursos.","Ninguna sesión","No publicado","Abrir"]
   }[language];
   const { session, profile, loading } = useAuth();
@@ -39,7 +39,7 @@ export default function TeacherDashboard() {
     return () => { active = false; };
   }, [userId, isTeacher]);
 
-  if (loading) return <section className="wrap page"><p className="muted" role="status">Chargement…</p></section>;
+  if (loading) return <section className="wrap page"><p className="muted" role="status">{labels[10]}</p></section>;
   if (!session) return <Navigate to="/connexion?retour=%2Fenseignant" replace />;
   if (!isTeacher) return <section className="wrap page narrow"><h1>{labels[0]}</h1><p className="notice">{labels[1]}</p><p><Link to="/">{labels[2]}</Link></p></section>;
 
