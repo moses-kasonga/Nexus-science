@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useLanguage } from "../../lib/i18n";
 
 export function errorText(cause: unknown): string {
   return cause instanceof Error ? cause.message : "Une erreur est survenue. Réessayez.";
