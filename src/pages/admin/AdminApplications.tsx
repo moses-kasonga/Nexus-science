@@ -71,7 +71,7 @@ export default function AdminApplications() {
             <article className="panel" key={row.id}>
               <div className="row between">
                 <div><strong>{[row.first_name, row.last_name].filter(Boolean).join(" ") || row.email || t.candidate} · {row.city}</strong><p className="muted small-text">{row.email ?? row.user_id} · {labels[row.status]} · {new Date(row.created_at).toLocaleDateString(locale)}</p></div>
-                <span className="pill">{label[row.status]}</span>
+                <span className="pill">{labels[row.status]}</span>
               </div>
               <dl className="facts">
                 <div><dt>{t.birth}</dt><dd>{row.birth_date ? new Date(row.birth_date).toLocaleDateString(locale)  : t.notProvided}</dd></div>
