@@ -63,7 +63,7 @@ export default function TeacherInvitation() {
       )}
       {token && session && preview === null && <p className="muted" role="status">{t.checking}</p>}
       {preview === "invalid" && <p className="notice error" role="alert">{t.inviteInvalid}</p>}
-      {wrongAccount && preview !== "invalid" && preview && <p className="notice error" role="alert">{t.inviteFor} {preview.email}. {t.otherAddress}</p>}
+      {wrongAccount && preview && <p className="notice error" role="alert">{t.inviteFor} {preview.email}. {t.otherAddress}</p>}
       {done && <p className="notice" role="status">{t.sentApplication}</p>}
       {preview && preview !== "invalid" && !wrongAccount && !done && (
         <form className="form" onSubmit={submit}>
