@@ -3,7 +3,7 @@ import { Link, Navigate } from "react-router-dom";
 import { displayName, useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
 import { Feedback, dayLabel, errorText } from "../admin/shared";
-import { useLanguage } from "../../lib/i18n";
+import { dateLocale, useLanguage } from "../../lib/i18n";
 
 type Schedule = { start_date: string; end_date: string; status: string };
 type MyCourse = { id: string; name: string; category: string; published: boolean; course_schedules: Schedule[] };
