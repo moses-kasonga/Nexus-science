@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { Feedback, dayLabel, errorText } from "./shared";
+import { useT } from "../../lib/i18n";
 
 type Row = { id: string; title: string; kind: string; max_score: number; due_date: string | null; published: boolean; results_published: boolean; course_id: string; courses: { name: string } | null };
 type Summary = Row & { graded: number; enrolled: number; average: number | null };
 
 export default function AdminAssessments() {
+  const t = useT({
+    fr:{title:"Suivi des évaluations",intro:"{t.intro}",loading:"Chargement…",empty:"{t.empty}",course:"Formation",due:"pour le",published:"Publiée",draft:"Brouillon",results:"Résultats publiés",hidden:"Résultats masqués",grading:"Notation",students:"élèves",average:"Moyenne"},
+    en:{title:"Assessment overview",intro:"Overview of assessments created by course teachers, including grading progress and averages.",loading:"Loading…",empty:"No assessments have been created yet.",course:"Course",due:"due",published:"Published",draft:"Draft",results:"Results published",hidden:"Results hidden",grading:"Grading",students:"students",average:"Average"},
+    pt:{title:"Acompanhamento das avaliações",intro:"Visão geral das avaliações criadas pelos professores responsáveis: progresso da classificação e médias.",loading:"A carregar…",empty:"Ainda não foi criada nenhuma avaliação.",course:"Curso",due:"para",published:"Publicada",draft:"Rascunho",results:"Resultados publicados",hidden:"Resultados ocultos",grading:"Classificação",students:"alunos",average:"Média"},
+    es:{title:"Seguimiento de evaluaciones",intro:"Resumen de las evaluaciones creadas por los profesores responsables: progreso de la calificación y promedios.",loading:"Cargando…",empty:"Todavía no se ha creado ninguna evaluación.",course:"Curso",due:"para el",published:"Publicada",draft:"Borrador",results:"Resultados publicados",hidden:"Resultados ocultos",grading:"Calificación",students:"alumnos",average:"Promedio"}
+  });
   const [rows, setRows] = useState<Summary[] | null>(null);
   const [error, setError] = useState("");
 
@@ -34,22 +41,22 @@ export default function AdminAssessments() {
 
   return (
     <div>
-      <h2>Suivi des évaluations</h2>
+      <h2>{t.title}</h2>
       <p className="muted">Vue d'ensemble des évaluations créées par les enseignants titulaires : avancement de la notation et moyennes.</p>
       <Feedback error={error} />
-      {rows === null && <p className="muted" role="status">Chargement…</p>}
+      {rows === null && <p className="muted" role="status">{t.loading}</p>}
       {rows?.length === 0 && !error && <p className="notice">Aucune évaluation n'a encore été créée.</p>}
       <ul className="stack">
         {rows?.map((row) => (
           <li key={row.id} className="panel">
             <div className="row between">
-              <span><strong>{row.title}</strong> <span className="tag">{row.kind}</span><br /><span className="muted small-text">{row.courses?.name ?? "Formation"}{row.due_date && <> · pour le {dayLabel(row.due_date)}</>}</span></span>
+              <span><strong>{row.title}</strong> <span className="tag">{row.kind}</span><br /><span className="muted small-text">{row.courses?.name ?? t.course}{row.due_date && <> · {t.due} {dayLabel(row.due_date)}</>}</span></span>
               <span className="row">
-                <span className={`pill ${row.published ? "ongoing" : "past"}`}>{row.published ? "Publiée" : "Brouillon"}</span>
-                <span className={`pill ${row.results_published ? "ongoing" : "past"}`}>{row.results_published ? "Résultats publiés" : "Résultats masqués"}</span>
+                <span className={`pill ${row.published ? "ongoing" : "past"}`}>{row.published ? t.published : t.draft}</span>
+                <span className={`pill ${row.results_published ? "ongoing" : "past"}`}>{row.results_published ? t.results : t.hidden}</span>
               </span>
             </div>
-            <p className="small-text">Notation : {row.graded} / {row.enrolled} élèves · Moyenne : {row.average === null ? "—" : `${row.average.toFixed(2)} / ${row.max_score}`}</p>
+            <p className="small-text">{t.grading} : {row.graded} / {row.enrolled} {t.students} · {t.average} : {row.average === null ? "—" : `${row.average.toFixed(2)} / ${row.max_score}`}</p>
           </li>
         ))}
       </ul>
