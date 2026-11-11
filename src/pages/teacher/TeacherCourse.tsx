@@ -6,6 +6,7 @@ import { supabase } from "../../lib/supabase";
 import { Feedback, dateTimeLabel, errorText } from "../admin/shared";
 import TeacherAssessments from "./TeacherAssessments";
 import LessonResourcesEditor from "./LessonResourcesEditor";
+import TeacherLessonPreview from "./TeacherLessonPreview";
 
 type LessonRow = { id: string; title: string; content: string | null; order_index: number; published: boolean };
 type CourseInfo = { name: string; category: string; subcategory: string | null; level: string | null; course_type: string; duration_minutes: number | null; published: boolean };
@@ -29,6 +30,8 @@ export default function TeacherCourse() {
   const [students, setStudents] = useState<Student[] | null>(null);
   const [editing, setEditing] = useState<LessonRow | "new" | null>(null);
   const [lessonContent, setLessonContent] = useState("");
+  const [lessonTitle, setLessonTitle] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -103,7 +106,7 @@ export default function TeacherCourse() {
         const { error: failure } = await supabase.from("lessons").insert({ course_id: id, title, content: content || null, order_index: next, published });
         if (failure) throw failure;
       }
-      setNotice(t.saved); setEditing(null); setLessonContent(""); await load();
+      setNotice(t.saved); setEditing(null); setLessonContent(""); setLessonTitle(""); setPreviewOpen(false); await load();
     } catch (cause) { setError(errorText(cause)); } finally { setBusy(false); }
   }
 
@@ -159,21 +162,22 @@ export default function TeacherCourse() {
             <span className="row">
               <button className="btn small" type="button" disabled={busy || index === 0} onClick={() => void move(lesson, -1)} aria-label={t.up}>↑</button>
               <button className="btn small" type="button" disabled={busy || index === (lessons.length - 1)} onClick={() => void move(lesson, 1)} aria-label={t.down}>↓</button>
-              <button className="btn small" type="button" onClick={() => { setEditing(lesson); setLessonContent(lesson.content ?? ""); setNotice(""); }}>{t.edit}</button>
+              <button className="btn small" type="button" onClick={() => { setEditing(lesson); setLessonTitle(lesson.title); setLessonContent(lesson.content ?? ""); setPreviewOpen(false); setNotice(""); }}>{t.edit}</button>
             </span>
           </li>
         ))}
       </ol>
-      {!editing && <button className="btn primary" type="button" onClick={() => { setEditing("new"); setLessonContent(""); setNotice(""); }}>{t.addLesson}</button>}
+      {!editing && <button className="btn primary" type="button" onClick={() => { setEditing("new"); setLessonTitle(""); setLessonContent(""); setPreviewOpen(false); setNotice(""); }}>{t.addLesson}</button>}
       {editing && (
         <form className="panel form" onSubmit={saveLesson} key={editing === "new" ? "new" : editing.id}>
           <h3>{editing === "new" ? t.newLesson : t.editLesson}</h3>
-          <label>{t.title}<input name="title" required maxLength={200} defaultValue={editing === "new" ? "" : editing.title} /></label>
+          <label>{t.title}<input name="title" required maxLength={200} value={lessonTitle} onChange={(event) => setLessonTitle(event.target.value)} /></label>
           <label>{t.content}<textarea name="content" rows={12} value={lessonContent} onChange={(event) => setLessonContent(event.target.value)} placeholder="Rédigez votre leçon ici. Vous pouvez insérer des illustrations depuis les ressources pédagogiques." /></label>
           {editing !== "new" && <LessonResourcesEditor courseId={id} lessonId={editing.id} content={lessonContent} onContentChange={setLessonContent} />}
           {editing === "new" && <p className="muted small-text">Enregistrez d’abord la leçon comme brouillon pour pouvoir y ajouter des images, des vidéos et des documents PDF. Vous pourrez ensuite la modifier pour joindre ses ressources.</p>}
           <label className="check"><input type="checkbox" name="published" defaultChecked={editing === "new" ? false : editing.published} /> {t.publish}</label>
-          <div className="row"><button className="btn primary" type="submit" disabled={busy}>{busy ? t.saving : t.save}</button><button className="btn" type="button" onClick={() => { setEditing(null); setLessonContent(""); }}>{t.cancel}</button></div>
+          <div className="row"><button className="btn" type="button" onClick={() => setPreviewOpen(true)} disabled={!lessonTitle.trim()}>Aperçu avant publication</button><button className="btn primary" type="submit" disabled={busy}>{busy ? t.saving : t.save}</button><button className="btn" type="button" onClick={() => { setEditing(null); setLessonTitle(""); setLessonContent(""); setPreviewOpen(false); }}>{t.cancel}</button></div>
+          {previewOpen && <TeacherLessonPreview courseId={id} lessonId={editing === "new" ? null : editing.id} title={lessonTitle} content={lessonContent} onClose={() => setPreviewOpen(false)} />}
         </form>
       )}
 
