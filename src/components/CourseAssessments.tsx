@@ -50,14 +50,13 @@ export default function CourseAssessments({ courseId, language }: { courseId: st
 
   async function openAssessment(item:Item) {
     setError("");setNotice("");setOpened(item.id);
-    const [q,o]=await Promise.all([
-      supabase.from("assessment_questions").select("id,prompt,question_type,points,position").eq("assessment_id",item.id).order("position"),
-      supabase.from("assessment_options").select("id,question_id,label,position").in("question_id", (q.data ?? []).map((row) => row.id)).order("position"),
-    ]);
-    if(q.error||o.error){setError(q.error?.message??o.error?.message??"Erreur");return;}
+    const q=await supabase.from("assessment_questions").select("id,prompt,question_type,points,position").eq("assessment_id",item.id).order("position");
+    if(q.error){setError(q.error.message);return;}
     const qrows=(q.data??[]) as Question[];
+    const o=qrows.length ? await supabase.from("assessment_options").select("id,question_id,label,position").in("question_id",qrows.map((row)=>row.id)).order("position") : {data:[],error:null};
+    if(o.error){setError(o.error.message);return;}
     setQuestions(qrows);
-    setOptions(((o.data??[]) as Option[]).filter((x)=>qrows.some((qrow)=>qrow.id===x.question_id)));
+    setOptions((o.data??[]) as Option[]);
     setAnswers(Object.fromEntries(qrows.map((qrow)=>[qrow.id,{selected_option_ids:[],written_answer:""}])));
   }
 
