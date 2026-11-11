@@ -52,7 +52,7 @@ export default function CourseAssessments({ courseId, language }: { courseId: st
     setError("");setNotice("");setOpened(item.id);
     const [q,o]=await Promise.all([
       supabase.from("assessment_questions").select("id,prompt,question_type,points,position").eq("assessment_id",item.id).order("position"),
-      supabase.from("assessment_options").select("id,question_id,label,position").order("position"),
+      supabase.from("assessment_options").select("id,question_id,label,position").in("question_id", (q.data ?? []).map((row) => row.id)).order("position"),
     ]);
     if(q.error||o.error){setError(q.error?.message??o.error?.message??"Erreur");return;}
     const qrows=(q.data??[]) as Question[];
