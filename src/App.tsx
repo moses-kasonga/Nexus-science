@@ -9,6 +9,8 @@ import Account from "./pages/Account";
 import CandidateApplicationPage from "./pages/CandidateApplication";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherInvitation from "./pages/TeacherInvitation";
+import { LanguageContext } from "./lib/i18n";
+import { pagesText } from "./lib/translations";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import TeacherCourse from "./pages/teacher/TeacherCourse";
 import AdminGuard from "./components/admin/AdminGuard";
@@ -94,10 +96,10 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
           <Link to="/#formations" onClick={closeMenu}>{labels.catalog}</Link>
           <Link to={session ? "/candidature" : "/inscription"} onClick={closeMenu}>{labels.calendar}</Link>
           {!session && <Link to="/inscription" onClick={closeMenu}>{labels.faq}</Link>}
-          {session && <Link to="/candidature" onClick={closeMenu}>Mon dossier de candidature</Link>}
+          {session && <Link to="/candidature" onClick={closeMenu}>{pagesText[language].menuApplication}</Link>}
           {session ? <Link to="/compte" onClick={closeMenu}>{labels.logout}</Link> : <Link to="/connexion" onClick={closeMenu}>{labels.login} ↗</Link>}
-          {profile?.role === "admin" && <Link to="/admin" onClick={closeMenu}>Administration</Link>}
-          {profile?.role === "teacher" && <Link to="/enseignant" onClick={closeMenu}>Espace enseignant</Link>}
+          {profile?.role === "admin" && <Link to="/admin" onClick={closeMenu}>{pagesText[language].menuAdmin}</Link>}
+          {profile?.role === "teacher" && <Link to="/enseignant" onClick={closeMenu}>{pagesText[language].menuTeacher}</Link>}
         </nav>
         <div className="public-menu-groups">
           <details open>
@@ -131,10 +133,10 @@ export default function App() {
   const [search, setSearch] = useState("");
   useEffect(() => { document.documentElement.dataset.theme = dark ? "dark" : "light"; }, [dark]);
   return (
-    <>
-      {!studentArea && <><a href="#contenu" className="skip">Aller au contenu</a><Header language={language} setLanguage={changeLanguage} dark={dark} toggleTheme={() => setDark(value => !value)} search={search} setSearch={setSearch} /></>}
+    <LanguageContext.Provider value={language}>
+      {!studentArea && <><a href="#contenu" className="skip">{pagesText[language].skip}</a><Header language={language} setLanguage={changeLanguage} dark={dark} toggleTheme={() => setDark(value => !value)} search={search} setSearch={setSearch} /></>}
       <main id="contenu">
-        {!supabaseConfigured && <div className="wrap"><p className="notice error" role="alert">La connexion à la base de données n'est pas configurée (variables VITE_SUPABASE_URL et VITE_SUPABASE_PUBLISHABLE_KEY).</p></div>}
+        {!supabaseConfigured && <div className="wrap"><p className="notice error" role="alert">{pagesText[language].notConfigured}</p></div>}
         <Routes>
           <Route path="/" element={<Home language={language} search={search} />} />
           <Route path="/cours/:id" element={<CoursePage language={language} />} />
@@ -155,10 +157,10 @@ export default function App() {
             <Route path="enseignants" element={<AdminTeachers />} />
             <Route path="evaluations" element={<AdminAssessments />} />
           </Route>
-          <Route path="*" element={<section className="wrap page"><h1>Page introuvable</h1><p><Link to="/">Retour à l’accueil</Link></p></section>} />
+          <Route path="*" element={<section className="wrap page"><h1>{pagesText[language].notFound}</h1><p><Link to="/">{pagesText[language].backToHome}</Link></p></section>} />
         </Routes>
       </main>
-      {!studentArea && <footer className="site-footer"><div className="wrap footer-brand"><strong>🧬 NEXUS SCIENCE</strong><span>Plateforme d’apprentissage scientifique</span><span>Apprendre · Comprendre · Progresser</span></div></footer>}
-    </>
+      {!studentArea && <footer className="site-footer"><div className="wrap footer-brand"><strong>🧬 NEXUS SCIENCE</strong><span>{pagesText[language].footer1}</span><span>{pagesText[language].footer2}</span></div></footer>}
+    </LanguageContext.Provider>
   );
 }
