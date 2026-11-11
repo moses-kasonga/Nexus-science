@@ -58,7 +58,7 @@ export default function LessonResourcesEditor({ courseId, lessonId, content, onC
       if (storageError) throw storageError;
       const { error: rowError } = await supabase.from("lesson_assets").delete().eq("id", asset.id);
       if (rowError) throw rowError;
-      if (asset.asset_type === "image") onContentChange(content.replace(new RegExp("!\\\\[[^\\\\]]*\\\\]\\\\(lesson-asset:" + asset.id + "\\\\)", "g"), "").replace(/\\n{3,}/g, "\\n\\n"));
+      if (asset.asset_type === "image") onContentChange(content.split("\\n").filter((line) => !line.includes("lesson-asset:" + asset.id)).join("\\n"));
       await loadAssets();
       setNotice("Ressource supprimée.");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "La suppression a échoué."); }
