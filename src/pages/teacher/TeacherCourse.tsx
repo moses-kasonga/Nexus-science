@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
-import { useT } from "../../lib/i18n";
+import { dateLocale, useLanguage, useT } from "../../lib/i18n";
 import { supabase } from "../../lib/supabase";
 import { Feedback, dateTimeLabel, errorText } from "../admin/shared";
 import TeacherAssessments from "./TeacherAssessments";
@@ -11,6 +11,7 @@ type Student = { id: string; name: string; email: string; status: string; since:
 
 export default function TeacherCourse() {
   const { id = "" } = useParams();
+  const locale = dateLocale[useLanguage()];
   const t = useT({
     fr: { back:"← Mes formations", loading:"Chargement…", loadingCourse:"Chargement de la formation…", missing:"Formation introuvable", noAccess:"Cette formation n'existe pas ou ne vous est pas attribuée.", lessons:"Leçons", noLessons:"Aucune leçon pour l'instant.", published:"Publiée", draft:"Brouillon", up:"Monter", down:"Descendre", edit:"Modifier", addLesson:"Ajouter une leçon", newLesson:"Nouvelle leçon", editLesson:"Modifier la leçon", title:"Titre", content:"Contenu", publish:"Publier cette leçon (visible par les élèves)", saving:"Enregistrement…", save:"Enregistrer", cancel:"Annuler", students:"Élèves inscrits", noStudents:"Aucun élève inscrit à cette formation pour le moment.", active:"Actif", removed:"Accès retiré", student:"Élève", required:"Le titre de la leçon est obligatoire.", saved:"Leçon enregistrée.", enrolled:"inscrit le" },
     en: { back:"← My courses", loading:"Loading…", loadingCourse:"Loading course…", missing:"Course not found", noAccess:"This course does not exist or has not been assigned to you.", lessons:"Lessons", noLessons:"No lessons yet.", published:"Published", draft:"Draft", up:"Move up", down:"Move down", edit:"Edit", addLesson:"Add a lesson", newLesson:"New lesson", editLesson:"Edit lesson", title:"Title", content:"Content", publish:"Publish this lesson (visible to students)", saving:"Saving…", save:"Save", cancel:"Cancel", students:"Enrolled students", noStudents:"No students are enrolled in this course yet.", active:"Active", removed:"Access revoked", student:"Student", required:"The lesson title is required.", saved:"Lesson saved.", enrolled:"enrolled on" },
@@ -142,7 +143,7 @@ export default function TeacherCourse() {
       <ul className="stack tight">
         {students?.map((student) => (
           <li key={student.id} className="panel row between">
-            <span>{student.name}<br /><span className="muted small-text">{student.email} · {t.enrolled} {dateTimeLabel(student.since)}</span></span>
+            <span>{student.name}<br /><span className="muted small-text">{student.email} · {t.enrolled} {dateTimeLabel(student.since, locale)}</span></span>
             <span className={`pill ${student.status === "active" ? "ongoing" : "past"}`}>{student.status === "active" ? t.active : t.removed}</span>
           </li>
         ))}
