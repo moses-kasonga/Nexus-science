@@ -2,9 +2,10 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../../lib/supabase";
 import { Feedback, dayLabel, errorText } from "../admin/shared";
 import { dateLocale, useLanguage, useT } from "../../lib/i18n";
+import AssessmentQuestionComposer from "./AssessmentQuestionComposer";
 
 export type RosterStudent = { id: string; name: string; email: string; status: string };
-type Assessment = { id: string; title: string; description: string | null; kind: "quiz" | "devoir" | "examen"; max_score: number; due_date: string | null; published: boolean; results_published: boolean };
+type Assessment = { id: string; title: string; description: string | null; kind: "quiz" | "devoir" | "examen"; max_score: number; due_date: string | null; published: boolean; results_published: boolean; allow_multiple_choice: boolean; allow_written: boolean };
 type Result = { student_id: string; score: number | null; comment: string | null };
 type Draft = { score: string; comment: string };
 
@@ -22,6 +23,7 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
   const [items, setItems] = useState<Assessment[] | null>(null);
   const [editing, setEditing] = useState<Assessment | "new" | null>(null);
   const [grading, setGrading] = useState<Assessment | null>(null);
+  const [questionsFor, setQuestionsFor] = useState<Assessment | null>(null);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -29,7 +31,7 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
 
   const load = useCallback(async () => {
     const { data, error: failure } = await supabase.from("assessments")
-      .select("id, title, description, kind, max_score, due_date, published, results_published").eq("course_id", courseId).order("created_at", { ascending: false });
+      .select("id, title, description, kind, max_score, due_date, published, results_published, allow_multiple_choice, allow_written").eq("course_id", courseId).order("created_at", { ascending: false });
     if (failure) { setError(failure.message); setItems((current) => current ?? []); return; }
     setItems((data ?? []) as Assessment[]);
   }, [courseId]);
@@ -45,6 +47,7 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
     const payload = {
       title, description: String(form.get("description") ?? "").trim() || null, kind: String(form.get("kind") ?? "devoir"),
       max_score: max, due_date: String(form.get("due_date") ?? "") || null,
+      allow_multiple_choice: form.get("allow_multiple_choice") === "on", allow_written: form.get("allow_written") === "on",
     };
     setBusy(true); setError(""); setNotice("");
     try {
@@ -52,8 +55,10 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
         const { error: failure } = await supabase.from("assessments").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", editing.id);
         if (failure) throw failure;
       } else {
-        const { error: failure } = await supabase.from("assessments").insert({ ...payload, course_id: courseId });
+        const { data, error: failure } = await supabase.from("assessments").insert({ ...payload, course_id: courseId }).select("id").single();
         if (failure) throw failure;
+        const created = { id: data.id, title, description: payload.description, kind: payload.kind as Assessment["kind"], max_score: max, due_date: payload.due_date, published: false, results_published: false, allow_multiple_choice: payload.allow_multiple_choice, allow_written: payload.allow_written } satisfies Assessment;
+        setQuestionsFor(created);
       }
       setNotice(t.saved); setEditing(null); await load();
     } catch (cause) { setError(errorText(cause)); } finally { setBusy(false); }
@@ -120,6 +125,7 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
             <div className="row">
               <button className="btn small" type="button" disabled={busy} onClick={() => void toggle(item, "published")}>{item.published ? t.unpublish : t.publish}</button>
               <button className="btn small" type="button" disabled={busy} onClick={() => void toggle(item, "results_published")}>{item.results_published ? t.hideResults : t.publishResults}</button>
+              <button className="btn small" type="button" disabled={busy} onClick={() => setQuestionsFor(item)}>Questions / corrigés</button>
               <button className="btn small primary" type="button" disabled={busy} onClick={() => void openGrading(item)}>{t.grades}</button>
               <button className="btn small" type="button" onClick={() => { setEditing(item); setNotice(""); }}>{t.edit}</button>
               <button className="btn small danger" type="button" disabled={busy} onClick={() => void remove(item)}>{t.remove}</button>
@@ -139,8 +145,19 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
           <label>{t.scale}<input name="max_score" inputMode="decimal" required defaultValue={editing === "new" ? "20" : String(editing.max_score)} /></label>
           <label>{t.due}<input name="due_date" type="date" defaultValue={editing === "new" ? "" : editing.due_date ?? ""} /></label>
           <label>{t.instructions}<textarea name="description" rows={4} defaultValue={editing === "new" ? "" : editing.description ?? ""} /></label>
+          <fieldset><legend>Types de réponses autorisés</legend>
+            <label className="check"><input type="checkbox" name="allow_multiple_choice" defaultChecked={editing === "new" ? true : editing.allow_multiple_choice} /> Activer les questions à choix multiples</label>
+            <label className="check"><input type="checkbox" name="allow_written" defaultChecked={editing === "new" ? false : editing.allow_written} /> Activer le champ de réponses écrites</label>
+          </fieldset>
           <div className="row"><button className="btn primary" type="submit" disabled={busy}>{busy ? t.saving : t.save}</button><button className="btn" type="button" onClick={() => setEditing(null)}>{t.cancel}</button></div>
         </form>
+      )}
+
+      {questionsFor && (
+        <div className="panel">
+          <div className="row between"><h3>Questions — {questionsFor.title}</h3><button className="btn small" type="button" onClick={() => setQuestionsFor(null)}>Fermer</button></div>
+          <AssessmentQuestionComposer key={questionsFor.id} assessmentId={questionsFor.id} allowMultipleChoice={questionsFor.allow_multiple_choice} allowWritten={questionsFor.allow_written} />
+        </div>
       )}
 
       {grading && (
