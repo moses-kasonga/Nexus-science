@@ -21,6 +21,7 @@ import AdminTeachers from "./pages/admin/AdminTeachers";
 import AdminAssessments from "./pages/admin/AdminAssessments";
 import AdminHomepage from "./pages/admin/AdminHomepage";
 import { CoursesRoute, StudentsRoute } from "./pages/admin/routes";
+import MoiseAssistantPage from "./pages/MoiseAssistantPage";
 
 type Language = "fr" | "en" | "pt" | "es";
 
@@ -144,6 +145,7 @@ export default function App() {
           <Route path="/inscription" element={<AuthPage mode="register" />} />
           <Route path="/mot-de-passe-oublie" element={<AuthPage mode="reset" />} />
           <Route path="/compte" element={<Account />} />
+          <Route path="/moise" element={<MoiseAssistantPage />} />
           <Route path="/candidature" element={<CandidateApplicationPage />} />
           <Route path="/espace-etudiant" element={<StudentDashboard />} />
           <Route path="/enseignant/invitation" element={<TeacherInvitation />} />
