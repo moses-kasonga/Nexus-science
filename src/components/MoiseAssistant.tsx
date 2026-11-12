@@ -5,7 +5,7 @@ import "./moise-assistant.css";
 type Role = "student" | "teacher" | "admin";
 type Message = { role: "user" | "assistant"; content: string; id: string };
 
-const apiBase = (import.meta.env.VITE_MOISE_API_URL || "https://mo-se-ai-kasonga-ten.vercel.app/api").replace(/\/$/, "");
+const apiBase = "/api/moise";
 
 const copy = {
   fr: { title: "MOÏSE", subtitle: "Votre assistant intelligent dans NEXUS SCIENCE", placeholder: "Posez votre question à MOÏSE…", send: "Envoyer", newChat: "Nouvelle conversation", welcome: "Bonjour ! Je suis MOÏSE. Comment puis-je vous aider aujourd’hui ?", student: "Je peux vous aider à comprendre vos cours, réviser et travailler vos exercices.", teacher: "Je peux vous aider à préparer vos leçons, exercices et évaluations.", admin: "Je peux vous aider à analyser et documenter la plateforme.", offline: "Le service MOÏSE est momentanément indisponible.", login: "Connectez-vous pour utiliser MOÏSE.", sending: "MOÏSE réfléchit…", error: "Impossible d’envoyer le message. Réessayez.", limit: "Votre message est trop long." },
