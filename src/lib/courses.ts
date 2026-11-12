@@ -3,7 +3,8 @@ import { supabase } from "./supabase";
 export type Language = "fr" | "en" | "pt" | "es";
 export type Schedule = { start_date: string; end_date: string; status: string };
 export type Course = { id: string; name: string; category: string; description: string | null; course_schedules: Schedule[] };
-export type Lesson = { id: string; title: string; content: string | null; order_index: number };
+export type LessonAsset = { id: string; asset_type: "image" | "video" | "pdf"; file_name: string; caption: string | null; signed_url: string };
+export type Lesson = { id: string; title: string; content: string | null; order_index: number; assets: LessonAsset[] };
 
 type TranslationRow = { entity_id: string; source_hash: string; source_language: Language; translated_content: Record<string, string | null> };
 
@@ -87,8 +88,23 @@ export async function fetchLessons(courseId: string, language: Language = "fr"):
     throw new Error(detail || "Les leçons n'ont pas pu être chargées.");
   }
   const lessons = (data ?? []) as Lesson[];
-  const cache = await getTranslations("lesson", lessons.map((lesson) => lesson.id), language);
-  return Promise.all(lessons.map((lesson) => translatedLesson(lesson, cache)));
+  const ids = lessons.map((lesson) => lesson.id);
+  const assetsByLesson = new Map<string, LessonAsset[]>();
+  if (ids.length > 0) {
+    const { data: assets, error: assetsError } = await supabase.from("lesson_assets")
+      .select("id,lesson_id,asset_type,file_name,caption,object_path")
+      .in("lesson_id", ids).order("created_at");
+    if (assetsError) throw new Error(assetsError.message || "Les ressources pédagogiques n'ont pas pu être chargées.");
+    for (const asset of assets ?? []) {
+      const { data: signed, error: signedError } = await supabase.storage.from("lesson-assets").createSignedUrl(asset.object_path, 3600);
+      if (signedError) throw new Error("Une ressource de la leçon n'a pas pu être ouverte.");
+      const item: LessonAsset = { id: asset.id, asset_type: asset.asset_type, file_name: asset.file_name, caption: asset.caption, signed_url: signed.signedUrl };
+      assetsByLesson.set(asset.lesson_id, [...(assetsByLesson.get(asset.lesson_id) ?? []), item]);
+    }
+  }
+  const cache = await getTranslations("lesson", ids, language);
+  const translated = await Promise.all(lessons.map((lesson) => translatedLesson(lesson, cache)));
+  return translated.map((lesson) => ({ ...lesson, assets: assetsByLesson.get(lesson.id) ?? [] }));
 }
 
 const dateFormats: Record<Language, Intl.DateTimeFormat> = {

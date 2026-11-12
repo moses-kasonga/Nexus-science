@@ -5,6 +5,22 @@ import { useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 import CourseAssessments from "../components/CourseAssessments";
 
+function LessonBody({ lesson, noContent }: { lesson: Lesson; noContent: string }) {
+  const parts = (lesson.content ?? "").split(/(!\[[^\]]*\]\(lesson-asset:[^)]+\))/g);
+  return <>
+    {parts.map((part, index) => {
+      const match = part.match(/^!\[([^\]]*)\]\(lesson-asset:([^)]+)\)$/);
+      if (match) {
+        const asset = lesson.assets?.find((item) => item.id === match[2] && item.asset_type === "image");
+        return asset ? <figure key={index} className="lesson-illustration"><img src={asset.signed_url} alt={match[1] || asset.caption || "Illustration pédagogique"} loading="lazy" /><figcaption>{match[1] || asset.caption}</figcaption></figure> : null;
+      }
+      return part.split(/\n{2,}/).filter((paragraph) => paragraph.trim()).map((paragraph, paragraphIndex) => <p key={index + "-" + paragraphIndex}>{paragraph}</p>);
+    })}
+    {(lesson.assets ?? []).filter((asset) => asset.asset_type === "video").map((asset) => <figure className="lesson-media" key={asset.id}><video controls preload="metadata" playsInline src={asset.signed_url}>{noContent}</video><figcaption>{asset.file_name}</figcaption></figure>)}
+    {(lesson.assets ?? []).filter((asset) => asset.asset_type === "pdf").map((asset) => <p className="lesson-document" key={asset.id}><a href={asset.signed_url} target="_blank" rel="noreferrer">📄 {asset.file_name} — Consulter / télécharger</a></p>)}
+  </>;
+}
+
 const pageCopy = {
   fr: { loading: "Chargement du cours…", missing: "Cours introuvable", back: "← Tous les cours", sessions: "Sessions", noSessions: "Aucune session publiée pour l'instant.", lessons: "Leçons", signup: "Inscrivez-vous pour accéder aux leçons. Votre évaluation sera coordonnée par l'enseignant titulaire du cours et suivie par l'administration.", enroll: "M'inscrire à cette formation", enrolling: "Inscription…", enrolled: "Vous êtes inscrit à cette formation.", reserved: "Les leçons sont réservées aux élèves inscrits.", login: "Connectez-vous", or: "ou", register: "créez un compte", continue: "pour continuer.", loadingLessons: "Chargement des leçons…", noLessons: "Aucune leçon accessible pour ce cours pour le moment.", noContent: "Cette leçon n'a pas encore de contenu.", loadError: "Impossible de charger les leçons. Détail :", unknownError: "Une erreur inconnue est survenue." },
   en: { loading: "Loading course…", missing: "Course not found", back: "← All courses", sessions: "Sessions", noSessions: "No sessions have been published yet.", lessons: "Lessons", signup: "Sign up to access the lessons. Your assessment will be coordinated by the course teacher and monitored by the administration.", enroll: "Enroll in this course", enrolling: "Enrolling…", enrolled: "You are enrolled in this course.", reserved: "Lessons are available to enrolled students only.", login: "Sign in", or: "or", register: "create an account", continue: "to continue.", loadingLessons: "Loading lessons…", noLessons: "No lessons are available for this course yet.", noContent: "This lesson does not have any content yet.", loadError: "Unable to load lessons. Details:", unknownError: "An unknown error occurred." },
@@ -107,7 +123,7 @@ export default function CoursePage({ language }: { language: Language }) {
             <li key={lesson.id}>
               <details>
                 <summary>{lesson.title}</summary>
-                <div className="lesson-body">{lesson.content ? lesson.content.split(/\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>) : <p className="muted">{labels.noContent}</p>}</div>
+                <div className="lesson-body">{lesson.content || lesson.assets?.length ? <LessonBody lesson={lesson} noContent={labels.noContent} /> : <p className="muted">{labels.noContent}</p>}</div>
               </details>
             </li>
           ))}
