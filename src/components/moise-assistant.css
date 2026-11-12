@@ -14,8 +14,10 @@
 .moise-message.assistant{align-self:flex-start}
 .moise-message span{display:block;margin-bottom:.25rem;font-size:.7rem;font-weight:700;opacity:.7}
 .moise-message p{margin:0;white-space:pre-wrap;line-height:1.55;font-size:.9rem}
-.moise-assistant-form{display:flex;align-items:flex-end;gap:.65rem;border:1px solid var(--border,#cbd5e1);border-radius:1rem;padding:.6rem}
-.moise-assistant-form textarea{flex:1;min-width:0;resize:vertical;border:0;outline:0;background:transparent;color:inherit;font:inherit;font-size:.9rem}
+.moise-assistant-form{display:flex;align-items:flex-end;gap:.65rem;border:1px solid var(--border,#cbd5e1);border-radius:1rem;padding:.6rem;background:#fff}
+.moise-assistant-form textarea{flex:1;min-width:0;resize:vertical;border:0;outline:0;background:transparent;color:#0f172a;-webkit-text-fill-color:#0f172a;caret-color:#0f172a;font:inherit;font-size:.9rem;opacity:1}
+.moise-assistant-form textarea::placeholder{color:#64748b;-webkit-text-fill-color:#64748b;opacity:1}
+.moise-assistant-form textarea:disabled{color:#475569;-webkit-text-fill-color:#475569;opacity:1}
 .moise-assistant-form button{border:0;border-radius:.75rem;background:var(--primary,#243b80);color:white;padding:.7rem .95rem;font-weight:600;cursor:pointer}
 .moise-assistant-form button:disabled{opacity:.45;cursor:not-allowed}
 .moise-assistant-error{margin:.5rem 0;color:#b91c1c;font-size:.85rem}
