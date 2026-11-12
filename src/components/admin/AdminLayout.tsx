@@ -5,10 +5,10 @@ import { useLanguage } from "../../lib/i18n";
 export default function AdminLayout() {
   const language = useLanguage();
   const labels = {
-    fr: ["Navigation administrateur","Administration","Vue d’ensemble","Admissions","Dossiers candidats","Gestion","Utilisateurs","À venir","Enseignants","Formations","Accès des élèves","Évaluations","Calendrier","Feedback","Retour au site public","Se déconnecter","Espace sécurisé","Administrateur","Page d’accueil"],
-    en: ["Administrator navigation","Administration","Overview","Admissions","Candidate applications","Management","Users","Coming soon","Teachers","Courses","Student access","Assessments","Calendar","Feedback","Back to public site","Sign out","Secure area","Administrator","Homepage"],
-    pt: ["Navegação do administrador","Administração","Visão geral","Admissões","Candidaturas","Gestão","Utilizadores","Em breve","Professores","Cursos","Acesso dos alunos","Avaliações","Calendário","Feedback","Voltar ao site público","Terminar sessão","Área segura","Administrador","Página inicial"],
-    es: ["Navegación del administrador","Administración","Resumen","Admisiones","Expedientes de candidatura","Gestión","Usuarios","Próximamente","Profesores","Cursos","Acceso de alumnos","Evaluaciones","Calendario","Comentarios","Volver al sitio público","Cerrar sesión","Área segura","Administrador","Página de inicio"]
+    fr: ["Navigation administrateur","Administration","Vue d’ensemble","Admissions","Dossiers candidats","Gestion","Utilisateurs","À venir","Enseignants","Formations","Accès des élèves","Évaluations","Calendrier","Feedback","Retour au site public","Se déconnecter","Espace sécurisé","Administrateur","Page d’accueil","Assistant MOÏSE"],
+    en: ["Administrator navigation","Administration","Overview","Admissions","Candidate applications","Management","Users","Coming soon","Teachers","Courses","Student access","Assessments","Calendar","Feedback","Back to public site","Sign out","Secure area","Administrator","Homepage","MOÏSE assistant"],
+    pt: ["Navegação do administrador","Administração","Visão geral","Admissões","Candidaturas","Gestão","Utilizadores","Em breve","Professores","Cursos","Acesso dos alunos","Avaliações","Calendário","Feedback","Voltar ao site público","Terminar sessão","Área segura","Administrador","Página inicial","Assistente MOÏSE"],
+    es: ["Navegación del administrador","Administración","Resumen","Admisiones","Expedientes de candidatura","Gestión","Usuarios","Próximamente","Profesores","Cursos","Acceso de alumnos","Evaluaciones","Calendario","Comentarios","Volver al sitio público","Cerrar sesión","Área segura","Administrador","Página de inicio","Asistente MOÏSE"]
   }[language];
   const { profile, session, signOut } = useAuth();
 
@@ -17,7 +17,7 @@ export default function AdminLayout() {
       <aside className="admin-sidebar" aria-label={labels[0]}>
         <Link className="admin-brand" to="/admin">Nexus <em>science</em><span>{labels[1]}</span></Link>
         <nav className="admin-nav">
-          <NavLink to="/admin" end>{labels[2]}</NavLink>
+          <NavLink to="/admin" end>{labels[2]}</NavLink>\n          <NavLink to="/moise">{labels[19]}</NavLink>
           <span className="admin-nav-label">{labels[3]}</span>
           <NavLink to="/admin/candidatures">{labels[4]}</NavLink>
           <span className="admin-nav-label">{labels[5]}</span>
