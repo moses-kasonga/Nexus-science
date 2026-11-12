@@ -2,8 +2,7 @@ import type { Language } from "./courses";
 import { activeLanguage } from "./i18n";
 
 /** Messages d'erreur des écrans enseignant et administration (hors composants React, donc langue lue au moment de l'erreur). */
-const messages = {
-  fr: {
+const fr = {
     generic: "Une erreur est survenue. Réessayez.", unnamed: "Compte sans nom",
     coursesLoad: "Les cours n'ont pas pu être chargés.", courseSave: "Le cours n'a pas pu être enregistré.", courseDelete: "Le cours n'a pas pu être supprimé.",
     scheduleAdd: "La session n'a pas pu être ajoutée (vérifiez que la date de fin n'est pas avant le début).", scheduleUpdate: "La session n'a pas pu être modifiée.", scheduleDelete: "La session n'a pas pu être supprimée.",
@@ -11,7 +10,12 @@ const messages = {
     enrollmentsLoad: "Les inscriptions n'ont pas pu être chargées.", invitationsLoad: "Les invitations n'ont pas pu être chargées.", applicationsLoad: "Les candidatures n'ont pas pu être chargées.",
     applicationApprove: "La candidature n'a pas pu être approuvée.", applicationReject: "La candidature n'a pas pu être refusée.",
     checkingAccess: "Vérification des accès…", antiBot: "Vérification anti-robot",
-  },
+};
+
+type Messages = { [K in keyof typeof fr]: string };
+
+const messages: Record<Language, Messages> = {
+  fr,
   en: {
     generic: "Something went wrong. Please try again.", unnamed: "Unnamed account",
     coursesLoad: "Courses could not be loaded.", courseSave: "The course could not be saved.", courseDelete: "The course could not be deleted.",
@@ -39,8 +43,8 @@ const messages = {
     applicationApprove: "No se pudo aprobar la solicitud.", applicationReject: "No se pudo rechazar la solicitud.",
     checkingAccess: "Comprobando accesos…", antiBot: "Verificación anti-robot",
   },
-} as const satisfies Record<Language, Record<string, string>>;
+};
 
-export type MessageKey = keyof (typeof messages)["fr"];
+export type MessageKey = keyof Messages;
 export const message = (key: MessageKey): string => messages[activeLanguage()][key];
 export const adminMessages = messages;
