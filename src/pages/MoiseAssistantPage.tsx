@@ -22,7 +22,7 @@ export default function MoiseAssistantPage() {
       <p><Link to={profile.role === "student" ? "/espace-etudiant" : profile.role === "teacher" ? "/enseignant" : "/admin"}>{t.back}</Link></p>
       <p className="eyebrow">NEXUS SCIENCE</p>
       <h1>{t.title}</h1>
-      <MoiseAssistant role={profile.role} />
+      <MoiseAssistant role={profile.role} accessToken={session.access_token} />
     </section>
   );
 }
