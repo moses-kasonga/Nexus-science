@@ -38,7 +38,7 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
     let size = 0;
     for await (const chunk of req) {
       size += chunk.length;
-      if (size > 1024 * 1024) {
+      if (size > 4 * 1024 * 1024) {
         res.statusCode = 413;
         res.end(JSON.stringify({ error: "Request body too large." }));
         return;
