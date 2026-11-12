@@ -22,3 +22,13 @@
 .moise-assistant-form button:disabled{opacity:.45;cursor:not-allowed}
 .moise-assistant-error{margin:.5rem 0;color:#b91c1c;font-size:.85rem}
 @media(max-width:560px){.moise-assistant{padding:.85rem}.moise-assistant-header{align-items:flex-start;flex-direction:column}.moise-new-chat{align-self:flex-end}.moise-message{max-width:96%}.moise-assistant-form{align-items:stretch;flex-direction:column}.moise-assistant-form button{align-self:flex-end}}
+
+.moise-assistant-form{min-width:0}
+.moise-composer-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:.45rem}
+.moise-composer-main textarea{width:100%;box-sizing:border-box}
+.moise-composer-actions{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap}
+.moise-attach{border:1px solid #cbd5e1!important;background:#f8fafc!important;color:#334155!important;padding:.4rem .65rem!important;font-size:.78rem!important}
+.moise-attach:disabled{opacity:.45}
+.moise-pending-file,.moise-message-attachment{font-size:.75rem;color:#475569;overflow-wrap:anywhere}
+.moise-pending-file button{border:0;background:transparent;color:#b91c1c;font-size:1rem;cursor:pointer;padding:0 .25rem}
+.moise-message-attachment{display:block;margin:0 0 .35rem}
