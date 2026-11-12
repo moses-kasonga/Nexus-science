@@ -107,6 +107,10 @@ export default function StudentDashboard() {
           <span className="student-welcome-mark" aria-hidden="true">🧬</span>
         </section>
 
+        <section className="student-section student-next">
+          <div><p className="student-kicker">MOÏSE</p><h2>{language === "fr" ? "Votre assistant pédagogique" : language === "pt" ? "O seu assistente pedagógico" : language === "es" ? "Tu asistente pedagógico" : "Your learning assistant"}</h2><p className="student-muted">{language === "fr" ? "Posez vos questions sur les cours, révisez et travaillez vos exercices avec MOÏSE." : language === "pt" ? "Faça perguntas sobre as aulas, reveja e pratique exercícios com MOÏSE." : language === "es" ? "Pregunta sobre las lecciones, repasa y practica ejercicios con MOÏSE." : "Ask questions about lessons, revise and practise exercises with MOÏSE."}</p><Link className="student-button" to="/moise">{language === "fr" ? "Ouvrir MOÏSE →" : language === "pt" ? "Abrir MOÏSE →" : language === "es" ? "Abrir MOÏSE →" : "Open MOÏSE →"}</Link></div>
+        </section>
+
         <section className="student-stats" aria-label={t.summary}>
           <article className="student-stat"><span>{t.accessibleCourses}</span><strong>{busy ? "—" : activeCourses.length}</strong><small>{t.activeAccess}</small></article>
           <article className="student-stat"><span>{t.upcoming}</span><strong>{busy ? "—" : nextSession ? "1" : "0"}</strong><small>{nextSession ? dateLabel(nextSession.start_date, locale) : t.noSession}</small></article>
