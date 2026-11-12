@@ -135,7 +135,7 @@ export default function MoiseAssistant({ role, accessToken }: { role: Role; acce
     <section className="moise-assistant" aria-labelledby="moise-assistant-title">
       <header className="moise-assistant-header">
         <div><span className="moise-assistant-mark" aria-hidden="true">✦</span><div><h2 id="moise-assistant-title">{t.title}</h2><p>{t.subtitle}</p></div></div>
-        <button type="button" className="moise-new-chat" onClick={() => { setMessages([]); setError(""); }}>{t.newChat}</button>
+        <button type="button" className="moise-new-chat" onClick={() => { setMessages([]); setPendingAttachment(null); setError(""); }}>{t.newChat}</button>
       </header>
       <div className="moise-assistant-intro"><strong>{roleDescription}</strong></div>
       <div className="moise-message-list" aria-live="polite">
