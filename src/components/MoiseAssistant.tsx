@@ -1,0 +1,123 @@
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { supabase } from "../lib/supabase";
+import { useLanguage } from "../lib/i18n";
+
+type Role = "student" | "teacher" | "admin";
+type Message = { role: "user" | "assistant"; content: string; id: string };
+
+const apiBase = (import.meta.env.VITE_MOISE_API_URL || "https://mo-se-ai-kasonga-ten.vercel.app/api").replace(/\/$/, "");
+
+const copy = {
+  fr: { title: "MOÏSE", subtitle: "Votre assistant intelligent dans NEXUS SCIENCE", placeholder: "Posez votre question à MOÏSE…", send: "Envoyer", newChat: "Nouvelle conversation", welcome: "Bonjour ! Je suis MOÏSE. Comment puis-je vous aider aujourd’hui ?", student: "Je peux vous aider à comprendre vos cours, réviser et travailler vos exercices.", teacher: "Je peux vous aider à préparer vos leçons, exercices et évaluations.", admin: "Je peux vous aider à analyser et documenter la plateforme.", offline: "Le service MOÏSE est momentanément indisponible.", login: "Connectez-vous pour utiliser MOÏSE.", sending: "MOÏSE réfléchit…", error: "Impossible d’envoyer le message. Réessayez.", limit: "Votre message est trop long." },
+  en: { title: "MOÏSE", subtitle: "Your intelligent assistant in NEXUS SCIENCE", placeholder: "Ask MOÏSE a question…", send: "Send", newChat: "New conversation", welcome: "Hello! I’m MOÏSE. How can I help you today?", student: "I can help you understand lessons, revise and work through exercises.", teacher: "I can help you prepare lessons, exercises and assessments.", admin: "I can help you analyse and document the platform.", offline: "The MOÏSE service is temporarily unavailable.", login: "Sign in to use MOÏSE.", sending: "MOÏSE is thinking…", error: "Unable to send the message. Please try again.", limit: "Your message is too long." },
+  pt: { title: "MOÏSE", subtitle: "O seu assistente inteligente no NEXUS SCIENCE", placeholder: "Faça uma pergunta ao MOÏSE…", send: "Enviar", newChat: "Nova conversa", welcome: "Olá! Sou o MOÏSE. Como posso ajudar hoje?", student: "Posso ajudar a compreender as aulas, rever e resolver exercícios.", teacher: "Posso ajudar a preparar aulas, exercícios e avaliações.", admin: "Posso ajudar a analisar e documentar a plataforma.", offline: "O serviço MOÏSE está temporariamente indisponível.", login: "Inicie sessão para utilizar o MOÏSE.", sending: "MOÏSE está a pensar…", error: "Não foi possível enviar a mensagem. Tente novamente.", limit: "A sua mensagem é demasiado longa." },
+  es: { title: "MOÏSE", subtitle: "Tu asistente inteligente en NEXUS SCIENCE", placeholder: "Haz una pregunta a MOÏSE…", send: "Enviar", newChat: "Nueva conversación", welcome: "¡Hola! Soy MOÏSE. ¿Cómo puedo ayudarte hoy?", student: "Puedo ayudarte a comprender las lecciones, repasar y resolver ejercicios.", teacher: "Puedo ayudarte a preparar lecciones, ejercicios y evaluaciones.", admin: "Puedo ayudarte a analizar y documentar la plataforma.", offline: "El servicio MOÏSE no está disponible temporalmente.", login: "Inicia sesión para utilizar MOÏSE.", sending: "MOÏSE está pensando…", error: "No se pudo enviar el mensaje. Inténtalo de nuevo.", limit: "Tu mensaje es demasiado largo." },
+};
+
+export default function MoiseAssistant({ role }: { role: Role }) {
+  const language = useLanguage();
+  const t = copy[language];
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
+  const [connected, setConnected] = useState<boolean | null>(null);
+  const [error, setError] = useState("");
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) { if (active) setConnected(false); return; }
+      try {
+        const response = await fetch(apiBase + "/nexus/chat/status", { headers: { Authorization: "Bearer " + token } });
+        const result = await response.json().catch(() => ({}));
+        if (active) setConnected(response.ok && result.connected === true);
+      } catch { if (active) setConnected(false); }
+    })();
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, sending]);
+
+  const send = async (event: FormEvent) => {
+    event.preventDefault();
+    const text = draft.trim();
+    if (!text || sending) return;
+    if (text.length > 8000) { setError(t.limit); return; }
+    setError("");
+    setDraft("");
+    const userMessage: Message = { role: "user", content: text, id: String(Date.now()) + "-user" };
+    const assistantId = String(Date.now()) + "-assistant";
+    const next = [...messages, userMessage];
+    setMessages([...next, { role: "assistant", content: "", id: assistantId }]);
+    setSending(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error(t.login);
+      const response = await fetch(apiBase + "/nexus/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ messages: next.map(({ role: messageRole, content }) => ({ role: messageRole, content })) }),
+      });
+      if (!response.ok || !response.body) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.error || t.error);
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let received = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data:")) continue;
+          const raw = line.slice(5).trim();
+          if (!raw) continue;
+          const packet = JSON.parse(raw) as { type?: string; text?: string; error?: string; content?: string };
+          if (packet.type === "delta" && packet.text) {
+            received += packet.text;
+            setMessages((current) => current.map((item) => item.id === assistantId ? { ...item, content: received } : item));
+          } else if (packet.type === "error") {
+            throw new Error(packet.error || t.error);
+          } else if (packet.type === "done" && typeof packet.content === "string") {
+            received = packet.content;
+          }
+        }
+      }
+      setMessages((current) => current.map((item) => item.id === assistantId ? { ...item, content: received || t.error } : item));
+    } catch (cause) {
+      setMessages((current) => current.filter((item) => item.id !== assistantId));
+      setError(cause instanceof Error ? cause.message : t.error);
+      setDraft(text);
+    } finally { setSending(false); }
+  };
+
+  const roleDescription = role === "student" ? t.student : role === "teacher" ? t.teacher : t.admin;
+  return (
+    <section className="moise-assistant" aria-labelledby="moise-assistant-title">
+      <header className="moise-assistant-header">
+        <div><span className="moise-assistant-mark" aria-hidden="true">✦</span><div><h2 id="moise-assistant-title">{t.title}</h2><p>{t.subtitle}</p></div></div>
+        <button type="button" className="moise-new-chat" onClick={() => { setMessages([]); setError(""); }}>{t.newChat}</button>
+      </header>
+      <div className="moise-assistant-intro"><strong>{roleDescription}</strong></div>
+      <div className="moise-message-list" aria-live="polite">
+        {messages.length === 0 && <div className="moise-welcome"><strong>{t.welcome}</strong><p>{roleDescription}</p></div>}
+        {messages.map((message) => <article className={"moise-message " + message.role} key={message.id}><span>{message.role === "user" ? "Vous" : "MOÏSE"}</span><p>{message.content || (sending && message.role === "assistant" ? t.sending : "")}</p></article>)}
+        <div ref={bottomRef} />
+      </div>
+      {connected === false && <p className="moise-assistant-error" role="status">{t.offline}</p>}
+      {error && <p className="moise-assistant-error" role="alert">{error}</p>}
+      <form className="moise-assistant-form" onSubmit={send}>
+        <textarea value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={t.placeholder} rows={2} disabled={sending || connected === false} />
+        <button type="submit" disabled={sending || connected === false || !draft.trim()}>{sending ? "…" : t.send}</button>
+      </form>
+    </section>
+  );
+}
