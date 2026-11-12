@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
 import { useLanguage } from "../lib/i18n";
+import "./moise-assistant.css";
 
 type Role = "student" | "teacher" | "admin";
 type Message = { role: "user" | "assistant"; content: string; id: string };
