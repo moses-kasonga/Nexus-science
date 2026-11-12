@@ -100,27 +100,35 @@ export default function MoiseAssistant({ role, accessToken }: { role: Role; acce
       const decoder = new TextDecoder();
       let buffer = "";
       let received = "";
+      let completed = false;
+      const consumeLine = (line: string) => {
+        if (!line.startsWith("data:")) return;
+        const raw = line.slice(5).trim();
+        if (!raw) return;
+        const packet = JSON.parse(raw) as { type?: string; text?: string; error?: string; content?: string };
+        if (packet.type === "delta" && packet.text) {
+          received += packet.text;
+          setMessages((current) => current.map((item) => item.id === assistantId ? { ...item, content: received } : item));
+        } else if (packet.type === "error") {
+          throw new Error(packet.error || t.error);
+        } else if (packet.type === "done" && typeof packet.content === "string") {
+          received = packet.content;
+          completed = true;
+        }
+      };
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
         buffer = lines.pop() ?? "";
-        for (const line of lines) {
-          if (!line.startsWith("data:")) continue;
-          const raw = line.slice(5).trim();
-          if (!raw) continue;
-          const packet = JSON.parse(raw) as { type?: string; text?: string; error?: string; content?: string };
-          if (packet.type === "delta" && packet.text) {
-            received += packet.text;
-            setMessages((current) => current.map((item) => item.id === assistantId ? { ...item, content: received } : item));
-          } else if (packet.type === "error") {
-            throw new Error(packet.error || t.error);
-          } else if (packet.type === "done" && typeof packet.content === "string") {
-            received = packet.content;
-          }
-        }
+        for (const line of lines) consumeLine(line);
       }
+      buffer += decoder.decode();
+      if (buffer.trim()) {
+        for (const line of buffer.split("\n")) consumeLine(line);
+      }
+      if (!completed) throw new Error("La réponse a été interrompue avant sa fin. Réessayez.");
       setMessages((current) => current.map((item) => item.id === assistantId ? { ...item, content: received || t.error } : item));
       setPendingAttachment(null);
     } catch (cause) {
