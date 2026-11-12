@@ -86,7 +86,13 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
         res.statusCode = 502;
         res.end(JSON.stringify({ error: "The MOÏSE service connection was interrupted." }));
       } else {
-        res.end();
+        try {
+          if (String(responseType || "").includes("text/event-stream")) {
+            res.write(`data: ${JSON.stringify({ type: "error", error: "La connexion avec MOÏSE a été interrompue." })}\\n\\n`);
+          }
+        } finally {
+          res.end();
+        }
       }
     }
   } catch {
@@ -95,7 +101,13 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
       res.setHeader("Content-Type", "application/json; charset=utf-8");
       res.end(JSON.stringify({ error: "Unable to reach the MOÏSE preview service." }));
     } else {
-      res.end();
+      try {
+        if (String(res.getHeader("Content-Type") || "").includes("text/event-stream")) {
+          res.write(`data: ${JSON.stringify({ type: "error", error: "La connexion avec MOÏSE a été interrompue." })}\\n\\n`);
+        }
+      } finally {
+        res.end();
+      }
     }
   }
 }
