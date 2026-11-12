@@ -15,7 +15,7 @@ const copy = {
   es: { title: "MOÏSE", subtitle: "Tu asistente inteligente en NEXUS SCIENCE", placeholder: "Haz una pregunta a MOÏSE…", send: "Enviar", newChat: "Nueva conversación", welcome: "¡Hola! Soy MOÏSE. ¿Cómo puedo ayudarte hoy?", student: "Puedo ayudarte a comprender las lecciones, repasar y resolver ejercicios.", teacher: "Puedo ayudarte a preparar lecciones, ejercicios y evaluaciones.", admin: "Puedo ayudarte a analizar y documentar la plataforma.", offline: "El servicio MOÏSE no está disponible temporalmente.", login: "Inicia sesión para utilizar MOÏSE.", sending: "MOÏSE está pensando…", error: "No se pudo enviar el mensaje. Inténtalo de nuevo.", limit: "Tu mensaje es demasiado largo." },
 };
 
-export default function MoiseAssistant({ role }: { role: Role }) {
+export default function MoiseAssistant({ role, accessToken }: { role: Role; accessToken: string }) {
   const language = useLanguage();
   const t = copy[language];
   const [messages, setMessages] = useState<Message[]>([]);
@@ -27,18 +27,26 @@ export default function MoiseAssistant({ role }: { role: Role }) {
 
   useEffect(() => {
     let active = true;
+    setConnected(null);
+    setError("");
     void (async () => {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) { if (active) setConnected(false); return; }
       try {
-        const response = await fetch(apiBase + "/nexus/chat/status", { headers: { Authorization: "Bearer " + token } });
-        const result = await response.json().catch(() => ({}));
-        if (active) setConnected(response.ok && result.connected === true);
-      } catch { if (active) setConnected(false); }
+        const response = await fetch(apiBase + "/nexus/chat/status", { headers: { Authorization: "Bearer " + accessToken } });
+        const result = await response.json().catch(() => ({})) as { connected?: boolean; error?: string };
+        if (!response.ok) {
+          if (active) { setConnected(false); setError(result.error || `Erreur de connexion MOÏSE (HTTP ${response.status}).`); }
+          return;
+        }
+        if (active) {
+          setConnected(result.connected === true);
+          if (result.connected !== true) setError("Le fournisseur IA n'est pas configuré sur ce serveur.");
+        }
+      } catch {
+        if (active) { setConnected(false); setError("Impossible de joindre le serveur MOÏSE (réseau ou CORS)."); }
+      }
     })();
     return () => { active = false; };
-  }, []);
+  }, [accessToken]);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, sending]);
 
@@ -55,12 +63,10 @@ export default function MoiseAssistant({ role }: { role: Role }) {
     setMessages([...next, { role: "assistant", content: "", id: assistantId }]);
     setSending(true);
     try {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) throw new Error(t.login);
+      if (!accessToken) throw new Error(t.login);
       const response = await fetch(apiBase + "/nexus/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + accessToken },
         body: JSON.stringify({ messages: next.map(({ role: messageRole, content }) => ({ role: messageRole, content })) }),
       });
       if (!response.ok || !response.body) {
