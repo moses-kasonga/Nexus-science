@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { supabase } from "../lib/supabase";
 import { useLanguage } from "../lib/i18n";
 import "./moise-assistant.css";
 
