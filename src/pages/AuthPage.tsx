@@ -55,6 +55,11 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
   const [diagnostic, setDiagnostic] = useState("");
   const [notice, setNotice] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordValue, setPasswordValue] = useState("");
+  const passwordHasLength = passwordValue.length >= 8;
+  const passwordHasNumber = /[0-9]/.test(passwordValue);
+  const passwordHasSpecial = /[^A-Za-z0-9\s]/.test(passwordValue);
+  const passwordIsValid = passwordHasLength && passwordHasNumber && passwordHasSpecial;
 
   useEffect(() => {
     if (!isReset) return;
@@ -79,7 +84,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
         return;
       }
       if (isReset && recoveryMode) {
-        if (password.length < 8) { setError(t.newPasswordShort); return; }
+        if (!passwordIsValid) { setError(t.passwordPolicy); return; }
         if (password !== confirmation) { setError(t.mismatch); return; }
         const { error: failure } = await supabase.auth.updateUser({ password });
         if (failure) {
@@ -106,7 +111,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
         return;
       }
       if (isRegister) {
-        if (password.length < 8) { setError(t.passwordShort); return; }
+        if (!passwordIsValid) { setError(t.passwordPolicy); return; }
         if (password !== confirmation) { setError(t.mismatch); return; }
         const firstName = String(form.get("first_name") ?? "").trim();
         const lastName = String(form.get("last_name") ?? "").trim();
@@ -197,10 +202,15 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
             <>
               <label>{isReset ? t.newPassword : t.password}
                 <span className="auth-password">
-                  <input name="password" type={showPassword ? "text" : "password"} autoComplete={isRegister || recoveryMode ? "new-password" : "current-password"} required minLength={isRegister || recoveryMode ? 8 : undefined} placeholder={isReset ? t.passwordPhReset : t.passwordPh} />
+                  <input name="password" type={showPassword ? "text" : "password"} autoComplete={isRegister || recoveryMode ? "new-password" : "current-password"} required minLength={isRegister || recoveryMode ? 8 : undefined} pattern={isRegister || recoveryMode ? "(?=.*[0-9])(?=.*[^A-Za-z0-9\\s]).{8,}" : undefined} title={isRegister || recoveryMode ? t.passwordPolicy : undefined} value={passwordValue} onChange={(event) => setPasswordValue(event.target.value)} placeholder={isReset ? t.passwordPhReset : t.passwordPh} />
                   <button type="button" className="password-toggle" onClick={() => setShowPassword(value => !value)} aria-label={showPassword ? t.hideLabel : t.showLabel}>{showPassword ? t.hide : t.show}</button>
                 </span>
               </label>
+              {(isRegister || recoveryMode) && <ul className="auth-password-rules" aria-live="polite">
+                <li className={passwordHasLength ? "is-valid" : ""}><span aria-hidden="true">{passwordHasLength ? "✓" : "○"}</span>{t.passwordRuleLength}</li>
+                <li className={passwordHasNumber ? "is-valid" : ""}><span aria-hidden="true">{passwordHasNumber ? "✓" : "○"}</span>{t.passwordRuleNumber}</li>
+                <li className={passwordHasSpecial ? "is-valid" : ""}><span aria-hidden="true">{passwordHasSpecial ? "✓" : "○"}</span>{t.passwordRuleSpecial}</li>
+              </ul>}
               {(isRegister || recoveryMode) && <label>{t.confirm}<input name="password_confirmation" type={showPassword ? "text" : "password"} autoComplete="new-password" required minLength={8} placeholder={t.confirmPh} /></label>}
             </>
           )}

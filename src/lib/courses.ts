@@ -3,7 +3,8 @@ import { supabase } from "./supabase";
 export type Language = "fr" | "en" | "pt" | "es";
 export type Schedule = { start_date: string; end_date: string; status: string };
 export type Course = { id: string; name: string; category: string; description: string | null; course_schedules: Schedule[] };
-export type Lesson = { id: string; title: string; content: string | null; order_index: number };
+export type LessonAsset = { id: string; asset_type: "image" | "video" | "pdf"; file_name: string; caption: string | null; signed_url: string };
+export type Lesson = { id: string; title: string; content: string | null; order_index: number; assets: LessonAsset[] };
 
 type TranslationRow = { entity_id: string; source_hash: string; source_language: Language; translated_content: Record<string, string | null> };
 
@@ -87,8 +88,23 @@ export async function fetchLessons(courseId: string, language: Language = "fr"):
     throw new Error(detail || "Les leçons n'ont pas pu être chargées.");
   }
   const lessons = (data ?? []) as Lesson[];
-  const cache = await getTranslations("lesson", lessons.map((lesson) => lesson.id), language);
-  return Promise.all(lessons.map((lesson) => translatedLesson(lesson, cache)));
+  const ids = lessons.map((lesson) => lesson.id);
+  const assetsByLesson = new Map<string, LessonAsset[]>();
+  if (ids.length > 0) {
+    const { data: assets, error: assetsError } = await supabase.from("lesson_assets")
+      .select("id,lesson_id,asset_type,file_name,caption,object_path")
+      .in("lesson_id", ids).order("created_at");
+    if (assetsError) throw new Error(assetsError.message || "Les ressources pédagogiques n'ont pas pu être chargées.");
+    for (const asset of assets ?? []) {
+      const { data: signed, error: signedError } = await supabase.storage.from("lesson-assets").createSignedUrl(asset.object_path, 3600);
+      if (signedError) throw new Error("Une ressource de la leçon n'a pas pu être ouverte.");
+      const item: LessonAsset = { id: asset.id, asset_type: asset.asset_type, file_name: asset.file_name, caption: asset.caption, signed_url: signed.signedUrl };
+      assetsByLesson.set(asset.lesson_id, [...(assetsByLesson.get(asset.lesson_id) ?? []), item]);
+    }
+  }
+  const cache = await getTranslations("lesson", ids, language);
+  const translated = await Promise.all(lessons.map((lesson) => translatedLesson(lesson, cache)));
+  return translated.map((lesson) => ({ ...lesson, assets: assetsByLesson.get(lesson.id) ?? [] }));
 }
 
 const dateFormats: Record<Language, Intl.DateTimeFormat> = {
@@ -102,6 +118,17 @@ export function formatRange(item: Schedule, language: Language = "fr"): string {
   const labels: Record<Language, string> = { fr: "du", en: "from", pt: "de", es: "del" };
   const until: Record<Language, string> = { fr: "au", en: "to", pt: "a", es: "al" };
   return `${labels[language]} ${formatDay(item.start_date, language)} ${until[language]} ${formatDay(item.end_date, language)}`;
+}
+
+
+export type FeaturedCourseSession = { course: Course; schedule: Schedule };
+
+/** Choisit uniquement les sessions publiées à partir de leurs dates réelles. */
+export function selectFeaturedSessions(courses: Course[], today = (() => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`; })()): { current: FeaturedCourseSession | null; next: FeaturedCourseSession | null } {
+  const sessions = courses.flatMap((course) => (course.course_schedules ?? []).filter((schedule) => schedule.status === "published").map((schedule) => ({ course, schedule })));
+  const current = sessions.filter(({ schedule }) => schedule.start_date <= today && schedule.end_date >= today).sort((a, b) => a.schedule.start_date.localeCompare(b.schedule.start_date) || a.course.name.localeCompare(b.course.name))[0] ?? null;
+  const next = sessions.filter(({ schedule }) => schedule.start_date > today).sort((a, b) => a.schedule.start_date.localeCompare(b.schedule.start_date) || a.course.name.localeCompare(b.course.name))[0] ?? null;
+  return { current, next };
 }
 
 export type SessionState = "upcoming" | "ongoing" | "past";

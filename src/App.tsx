@@ -19,6 +19,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminApplications from "./pages/admin/AdminApplications";
 import AdminTeachers from "./pages/admin/AdminTeachers";
 import AdminAssessments from "./pages/admin/AdminAssessments";
+import AdminHomepage from "./pages/admin/AdminHomepage";
 import { CoursesRoute, StudentsRoute } from "./pages/admin/routes";
 
 type Language = "fr" | "en" | "pt" | "es";
@@ -94,9 +95,7 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
         <nav aria-label={labels.mainNav}>
           <Link to="/" onClick={closeMenu}>{labels.home}</Link>
           <Link to="/#formations" onClick={closeMenu}>{labels.catalog}</Link>
-          <Link to={session ? "/candidature" : "/inscription"} onClick={closeMenu}>{labels.calendar}</Link>
-          {!session && <Link to="/inscription" onClick={closeMenu}>{labels.faq}</Link>}
-          {session && <Link to="/candidature" onClick={closeMenu}>{pagesText[language].menuApplication}</Link>}
+          {session && <Link to="/candidature" onClick={closeMenu}>{labels.calendar}</Link>}
           {session ? <Link to="/compte" onClick={closeMenu}>{labels.logout}</Link> : <Link to="/connexion" onClick={closeMenu}>{labels.login} ↗</Link>}
           {profile?.role === "admin" && <Link to="/admin" onClick={closeMenu}>{pagesText[language].menuAdmin}</Link>}
           {profile?.role === "teacher" && <Link to="/enseignant" onClick={closeMenu}>{pagesText[language].menuTeacher}</Link>}
@@ -157,6 +156,7 @@ export default function App() {
             <Route path="eleves" element={<StudentsRoute />} />
             <Route path="enseignants" element={<AdminTeachers />} />
             <Route path="evaluations" element={<AdminAssessments />} />
+            <Route path="accueil" element={<AdminHomepage />} />
           </Route>
           <Route path="*" element={<section className="wrap page"><h1>{pagesText[language].notFound}</h1><p><Link to="/">{pagesText[language].backToHome}</Link></p></section>} />
         </Routes>
