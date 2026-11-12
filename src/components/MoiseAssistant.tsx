@@ -78,10 +78,19 @@ export default function MoiseAssistant({ role, accessToken }: { role: Role; acce
     setSending(true);
     try {
       if (!accessToken) throw new Error(t.login);
+      const payloadMessages: Array<{ role: "user" | "assistant"; content: string; attachment?: { name: string; mimeType: string; dataUrl: string } }> =
+        next.map(({ role: messageRole, content }) => ({ role: messageRole, content }));
+      if (selectedFile) {
+        payloadMessages[payloadMessages.length - 1].attachment = {
+          name: selectedFile.name,
+          mimeType: selectedFile.type,
+          dataUrl: await readFileAsDataUrl(selectedFile),
+        };
+      }
       const response = await fetch(apiBase + "/nexus/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + accessToken },
-        body: JSON.stringify({ messages: await Promise.all(next.map(async ({ role: messageRole, content }, index) => ({ role: messageRole, content, ...(index === next.length - 1 && selectedFile ? { attachment: { name: selectedFile.name, mimeType: selectedFile.type, dataUrl: await readFileAsDataUrl(selectedFile) } } : {}) })) }),
+        body: JSON.stringify({ messages: payloadMessages }),
       });
       if (!response.ok || !response.body) {
         const result = await response.json().catch(() => ({}));
