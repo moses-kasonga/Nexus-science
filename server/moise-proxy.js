@@ -88,7 +88,7 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
       } else {
         try {
           if (String(responseType || "").includes("text/event-stream")) {
-            res.write(`data: ${JSON.stringify({ type: "error", error: "La connexion avec MOÏSE a été interrompue." })}\\n\\n`);
+            res.write(`data: ${JSON.stringify({ type: "error", error: "La connexion avec MOÏSE a été interrompue." })}\n\n`);
           }
         } finally {
           res.end();
@@ -103,7 +103,7 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
     } else {
       try {
         if (String(res.getHeader("Content-Type") || "").includes("text/event-stream")) {
-          res.write(`data: ${JSON.stringify({ type: "error", error: "La connexion avec MOÏSE a été interrompue." })}\\n\\n`);
+          res.write(`data: ${JSON.stringify({ type: "error", error: "La connexion avec MOÏSE a été interrompue." })}\n\n`);
         }
       } finally {
         res.end();
