@@ -1,0 +1,22 @@
+.moise-assistant{margin:2rem 0;padding:1.25rem;border:1px solid var(--border,#dbe2ea);border-radius:1.25rem;background:var(--card,#fff);color:var(--foreground,inherit);box-shadow:0 14px 36px rgba(15,23,42,.06)}
+.moise-assistant-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-bottom:1rem;border-bottom:1px solid var(--border,#dbe2ea)}
+.moise-assistant-header>div{display:flex;align-items:center;gap:.8rem;min-width:0}
+.moise-assistant-mark{display:grid;place-items:center;width:2.6rem;height:2.6rem;border-radius:50%;background:linear-gradient(135deg,#dbeafe,#ede9fe);color:#4338ca;font-size:1.4rem}
+.moise-assistant-header h2{margin:0;font-size:1.15rem}
+.moise-assistant-header p{margin:.2rem 0 0;color:var(--muted-foreground,#64748b);font-size:.8rem}
+.moise-new-chat{border:1px solid var(--border,#dbe2ea);border-radius:.7rem;background:transparent;padding:.55rem .75rem;font-size:.8rem;cursor:pointer}
+.moise-assistant-intro{padding:.9rem 0;color:var(--muted-foreground,#64748b);font-size:.88rem}
+.moise-message-list{display:flex;flex-direction:column;gap:.8rem;min-height:180px;max-height:460px;overflow:auto;padding:.25rem 0 1rem}
+.moise-welcome{margin:auto;text-align:center;max-width:34rem;padding:1.5rem;color:var(--muted-foreground,#64748b)}
+.moise-welcome strong{color:var(--foreground,inherit)}
+.moise-message{max-width:min(88%,46rem);padding:.75rem .9rem;border-radius:1rem;background:var(--muted,#f1f5f9);overflow-wrap:anywhere}
+.moise-message.user{align-self:flex-end;background:#e8edff;color:#172554}
+.moise-message.assistant{align-self:flex-start}
+.moise-message span{display:block;margin-bottom:.25rem;font-size:.7rem;font-weight:700;opacity:.7}
+.moise-message p{margin:0;white-space:pre-wrap;line-height:1.55;font-size:.9rem}
+.moise-assistant-form{display:flex;align-items:flex-end;gap:.65rem;border:1px solid var(--border,#cbd5e1);border-radius:1rem;padding:.6rem}
+.moise-assistant-form textarea{flex:1;min-width:0;resize:vertical;border:0;outline:0;background:transparent;color:inherit;font:inherit;font-size:.9rem}
+.moise-assistant-form button{border:0;border-radius:.75rem;background:var(--primary,#243b80);color:white;padding:.7rem .95rem;font-weight:600;cursor:pointer}
+.moise-assistant-form button:disabled{opacity:.45;cursor:not-allowed}
+.moise-assistant-error{margin:.5rem 0;color:#b91c1c;font-size:.85rem}
+@media(max-width:560px){.moise-assistant{padding:.85rem}.moise-assistant-header{align-items:flex-start;flex-direction:column}.moise-new-chat{align-self:flex-end}.moise-message{max-width:96%}.moise-assistant-form{align-items:stretch;flex-direction:column}.moise-assistant-form button{align-self:flex-end}}
