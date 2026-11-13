@@ -20,6 +20,20 @@ const respond = (body: unknown, status: number, origin: string | null) =>
     headers: { ...corsHeaders(origin), "Content-Type": "application/json" },
   });
 
+const getDefaultKey = (envName: string): string | undefined => {
+  const raw = Deno.env.get(envName);
+  if (!raw) return undefined;
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && typeof parsed.default === "string") {
+      return parsed.default;
+    }
+  } catch {
+    // A plain key value is also accepted for compatibility with custom environments.
+  }
+  return raw;
+};
+
 Deno.serve(async (request) => {
   const origin = request.headers.get("Origin");
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(origin) });
@@ -27,8 +41,9 @@ Deno.serve(async (request) => {
 
   const authorization = request.headers.get("Authorization");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  // Prefer legacy variables when present; otherwise use the new Supabase-managed key maps.
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? getDefaultKey("SUPABASE_PUBLISHABLE_KEYS");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? getDefaultKey("SUPABASE_SECRET_KEYS");
   const smtpHost = Deno.env.get("SMTP_HOST") ?? "smtp.gmail.com";
   const smtpPort = Number(Deno.env.get("SMTP_PORT") ?? "465");
   const smtpUser = Deno.env.get("SMTP_USER");
@@ -36,6 +51,12 @@ Deno.serve(async (request) => {
   const fromEmail = Deno.env.get("FEEDBACK_FROM_EMAIL") ?? smtpUser;
 
   if (!authorization?.startsWith("Bearer ") || !supabaseUrl || !anonKey || !serviceKey) {
+    console.error("SMTP test missing prerequisites:", {
+      hasAuthorization: Boolean(authorization?.startsWith("Bearer ")),
+      hasSupabaseUrl: Boolean(supabaseUrl),
+      hasPublishableKey: Boolean(anonKey),
+      hasSecretKey: Boolean(serviceKey),
+    });
     return respond({ error: "Session ou configuration Supabase manquante." }, 401, origin);
   }
   if (!smtpUser || !smtpPass || !fromEmail || fromEmail.toLowerCase() !== smtpUser.toLowerCase() ||
