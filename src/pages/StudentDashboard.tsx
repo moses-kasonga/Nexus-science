@@ -4,6 +4,7 @@ import { displayName, useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 import { dateLocale, useLanguage, useSetLanguage, useT } from "../lib/i18n";
 import { pagesText } from "../lib/translations";
+import StudentFeedback from "../components/StudentFeedback";
 
 type StudentCourse = {
   id: string;
@@ -24,12 +25,14 @@ const dateLabel = (value: string, locale: string) => new Intl.DateTimeFormat(loc
 }).format(new Date(value + "T12:00:00"));
 
 export default function StudentDashboard() {
-  const { session, profile, loading } = useAuth();
+  const { session, profile, loading, signOut } = useAuth();
   const t = useT(pagesText);
   const language = useLanguage();
   const setLanguage = useSetLanguage();
   const locale = dateLocale[language];
   const languageLabel = { fr:"Langue", en:"Language", pt:"Idioma", es:"Idioma" }[language];
+  const candidateLabel = { fr:"Candidature", en:"Application", pt:"Candidatura", es:"Solicitud" }[language];
+  const logoutLabel = { fr:"Se déconnecter", en:"Sign out", pt:"Terminar sessão", es:"Cerrar sesión" }[language];
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
@@ -81,6 +84,9 @@ export default function StudentDashboard() {
           <a className="student-nav-link" href="#mes-cours">▤ <span>{t.myCourses}</span></a>
           <span className="student-nav-link disabled" aria-disabled="true">✎ <span>{t.exercises}</span><small>{t.soon}</small></span>
           <span className="student-nav-link disabled" aria-disabled="true">▦ <span>{t.calendar}</span><small>{t.soon}</small></span>
+          <Link className="student-nav-link" to="/candidature">✎ <span>{candidateLabel}</span></Link>
+          <a className="student-nav-link" href="#student-feedback-title">✉ <span>Feedback</span></a>
+          <button className="student-nav-link student-logout-button" type="button" onClick={() => { if (window.confirm(logoutLabel + " ?")) void signOut(); }}>{logoutLabel}</button>
         </nav>
         <div className="student-sidebar-bottom">
           <Link to="/compte">{t.myProfile}</Link>
@@ -105,6 +111,10 @@ export default function StudentDashboard() {
         <section className="student-welcome">
           <div><p className="student-kicker">{t.welcomeKicker}</p><h2>{t.hello} {name} 👋</h2><p>{t.welcomeText}</p></div>
           <span className="student-welcome-mark" aria-hidden="true">🧬</span>
+        </section>
+
+        <section className="student-section student-next">
+          <div><p className="student-kicker">MOÏSE</p><h2>{language === "fr" ? "Votre assistant pédagogique" : language === "pt" ? "O seu assistente pedagógico" : language === "es" ? "Tu asistente pedagógico" : "Your learning assistant"}</h2><p className="student-muted">{language === "fr" ? "Posez vos questions sur les cours, révisez et travaillez vos exercices avec MOÏSE." : language === "pt" ? "Faça perguntas sobre as aulas, reveja e pratique exercícios com MOÏSE." : language === "es" ? "Pregunta sobre las lecciones, repasa y practica ejercicios con MOÏSE." : "Ask questions about lessons, revise and practise exercises with MOÏSE."}</p><Link className="student-button" to="/moise">{language === "fr" ? "Ouvrir MOÏSE →" : language === "pt" ? "Abrir MOÏSE →" : language === "es" ? "Abrir MOÏSE →" : "Open MOÏSE →"}</Link></div>
         </section>
 
         <section className="student-stats" aria-label={t.summary}>
@@ -138,6 +148,7 @@ export default function StudentDashboard() {
           <div><p className="student-kicker">{t.next}</p><h2>{t.nextSession}</h2></div>
           {nextSession ? <div className="student-session"><strong>{nextSession.courseName}</strong><span>{dateLabel(nextSession.start_date, locale)} – {dateLabel(nextSession.end_date, locale)}</span><Link to={`/cours/${nextSession.courseId}`}>{t.seeCourse}</Link></div> : <p className="student-muted">{t.sessionsHere}</p>}
         </section>
+        <StudentFeedback />
       </main>
     </div>
   );

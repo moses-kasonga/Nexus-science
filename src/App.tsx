@@ -20,7 +20,11 @@ import AdminApplications from "./pages/admin/AdminApplications";
 import AdminTeachers from "./pages/admin/AdminTeachers";
 import AdminAssessments from "./pages/admin/AdminAssessments";
 import AdminHomepage from "./pages/admin/AdminHomepage";
+import AdminFeedback from "./pages/admin/AdminFeedback";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminCalendar from "./pages/admin/AdminCalendar";
 import { CoursesRoute, StudentsRoute } from "./pages/admin/routes";
+import MoiseAssistantPage from "./pages/MoiseAssistantPage";
 
 type Language = "fr" | "en" | "pt" | "es";
 
@@ -28,7 +32,7 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
   language: Language; setLanguage: (value: Language) => void;
   dark: boolean; toggleTheme: () => void; search: string; setSearch: (value: string) => void;
 }) {
-  const { session, profile } = useAuth();
+  const { session, profile, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   useEffect(() => {
@@ -43,10 +47,10 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
     };
   }, [menuOpen]);
   const labels = {
-    fr: { home: "Accueil", search: "Rechercher", menu: "Menu", close: "Fermer", calendar: "Candidature", catalog: "Catalogue des formations", faq: "Créer un compte candidat", login: "Se connecter", logout: "Mon compte", discover: "Découvrez", journey: "Construire son parcours scientifique", find: "Trouver une formation", learn: "Apprendre et s’évaluer", success: "Préparer sa réussite scientifique", mission: "Notre mission", platform: "La plateforme", disciplines: "Disciplines scientifiques", path: "Votre parcours", courses: "Les formations", practice: "Apprendre par la pratique", theme: "Mode sombre / clair", language:"Choisir la langue", mainNav:"Menu principal", lightMode:"Activer le thème clair", darkMode:"Activer le thème sombre" },
-    en: { home: "Home", search: "Search", menu: "Menu", close: "Close", calendar: "Application", catalog: "Course catalogue", faq: "Create candidate account", login: "Sign in", logout: "My account", discover: "Discover", journey: "Build your scientific journey", find: "Find a course", learn: "Learn and assess", success: "Prepare for scientific success", mission: "Our mission", platform: "The platform", disciplines: "Scientific disciplines", path: "Your journey", courses: "Courses", practice: "Learn through practice", theme: "Dark / light mode", language:"Choose language", mainNav:"Main menu", lightMode:"Enable light theme", darkMode:"Enable dark theme" },
-    pt: { home: "Início", search: "Pesquisar", menu: "Menu", close: "Fechar", calendar: "Candidatura", catalog: "Catálogo de cursos", faq: "Criar conta de candidato", login: "Entrar", logout: "A minha conta", discover: "Descubra", journey: "Construa o seu percurso científico", find: "Encontrar um curso", learn: "Aprender e avaliar", success: "Preparar o sucesso científico", mission: "A nossa missão", platform: "A plataforma", disciplines: "Disciplinas científicas", path: "O seu percurso", courses: "Cursos", practice: "Aprender na prática", theme: "Modo escuro / claro", language:"Escolher idioma", mainNav:"Menu principal", lightMode:"Ativar tema claro", darkMode:"Ativar tema escuro" },
-    es: { home: "Inicio", search: "Buscar", menu: "Menú", close: "Cerrar", calendar: "Solicitud", catalog: "Catálogo de cursos", faq: "Crear cuenta de candidato", login: "Iniciar sesión", logout: "Mi cuenta", discover: "Descubre", journey: "Construye tu recorrido científico", find: "Encontrar un curso", learn: "Aprender y evaluar", success: "Preparar el éxito científico", mission: "Nuestra misión", platform: "La plataforma", disciplines: "Disciplinas científicas", path: "Tu recorrido", courses: "Cursos", practice: "Aprender con la práctica", theme: "Modo oscuro / claro", language:"Elegir idioma", mainNav:"Menú principal", lightMode:"Activar tema claro", darkMode:"Activar tema oscuro" }
+    fr: { home: "Accueil", search: "Rechercher", menu: "Menu", close: "Fermer", calendar: "Candidature", catalog: "Catalogue des formations", faq: "Créer un compte candidat", login: "Se connecter", logout: "Se déconnecter", discover: "Découvrez", journey: "Construire son parcours scientifique", find: "Trouver une formation", learn: "Apprendre et s’évaluer", success: "Préparer sa réussite scientifique", mission: "Notre mission", platform: "La plateforme", disciplines: "Disciplines scientifiques", path: "Votre parcours", courses: "Les formations", practice: "Apprendre par la pratique", theme: "Mode sombre / clair", language:"Choisir la langue", mainNav:"Menu principal", lightMode:"Activer le thème clair", darkMode:"Activer le thème sombre" },
+    en: { home: "Home", search: "Search", menu: "Menu", close: "Close", calendar: "Application", catalog: "Course catalogue", faq: "Create candidate account", login: "Sign in", logout: "Sign out", discover: "Discover", journey: "Build your scientific journey", find: "Find a course", learn: "Learn and assess", success: "Prepare for scientific success", mission: "Our mission", platform: "The platform", disciplines: "Scientific disciplines", path: "Your journey", courses: "Courses", practice: "Learn through practice", theme: "Dark / light mode", language:"Choose language", mainNav:"Main menu", lightMode:"Enable light theme", darkMode:"Enable dark theme" },
+    pt: { home: "Início", search: "Pesquisar", menu: "Menu", close: "Fechar", calendar: "Candidatura", catalog: "Catálogo de cursos", faq: "Criar conta de candidato", login: "Entrar", logout: "Terminar sessão", discover: "Descubra", journey: "Construa o seu percurso científico", find: "Encontrar um curso", learn: "Aprender e avaliar", success: "Preparar o sucesso científico", mission: "A nossa missão", platform: "A plataforma", disciplines: "Disciplinas científicas", path: "O seu percurso", courses: "Cursos", practice: "Aprender na prática", theme: "Modo escuro / claro", language:"Escolher idioma", mainNav:"Menu principal", lightMode:"Ativar tema claro", darkMode:"Ativar tema escuro" },
+    es: { home: "Inicio", search: "Buscar", menu: "Menú", close: "Cerrar", calendar: "Solicitud", catalog: "Catálogo de cursos", faq: "Crear cuenta de candidato", login: "Iniciar sesión", logout: "Cerrar sesión", discover: "Descubre", journey: "Construye tu recorrido científico", find: "Encontrar un curso", learn: "Aprender y evaluar", success: "Preparar el éxito científico", mission: "Nuestra misión", platform: "La plataforma", disciplines: "Disciplinas científicas", path: "Tu recorrido", courses: "Cursos", practice: "Aprender con la práctica", theme: "Modo oscuro / claro", language:"Elegir idioma", mainNav:"Menú principal", lightMode:"Activar tema claro", darkMode:"Activar tema oscuro" }
   }[language];
   const closeMenu = () => setMenuOpen(false);
   return (
@@ -96,7 +100,7 @@ function Header({ language, setLanguage, dark, toggleTheme, search, setSearch }:
           <Link to="/" onClick={closeMenu}>{labels.home}</Link>
           <Link to="/#formations" onClick={closeMenu}>{labels.catalog}</Link>
           {session && <Link to="/candidature" onClick={closeMenu}>{labels.calendar}</Link>}
-          {session ? <Link to="/compte" onClick={closeMenu}>{labels.logout}</Link> : <Link to="/connexion" onClick={closeMenu}>{labels.login} ↗</Link>}
+          {session ? <button className="menu-auth-action" type="button" onClick={() => { if (window.confirm(labels.logout + " ?")) { closeMenu(); void signOut(); } }}>{labels.logout}</button> : <Link to="/connexion" onClick={closeMenu}>{labels.login} ↗</Link>}
           {profile?.role === "admin" && <Link to="/admin" onClick={closeMenu}>{pagesText[language].menuAdmin}</Link>}
           {profile?.role === "teacher" && <Link to="/enseignant" onClick={closeMenu}>{pagesText[language].menuTeacher}</Link>}
         </nav>
@@ -144,6 +148,7 @@ export default function App() {
           <Route path="/inscription" element={<AuthPage mode="register" />} />
           <Route path="/mot-de-passe-oublie" element={<AuthPage mode="reset" />} />
           <Route path="/compte" element={<Account />} />
+          <Route path="/moise" element={<MoiseAssistantPage />} />
           <Route path="/candidature" element={<CandidateApplicationPage />} />
           <Route path="/espace-etudiant" element={<StudentDashboard />} />
           <Route path="/enseignant/invitation" element={<TeacherInvitation />} />
@@ -157,6 +162,9 @@ export default function App() {
             <Route path="enseignants" element={<AdminTeachers />} />
             <Route path="evaluations" element={<AdminAssessments />} />
             <Route path="accueil" element={<AdminHomepage />} />
+            <Route path="feedback" element={<AdminFeedback />} />
+            <Route path="utilisateurs" element={<AdminUsers />} />
+            <Route path="calendrier" element={<AdminCalendar />} />
           </Route>
           <Route path="*" element={<section className="wrap page"><h1>{pagesText[language].notFound}</h1><p><Link to="/">{pagesText[language].backToHome}</Link></p></section>} />
         </Routes>
