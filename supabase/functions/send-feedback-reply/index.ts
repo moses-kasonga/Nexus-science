@@ -77,7 +77,7 @@ Deno.serve(async (request) => {
   if (!authorization?.startsWith("Bearer ") || !supabaseUrl || !anonKey || !serviceKey) {
     return json({ error: "Configuration ou session manquante." }, 401);
   }
-  if (!smtpHost || !smtpUser || !smtpPass || !fromEmail || ![465, 587].includes(smtpPort)) {
+  if (!smtpHost || !smtpUser || !smtpPass || !fromEmail || fromEmail.toLowerCase() !== smtpUser.toLowerCase() || ![465, 587].includes(smtpPort)) {
     return json({ error: "La configuration SMTP de NEXUS SCIENCE est incomplète." }, 503);
   }
 
@@ -127,7 +127,6 @@ Deno.serve(async (request) => {
   const studentUrl = new URL("/espace-etudiant", appOrigin).toString();
   const safeBody = escapeHtml(body).replace(/\\n/g, "<br>");
   const safeSubject = escapeHtml(original.subject);
-  const safeName = escapeHtml(studentName);
   const html = `
     <div style="font-family:Arial,sans-serif;line-height:1.65;color:#172b3a;max-width:640px;margin:0 auto">
       <p>${escapeHtml(copy.greeting(studentName))}</p>
