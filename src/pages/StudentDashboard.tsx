@@ -25,12 +25,14 @@ const dateLabel = (value: string, locale: string) => new Intl.DateTimeFormat(loc
 }).format(new Date(value + "T12:00:00"));
 
 export default function StudentDashboard() {
-  const { session, profile, loading } = useAuth();
+  const { session, profile, loading, signOut } = useAuth();
   const t = useT(pagesText);
   const language = useLanguage();
   const setLanguage = useSetLanguage();
   const locale = dateLocale[language];
   const languageLabel = { fr:"Langue", en:"Language", pt:"Idioma", es:"Idioma" }[language];
+  const candidateLabel = { fr:"Candidature", en:"Application", pt:"Candidatura", es:"Solicitud" }[language];
+  const logoutLabel = { fr:"Se déconnecter", en:"Sign out", pt:"Terminar sessão", es:"Cerrar sesión" }[language];
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
@@ -82,11 +84,13 @@ export default function StudentDashboard() {
           <a className="student-nav-link" href="#mes-cours">▤ <span>{t.myCourses}</span></a>
           <span className="student-nav-link disabled" aria-disabled="true">✎ <span>{t.exercises}</span><small>{t.soon}</small></span>
           <span className="student-nav-link disabled" aria-disabled="true">▦ <span>{t.calendar}</span><small>{t.soon}</small></span>
+          <Link className="student-nav-link" to="/candidature">✎ <span>{candidateLabel}</span></Link>
           <a className="student-nav-link" href="#student-feedback-title">✉ <span>Feedback</span></a>
         </nav>
         <div className="student-sidebar-bottom">
           <Link to="/compte">{t.myProfile}</Link>
           <Link to="/">{t.publicSite}</Link>
+          <button className="student-logout-button" type="button" onClick={() => { if (window.confirm(logoutLabel + " ?")) void signOut(); }}>{logoutLabel}</button>
         </div>
       </aside>
 
