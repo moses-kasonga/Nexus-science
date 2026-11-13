@@ -82,6 +82,7 @@ export default function StudentDashboard() {
           <a className="student-nav-link" href="#mes-cours">▤ <span>{t.myCourses}</span></a>
           <span className="student-nav-link disabled" aria-disabled="true">✎ <span>{t.exercises}</span><small>{t.soon}</small></span>
           <span className="student-nav-link disabled" aria-disabled="true">▦ <span>{t.calendar}</span><small>{t.soon}</small></span>
+          <a className="student-nav-link" href="#student-feedback-title">✉ <span>Feedback</span></a>
         </nav>
         <div className="student-sidebar-bottom">
           <Link to="/compte">{t.myProfile}</Link>
