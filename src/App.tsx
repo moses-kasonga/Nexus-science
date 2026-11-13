@@ -21,6 +21,7 @@ import AdminTeachers from "./pages/admin/AdminTeachers";
 import AdminAssessments from "./pages/admin/AdminAssessments";
 import AdminHomepage from "./pages/admin/AdminHomepage";
 import AdminFeedback from "./pages/admin/AdminFeedback";
+import AdminSmtpTest from "./pages/admin/AdminSmtpTest";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminCalendar from "./pages/admin/AdminCalendar";
 import { CoursesRoute, StudentsRoute } from "./pages/admin/routes";
@@ -163,6 +164,7 @@ export default function App() {
             <Route path="evaluations" element={<AdminAssessments />} />
             <Route path="accueil" element={<AdminHomepage />} />
             <Route path="feedback" element={<AdminFeedback />} />
+            <Route path="smtp-test" element={<AdminSmtpTest />} />
             <Route path="utilisateurs" element={<AdminUsers />} />
             <Route path="calendrier" element={<AdminCalendar />} />
           </Route>
