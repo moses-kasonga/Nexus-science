@@ -68,7 +68,19 @@ Deno.serve(async (request) => {
     global: { headers: { Authorization: authorization } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
+  // New sb_secret keys belong in the apikey header only, never Authorization.
+  // Older service_role JWT keys still use the standard supabase-js behavior.
+  const adminFetch = serviceKey.startsWith("sb_secret_")
+    ? (input: RequestInfo | URL, init?: RequestInit) => {
+        const headers = new Headers(init?.headers);
+        headers.delete("Authorization");
+        headers.set("apikey", serviceKey);
+        return fetch(input, { ...init, headers });
+      }
+    : fetch;
+
   const admin = createClient(supabaseUrl, serviceKey, {
+    global: { fetch: adminFetch },
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
