@@ -4,6 +4,7 @@ import { displayName, useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 import { dateLocale, useLanguage, useSetLanguage, useT } from "../lib/i18n";
 import { pagesText } from "../lib/translations";
+import StudentFeedback from "../components/StudentFeedback";
 
 type StudentCourse = {
   id: string;
@@ -138,6 +139,8 @@ export default function StudentDashboard() {
           <div><p className="student-kicker">{t.next}</p><h2>{t.nextSession}</h2></div>
           {nextSession ? <div className="student-session"><strong>{nextSession.courseName}</strong><span>{dateLabel(nextSession.start_date, locale)} – {dateLabel(nextSession.end_date, locale)}</span><Link to={`/cours/${nextSession.courseId}`}>{t.seeCourse}</Link></div> : <p className="student-muted">{t.sessionsHere}</p>}
         </section>
+
+        <StudentFeedback />
       </main>
     </div>
   );
