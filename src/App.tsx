@@ -19,6 +19,8 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminApplications from "./pages/admin/AdminApplications";
 import AdminTeachers from "./pages/admin/AdminTeachers";
 import AdminAssessments from "./pages/admin/AdminAssessments";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminCalendar from "./pages/admin/AdminCalendar";
 import { CoursesRoute, StudentsRoute } from "./pages/admin/routes";
 
 type Language = "fr" | "en" | "pt" | "es";
@@ -158,6 +160,8 @@ export default function App() {
             <Route path="eleves" element={<StudentsRoute />} />
             <Route path="enseignants" element={<AdminTeachers />} />
             <Route path="evaluations" element={<AdminAssessments />} />
+            <Route path="utilisateurs" element={<AdminUsers />} />
+            <Route path="calendrier" element={<AdminCalendar />} />
           </Route>
           <Route path="*" element={<section className="wrap page"><h1>{pagesText[language].notFound}</h1><p><Link to="/">{pagesText[language].backToHome}</Link></p></section>} />
         </Routes>

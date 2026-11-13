@@ -10,7 +10,7 @@ function fail(error: { message: string } | null, fallback: string): never {
 
 export type AdminSchedule = { id: string; start_date: string; end_date: string; status: "scheduled" | "published" | "cancelled" };
 export type AdminCourse = { id: string; name: string; category: string; description: string | null; published: boolean; course_schedules: AdminSchedule[]; course_teachers: { teacher_id: string }[] };
-export type PersonRow = { id: string; first_name: string | null; last_name: string | null; email: string | null; role: Role };
+export type PersonRow = { id: string; first_name: string | null; last_name: string | null; email: string | null; role: Role; created_at?: string };
 export type EnrollmentRow = { id: string; student_id: string; status: "active" | "revoked"; created_at: string };
 export type InvitationRow = { id: string; email: string; expires_at: string; used_at: string | null; revoked_at: string | null; created_at: string };
 export type ApplicationRow = { id: string; user_id: string; specialty: string | null; qualifications: string | null; experience: string | null; motivation: string | null; status: "pending" | "approved" | "rejected"; rejection_reason: string | null; created_at: string };
@@ -68,7 +68,7 @@ export async function deleteSchedule(id: string): Promise<void> {
 
 // ---------- Personnes ----------
 export async function listPeople(): Promise<PersonRow[]> {
-  const { data, error } = await supabase.from("profiles").select("id, first_name, last_name, email, role").order("created_at", { ascending: true });
+  const { data, error } = await supabase.from("profiles").select("id, first_name, last_name, email, role, created_at").order("created_at", { ascending: true });
   if (error) fail(error, message("peopleLoad"));
   return (data ?? []) as PersonRow[];
 }

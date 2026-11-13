@@ -21,12 +21,12 @@ export default function AdminLayout() {
           <span className="admin-nav-label">{labels[3]}</span>
           <NavLink to="/admin/candidatures">{labels[4]}</NavLink>
           <span className="admin-nav-label">{labels[5]}</span>
-          <span className="admin-nav-item is-planned">{labels[6]} <small>{labels[7]}</small></span>
+          <NavLink to="/admin/utilisateurs">{labels[6]}</NavLink>
           <NavLink to="/admin/enseignants">{labels[8]}</NavLink>
           <NavLink to="/admin/formations">{labels[9]}</NavLink>
           <NavLink to="/admin/eleves">{labels[10]}</NavLink>
           <NavLink to="/admin/evaluations">{labels[11]}</NavLink>
-          <span className="admin-nav-item is-planned">{labels[12]} <small>{labels[7]}</small></span>
+          <NavLink to="/admin/calendrier">{labels[12]}</NavLink>
           <span className="admin-nav-item is-planned">{labels[13]} <small>{labels[7]}</small></span>
         </nav>
         <div className="admin-sidebar-footer">
