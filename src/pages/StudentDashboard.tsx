@@ -4,7 +4,6 @@ import { displayName, useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 import { dateLocale, useLanguage, useSetLanguage, useT } from "../lib/i18n";
 import { pagesText } from "../lib/translations";
-import StudentFeedback from "../components/StudentFeedback";
 
 type StudentCourse = {
   id: string;
@@ -82,7 +81,6 @@ export default function StudentDashboard() {
           <a className="student-nav-link" href="#mes-cours">▤ <span>{t.myCourses}</span></a>
           <span className="student-nav-link disabled" aria-disabled="true">✎ <span>{t.exercises}</span><small>{t.soon}</small></span>
           <span className="student-nav-link disabled" aria-disabled="true">▦ <span>{t.calendar}</span><small>{t.soon}</small></span>
-          <a className="student-nav-link" href="#student-feedback-title">✉ <span>Feedback</span></a>
         </nav>
         <div className="student-sidebar-bottom">
           <Link to="/compte">{t.myProfile}</Link>
@@ -140,8 +138,6 @@ export default function StudentDashboard() {
           <div><p className="student-kicker">{t.next}</p><h2>{t.nextSession}</h2></div>
           {nextSession ? <div className="student-session"><strong>{nextSession.courseName}</strong><span>{dateLabel(nextSession.start_date, locale)} – {dateLabel(nextSession.end_date, locale)}</span><Link to={`/cours/${nextSession.courseId}`}>{t.seeCourse}</Link></div> : <p className="student-muted">{t.sessionsHere}</p>}
         </section>
-
-        <StudentFeedback />
       </main>
     </div>
   );
