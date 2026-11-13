@@ -20,6 +20,7 @@ import AdminApplications from "./pages/admin/AdminApplications";
 import AdminTeachers from "./pages/admin/AdminTeachers";
 import AdminAssessments from "./pages/admin/AdminAssessments";
 import AdminHomepage from "./pages/admin/AdminHomepage";
+import AdminFeedback from "./pages/admin/AdminFeedback";
 import { CoursesRoute, StudentsRoute } from "./pages/admin/routes";
 import MoiseAssistantPage from "./pages/MoiseAssistantPage";
 
@@ -159,6 +160,7 @@ export default function App() {
             <Route path="enseignants" element={<AdminTeachers />} />
             <Route path="evaluations" element={<AdminAssessments />} />
             <Route path="accueil" element={<AdminHomepage />} />
+            <Route path="feedback" element={<AdminFeedback />} />
           </Route>
           <Route path="*" element={<section className="wrap page"><h1>{pagesText[language].notFound}</h1><p><Link to="/">{pagesText[language].backToHome}</Link></p></section>} />
         </Routes>
