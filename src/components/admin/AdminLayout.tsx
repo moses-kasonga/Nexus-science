@@ -28,7 +28,7 @@ export default function AdminLayout() {
           <NavLink to="/admin/eleves">{labels[10]}</NavLink>
           <NavLink to="/admin/evaluations">{labels[11]}</NavLink>
           <NavLink to="/admin/calendrier">{labels[12]}</NavLink>
-          <NavLink to="/admin/feedback">{labels[13]}</NavLink>
+          <span className="admin-nav-item is-planned">{labels[13]} <small>{labels[7]}</small></span>
         </nav>
         <div className="admin-sidebar-footer">
           <span className="admin-user">{displayName(profile, session?.user.email)}</span>
