@@ -86,11 +86,11 @@ export default function StudentDashboard() {
           <span className="student-nav-link disabled" aria-disabled="true">▦ <span>{t.calendar}</span><small>{t.soon}</small></span>
           <Link className="student-nav-link" to="/candidature">✎ <span>{candidateLabel}</span></Link>
           <a className="student-nav-link" href="#student-feedback-title">✉ <span>Feedback</span></a>
+          <button className="student-nav-link student-logout-button" type="button" onClick={() => { if (window.confirm(logoutLabel + " ?")) void signOut(); }}>{logoutLabel}</button>
         </nav>
         <div className="student-sidebar-bottom">
           <Link to="/compte">{t.myProfile}</Link>
           <Link to="/">{t.publicSite}</Link>
-          <button className="student-logout-button" type="button" onClick={() => { if (window.confirm(logoutLabel + " ?")) void signOut(); }}>{logoutLabel}</button>
         </div>
       </aside>
 
