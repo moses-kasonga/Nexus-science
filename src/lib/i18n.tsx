@@ -8,3 +8,8 @@ export const useLanguage = (): Language => useContext(LanguageContext);
 export const useSetLanguage = (): ((language: Language) => void) => useContext(LanguageSetterContext);
 export function useT<T>(dictionary: Record<Language, T>): T { return dictionary[useLanguage()]; }
 export const dateLocale: Record<Language, string> = { fr: "fr-FR", en: "en-GB", pt: "pt-PT", es: "es-ES" };
+
+/** Langue active lisible hors composants React (messages d'erreur des fonctions d'accès aux données). Mise à jour par App. */
+let currentLanguage: Language = "fr";
+export const activeLanguage = (): Language => currentLanguage;
+export const setActiveLanguage = (language: Language): void => { currentLanguage = language; };

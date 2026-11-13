@@ -9,7 +9,7 @@ import Account from "./pages/Account";
 import CandidateApplicationPage from "./pages/CandidateApplication";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherInvitation from "./pages/TeacherInvitation";
-import { LanguageContext, LanguageSetterContext } from "./lib/i18n";
+import { LanguageContext, LanguageSetterContext, setActiveLanguage } from "./lib/i18n";
 import { pagesText } from "./lib/translations";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import TeacherCourse from "./pages/teacher/TeacherCourse";
@@ -19,6 +19,8 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminApplications from "./pages/admin/AdminApplications";
 import AdminTeachers from "./pages/admin/AdminTeachers";
 import AdminAssessments from "./pages/admin/AdminAssessments";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminCalendar from "./pages/admin/AdminCalendar";
 import AdminHomepage from "./pages/admin/AdminHomepage";
 import { CoursesRoute, StudentsRoute } from "./pages/admin/routes";
 
@@ -126,6 +128,7 @@ export default function App() {
   const { session, profile } = useAuth();
   const studentArea = location.pathname.startsWith("/espace-etudiant");
   const [language, setLanguage] = useState<Language>(() => { const saved = window.localStorage.getItem("nexus-language"); return saved === "en" || saved === "pt" || saved === "es" ? saved : "fr"; });
+  setActiveLanguage(language); // lu par les messages d'erreur hors composants
   const changeLanguage = (value: Language) => { window.localStorage.setItem("nexus-language", value); setLanguage(value); if (session) void supabase.from("profiles").update({ preferred_language: value }).eq("id", session.user.id); };
   useEffect(() => { const preferred = profile?.preferred_language; if (preferred === "fr" || preferred === "en" || preferred === "pt" || preferred === "es") { setLanguage(preferred); window.localStorage.setItem("nexus-language", preferred); } }, [profile?.preferred_language]);
   const [dark, setDark] = useState(() => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false);
@@ -156,6 +159,8 @@ export default function App() {
             <Route path="eleves" element={<StudentsRoute />} />
             <Route path="enseignants" element={<AdminTeachers />} />
             <Route path="evaluations" element={<AdminAssessments />} />
+            <Route path="utilisateurs" element={<AdminUsers />} />
+            <Route path="calendrier" element={<AdminCalendar />} />
             <Route path="accueil" element={<AdminHomepage />} />
           </Route>
           <Route path="*" element={<section className="wrap page"><h1>{pagesText[language].notFound}</h1><p><Link to="/">{pagesText[language].backToHome}</Link></p></section>} />
