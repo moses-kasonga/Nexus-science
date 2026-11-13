@@ -5,10 +5,10 @@ import { useLanguage } from "../../lib/i18n";
 export default function AdminLayout() {
   const language = useLanguage();
   const labels = {
-    fr: ["Navigation administrateur","Administration","Vue d’ensemble","Admissions","Dossiers candidats","Gestion","Utilisateurs","À venir","Enseignants","Formations","Accès des élèves","Évaluations","Calendrier","Feedback","Retour au site public","Se déconnecter","Espace sécurisé","Administrateur"],
-    en: ["Administrator navigation","Administration","Overview","Admissions","Candidate applications","Management","Users","Coming soon","Teachers","Courses","Student access","Assessments","Calendar","Feedback","Back to public site","Sign out","Secure area","Administrator"],
-    pt: ["Navegação do administrador","Administração","Visão geral","Admissões","Candidaturas","Gestão","Utilizadores","Em breve","Professores","Cursos","Acesso dos alunos","Avaliações","Calendário","Feedback","Voltar ao site público","Terminar sessão","Área segura","Administrador"],
-    es: ["Navegación del administrador","Administración","Resumen","Admisiones","Expedientes de candidatura","Gestión","Usuarios","Próximamente","Profesores","Cursos","Acceso de alumnos","Evaluaciones","Calendario","Comentarios","Volver al sitio público","Cerrar sesión","Área segura","Administrador"]
+    fr: ["Navigation administrateur","Administration","Vue d’ensemble","Admissions","Dossiers candidats","Gestion","Utilisateurs","À venir","Enseignants","Formations","Accès des élèves","Évaluations","Calendrier","Feedback","Retour au site public","Se déconnecter","Espace sécurisé","Administrateur","Page d’accueil"],
+    en: ["Administrator navigation","Administration","Overview","Admissions","Candidate applications","Management","Users","Coming soon","Teachers","Courses","Student access","Assessments","Calendar","Feedback","Back to public site","Sign out","Secure area","Administrator","Homepage"],
+    pt: ["Navegação do administrador","Administração","Visão geral","Admissões","Candidaturas","Gestão","Utilizadores","Em breve","Professores","Cursos","Acesso dos alunos","Avaliações","Calendário","Feedback","Voltar ao site público","Terminar sessão","Área segura","Administrador","Página inicial"],
+    es: ["Navegación del administrador","Administración","Resumen","Admisiones","Expedientes de candidatura","Gestión","Usuarios","Próximamente","Profesores","Cursos","Acceso de alumnos","Evaluaciones","Calendario","Comentarios","Volver al sitio público","Cerrar sesión","Área segura","Administrador","Página de inicio"]
   }[language];
   const { profile, session, signOut } = useAuth();
 
@@ -24,6 +24,7 @@ export default function AdminLayout() {
           <NavLink to="/admin/utilisateurs">{labels[6]}</NavLink>
           <NavLink to="/admin/enseignants">{labels[8]}</NavLink>
           <NavLink to="/admin/formations">{labels[9]}</NavLink>
+          <NavLink to="/admin/accueil">{labels[18]}</NavLink>
           <NavLink to="/admin/eleves">{labels[10]}</NavLink>
           <NavLink to="/admin/evaluations">{labels[11]}</NavLink>
           <NavLink to="/admin/calendrier">{labels[12]}</NavLink>

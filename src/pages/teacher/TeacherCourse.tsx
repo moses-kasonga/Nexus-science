@@ -5,8 +5,11 @@ import { dateLocale, useLanguage, useT } from "../../lib/i18n";
 import { supabase } from "../../lib/supabase";
 import { Feedback, dateTimeLabel, errorText } from "../admin/shared";
 import TeacherAssessments from "./TeacherAssessments";
+import LessonResourcesEditor from "./LessonResourcesEditor";
+import TeacherLessonPreview from "./TeacherLessonPreview";
 
 type LessonRow = { id: string; title: string; content: string | null; order_index: number; published: boolean };
+type CourseInfo = { name: string; category: string; subcategory: string | null; level: string | null; course_type: string; duration_minutes: number | null; published: boolean };
 type Student = { id: string; name: string; email: string; status: string; since: string };
 
 export default function TeacherCourse() {
@@ -22,9 +25,13 @@ export default function TeacherCourse() {
   const userId = session?.user.id;
   const isTeacher = profile?.role === "teacher";
   const [courseName, setCourseName] = useState<string | null | undefined>(undefined);
+  const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null);
   const [lessons, setLessons] = useState<LessonRow[] | null>(null);
   const [students, setStudents] = useState<Student[] | null>(null);
   const [editing, setEditing] = useState<LessonRow | "new" | null>(null);
+  const [lessonContent, setLessonContent] = useState("");
+  const [lessonTitle, setLessonTitle] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -36,7 +43,7 @@ export default function TeacherCourse() {
       if (linkError) throw linkError;
       if (!link) { setCourseName(null); return; }
       const [course, lessonRows, enrollRows] = await Promise.all([
-        supabase.from("courses").select("name").eq("id", id).maybeSingle(),
+        supabase.from("courses").select("name, category, subcategory, level, course_type, duration_minutes, published").eq("id", id).maybeSingle(),
         supabase.from("lessons").select("id, title, content, order_index, published").eq("course_id", id).order("order_index"),
         supabase.from("enrollments").select("student_id, status, created_at").eq("course_id", id).order("created_at"),
       ]);
@@ -44,6 +51,7 @@ export default function TeacherCourse() {
       if (lessonRows.error) throw lessonRows.error;
       if (enrollRows.error) throw enrollRows.error;
       setCourseName(course.data?.name ?? null);
+      setCourseInfo(course.data as CourseInfo | null);
       setLessons((lessonRows.data ?? []) as LessonRow[]);
       const ids = (enrollRows.data ?? []).map((row) => row.student_id as string);
       const people = new Map<string, { first_name: string | null; last_name: string | null; email: string | null }>();
@@ -61,11 +69,31 @@ export default function TeacherCourse() {
   }, [id, userId]);
   useEffect(() => { if (isTeacher) void load(); }, [isTeacher, load]);
 
+  async function saveCourseInfo(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const name = String(form.get("name") ?? "").trim();
+    const category = String(form.get("category") ?? "").trim();
+    const durationRaw = String(form.get("duration_minutes") ?? "").trim();
+    const duration = durationRaw ? Number(durationRaw) : null;
+    if (!name || !category || (duration !== null && (!Number.isInteger(duration) || duration <= 0))) { setError("Vérifiez le titre, la discipline et la durée."); return; }
+    setBusy(true); setError(""); setNotice("");
+    const { error: failure } = await supabase.from("courses").update({
+      name, category, subcategory: String(form.get("subcategory") ?? "").trim() || null,
+      level: String(form.get("level") ?? "").trim() || null, course_type: String(form.get("course_type") ?? "Leçon"),
+      duration_minutes: duration, updated_at: new Date().toISOString(),
+    }).eq("id", id);
+    setBusy(false);
+    if (failure) { setError(errorText(failure)); return; }
+    setNotice("Informations de la formation enregistrées.");
+    await load();
+  }
+
   async function saveLesson(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const title = String(form.get("title") ?? "").trim();
-    const content = String(form.get("content") ?? "").trim();
+    const content = lessonContent.trim();
     const published = form.get("published") === "on";
     if (!title) { setError(t.required); return; }
     setBusy(true); setError(""); setNotice("");
@@ -78,7 +106,7 @@ export default function TeacherCourse() {
         const { error: failure } = await supabase.from("lessons").insert({ course_id: id, title, content: content || null, order_index: next, published });
         if (failure) throw failure;
       }
-      setNotice(t.saved); setEditing(null); await load();
+      setNotice(t.saved); setEditing(null); setLessonContent(""); setLessonTitle(""); setPreviewOpen(false); await load();
     } catch (cause) { setError(errorText(cause)); } finally { setBusy(false); }
   }
 
@@ -97,7 +125,7 @@ export default function TeacherCourse() {
     } catch (cause) { setError(errorText(cause)); } finally { setBusy(false); }
   }
 
-  if (loading) return <section className="wrap page"><p className="muted" role="status">{t.loading}</p></section>;
+  if (loading) return <section className="wrap page teacher-course-page"><p className="muted" role="status">{t.loading}</p></section>;
   if (!session) return <Navigate to="/connexion" replace />;
   if (!isTeacher) return <Navigate to="/enseignant" replace />;
   if (courseName === undefined) return <section className="wrap page"><p className="muted" role="status">{t.loadingCourse}</p></section>;
@@ -109,6 +137,21 @@ export default function TeacherCourse() {
       <h1>{courseName}</h1>
       <Feedback error={error} notice={notice} />
 
+      {courseInfo && <details className="panel" open>
+        <summary><strong>Informations du cours</strong></summary>
+        <form className="form" onSubmit={saveCourseInfo}>
+          <label>Titre<input name="name" required maxLength={200} defaultValue={courseInfo.name} /></label>
+          <label>Discipline<input name="category" required defaultValue={courseInfo.category} /></label>
+          <label>Sous-discipline<input name="subcategory" defaultValue={courseInfo.subcategory ?? ""} /></label>
+          <label>Niveau<select name="level" defaultValue={courseInfo.level ?? "Débutant"}><option>Débutant</option><option>Intermédiaire</option><option>Avancé</option></select></label>
+          <label>Type<select name="course_type" defaultValue={courseInfo.course_type || "Leçon"}><option>Leçon</option><option>Formation</option><option>Atelier</option><option>Module</option></select></label>
+          <label>Durée (minutes)<input name="duration_minutes" type="number" min="1" step="1" defaultValue={courseInfo.duration_minutes ?? 30} /></label>
+          <label>Statut<input value={courseInfo.published ? "Publié" : "Brouillon"} readOnly /></label>
+          <p className="muted small-text">Le statut de publication reste contrôlé par l'administration.</p>
+          <button className="btn primary" type="submit" disabled={busy}>{busy ? "Enregistrement…" : "Enregistrer les informations"}</button>
+        </form>
+      </details>}
+
       <h2>{t.lessons}</h2>
       {lessons === null && <p className="muted" role="status">{t.loading}</p>}
       {lessons?.length === 0 && <p className="notice">{t.noLessons}</p>}
@@ -119,19 +162,50 @@ export default function TeacherCourse() {
             <span className="row">
               <button className="btn small" type="button" disabled={busy || index === 0} onClick={() => void move(lesson, -1)} aria-label={t.up}>↑</button>
               <button className="btn small" type="button" disabled={busy || index === (lessons.length - 1)} onClick={() => void move(lesson, 1)} aria-label={t.down}>↓</button>
-              <button className="btn small" type="button" onClick={() => { setEditing(lesson); setNotice(""); }}>{t.edit}</button>
+              <button className="btn small" type="button" onClick={() => { setEditing(lesson); setLessonTitle(lesson.title); setLessonContent(lesson.content ?? ""); setPreviewOpen(false); setNotice(""); }}>{t.edit}</button>
             </span>
           </li>
         ))}
       </ol>
-      {!editing && <button className="btn primary" type="button" onClick={() => { setEditing("new"); setNotice(""); }}>{t.addLesson}</button>}
+      {!editing && <button className="btn primary" type="button" onClick={() => { setEditing("new"); setLessonTitle(""); setLessonContent(""); setPreviewOpen(false); setNotice(""); }}>{t.addLesson}</button>}
       {editing && (
-        <form className="panel form" onSubmit={saveLesson} key={editing === "new" ? "new" : editing.id}>
-          <h3>{editing === "new" ? t.newLesson : t.editLesson}</h3>
-          <label>{t.title}<input name="title" required maxLength={200} defaultValue={editing === "new" ? "" : editing.title} /></label>
-          <label>{t.content}<textarea name="content" rows={10} defaultValue={editing === "new" ? "" : editing.content ?? ""} /></label>
-          <label className="check"><input type="checkbox" name="published" defaultChecked={editing === "new" ? false : editing.published} /> {t.publish}</label>
-          <div className="row"><button className="btn primary" type="submit" disabled={busy}>{busy ? t.saving : t.save}</button><button className="btn" type="button" onClick={() => setEditing(null)}>{t.cancel}</button></div>
+        <form className="teacher-lesson-editor" onSubmit={saveLesson} key={editing === "new" ? "new" : editing.id}>
+          <div className="teacher-editor-heading">
+            <div>
+              <p className="eyebrow">ESPACE ENSEIGNANT · CONSTRUCTION DU COURS</p>
+              <h2>{editing === "new" ? t.newLesson : t.editLesson}</h2>
+              <p className="muted small-text">Préparez le contenu, ajoutez vos supports, puis vérifiez le rendu avant publication.</p>
+            </div>
+            <span className={editing === "new" || !editing.published ? "pill past" : "pill ongoing"}>{editing === "new" || !editing.published ? "Brouillon" : "Publiée"}</span>
+          </div>
+
+          <div className="teacher-editor-main">
+            <section className="teacher-editor-section">
+              <div className="teacher-section-heading"><span className="teacher-section-number">1</span><div><h3>Contenu de la leçon</h3><p className="muted small-text">Donnez un titre clair et structurez votre explication.</p></div></div>
+              <label>{t.title}<input name="title" required maxLength={200} value={lessonTitle} onChange={(event) => setLessonTitle(event.target.value)} placeholder="Ex. : La cellule, unité fondamentale du vivant" /></label>
+              <label>{t.content}<textarea className="teacher-lesson-content-input" name="content" rows={16} value={lessonContent} onChange={(event) => setLessonContent(event.target.value)} placeholder="Commencez à rédiger votre leçon ici…&#10;&#10;Présentez les notions essentielles, les explications et les exemples." /></label>
+            </section>
+
+            <section className="teacher-editor-section teacher-editor-resources">
+              <div className="teacher-section-heading"><span className="teacher-section-number">2</span><div><h3>Supports pédagogiques</h3><p className="muted small-text">Illustrez la leçon avec des images, des vidéos et des documents.</p></div></div>
+              {editing !== "new" && <LessonResourcesEditor courseId={id} lessonId={editing.id} content={lessonContent} onContentChange={setLessonContent} />}
+              {editing === "new" && <p className="teacher-editor-hint">Enregistrez d’abord cette leçon en brouillon. Vous pourrez ensuite ajouter ses images, vidéos et fichiers PDF depuis le même espace.</p>}
+            </section>
+          </div>
+
+          <aside className="teacher-editor-settings">
+            <div className="teacher-section-heading"><span className="teacher-section-number">3</span><div><h3>Publication</h3><p className="muted small-text">Contrôlez la visibilité de cette leçon.</p></div></div>
+            <label className="teacher-publish-option"><input type="checkbox" name="published" defaultChecked={editing === "new" ? false : editing.published} /><span><strong>Publier cette leçon</strong><small>Visible par les élèves inscrits après enregistrement.</small></span></label>
+            <p className="muted small-text">Vous pouvez prévisualiser votre travail sans le publier. L’aperçu ne change jamais le statut de la leçon.</p>
+          </aside>
+
+          <div className="teacher-editor-actions">
+            <button className="btn" type="button" onClick={() => setPreviewOpen(true)} disabled={!lessonTitle.trim()}>Aperçu avant publication</button>
+            <span className="teacher-editor-action-spacer" />
+            <button className="btn" type="button" onClick={() => { setEditing(null); setLessonTitle(""); setLessonContent(""); setPreviewOpen(false); }}>{t.cancel}</button>
+            <button className="btn primary" type="submit" disabled={busy}>{busy ? t.saving : t.save}</button>
+          </div>
+          {previewOpen && <TeacherLessonPreview courseId={id} lessonId={editing === "new" ? null : editing.id} title={lessonTitle} content={lessonContent} onClose={() => setPreviewOpen(false)} />}
         </form>
       )}
 

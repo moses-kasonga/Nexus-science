@@ -2,11 +2,17 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../../lib/supabase";
 import { Feedback, dayLabel, errorText } from "../admin/shared";
 import { dateLocale, useLanguage, useT } from "../../lib/i18n";
+import AssessmentQuestionComposer from "./AssessmentQuestionComposer";
 
 export type RosterStudent = { id: string; name: string; email: string; status: string };
-type Assessment = { id: string; title: string; description: string | null; kind: "quiz" | "devoir" | "examen"; max_score: number; due_date: string | null; published: boolean; results_published: boolean };
+type Assessment = { id: string; title: string; description: string | null; kind: "quiz" | "devoir" | "examen"; max_score: number; due_date: string | null; published: boolean; results_published: boolean; allow_multiple_choice: boolean; allow_written: boolean };
 type Result = { student_id: string; score: number | null; comment: string | null };
 type Draft = { score: string; comment: string };
+type AnswerRow = { id: string; attempt_id: string; question_id: string; selected_option_ids: string[]; written_answer: string | null; points_awarded: number | null; teacher_feedback: string | null };
+type AnswerQuestion = { id: string; prompt: string; question_type: "multiple_choice" | "written"; points: number };
+type AnswerOption = { id: string; question_id: string; label: string };
+type AnswerKey = { question_id: string; correct_option_ids: string[]; expected_text: string | null; explanation: string | null };
+type StudentAnswer = { student_id: string; response: AnswerRow; question: AnswerQuestion; options: AnswerOption[]; key: AnswerKey | undefined };
 
 export default function TeacherAssessments({ courseId, students }: { courseId: string; students: RosterStudent[] }) {
   const locale = dateLocale[useLanguage()];
@@ -22,14 +28,17 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
   const [items, setItems] = useState<Assessment[] | null>(null);
   const [editing, setEditing] = useState<Assessment | "new" | null>(null);
   const [grading, setGrading] = useState<Assessment | null>(null);
+  const [questionsFor, setQuestionsFor] = useState<Assessment | null>(null);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const [studentAnswers, setStudentAnswers] = useState<StudentAnswer[]>([]);
+  const [answerGrades, setAnswerGrades] = useState<Record<string, { score: string; feedback: string }>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
   const load = useCallback(async () => {
     const { data, error: failure } = await supabase.from("assessments")
-      .select("id, title, description, kind, max_score, due_date, published, results_published").eq("course_id", courseId).order("created_at", { ascending: false });
+      .select("id, title, description, kind, max_score, due_date, published, results_published, allow_multiple_choice, allow_written").eq("course_id", courseId).order("created_at", { ascending: false });
     if (failure) { setError(failure.message); setItems((current) => current ?? []); return; }
     setItems((data ?? []) as Assessment[]);
   }, [courseId]);
@@ -42,9 +51,13 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
     const max = Number(String(form.get("max_score") ?? "20").replace(",", "."));
     if (!title) { setError(t.required); return; }
     if (!Number.isFinite(max) || max <= 0) { setError(t.positive); return; }
+    const allowMultipleChoice = form.get("allow_multiple_choice") === "on";
+    const allowWritten = form.get("allow_written") === "on";
+    if (!allowMultipleChoice && !allowWritten) { setError("Activez au moins un mode de réponse."); return; }
     const payload = {
       title, description: String(form.get("description") ?? "").trim() || null, kind: String(form.get("kind") ?? "devoir"),
       max_score: max, due_date: String(form.get("due_date") ?? "") || null,
+      allow_multiple_choice: allowMultipleChoice, allow_written: allowWritten,
     };
     setBusy(true); setError(""); setNotice("");
     try {
@@ -52,8 +65,10 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
         const { error: failure } = await supabase.from("assessments").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", editing.id);
         if (failure) throw failure;
       } else {
-        const { error: failure } = await supabase.from("assessments").insert({ ...payload, course_id: courseId });
+        const { data, error: failure } = await supabase.from("assessments").insert({ ...payload, course_id: courseId }).select("id").single();
         if (failure) throw failure;
+        const created = { id: data.id, title, description: payload.description, kind: payload.kind as Assessment["kind"], max_score: max, due_date: payload.due_date, published: false, results_published: false, allow_multiple_choice: payload.allow_multiple_choice, allow_written: payload.allow_written } satisfies Assessment;
+        setQuestionsFor(created);
       }
       setNotice(t.saved); setEditing(null); await load();
     } catch (cause) { setError(errorText(cause)); } finally { setBusy(false); }
@@ -79,11 +94,51 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
 
   async function openGrading(item: Assessment) {
     setGrading(item); setError(""); setNotice("");
-    const { data, error: failure } = await supabase.from("assessment_results").select("student_id, score, comment").eq("assessment_id", item.id);
-    if (failure) { setError(failure.message); return; }
+    const [resultRows, attemptRows] = await Promise.all([
+      supabase.from("assessment_results").select("student_id, score, comment").eq("assessment_id", item.id),
+      supabase.from("assessment_attempts").select("id, student_id").eq("assessment_id", item.id),
+    ]);
+    if (resultRows.error || attemptRows.error) { setError(resultRows.error?.message ?? attemptRows.error?.message ?? "Erreur"); return; }
     const next: Record<string, Draft> = {};
-    for (const row of (data ?? []) as Result[]) next[row.student_id] = { score: row.score === null ? "" : String(row.score), comment: row.comment ?? "" };
+    for (const row of (resultRows.data ?? []) as Result[]) next[row.student_id] = { score: row.score === null ? "" : String(row.score), comment: row.comment ?? "" };
     setDrafts(next);
+    const attempts = attemptRows.data ?? [];
+    if (attempts.length) {
+      const attemptIds = attempts.map((row) => row.id as string);
+      const [responses, questions] = await Promise.all([
+        supabase.from("assessment_responses").select("id,attempt_id,question_id,selected_option_ids,written_answer,points_awarded,teacher_feedback").in("attempt_id", attemptIds),
+        supabase.from("assessment_questions").select("id,prompt,question_type,points").eq("assessment_id", item.id),
+      ]);
+      if (responses.error || questions.error) { setError(responses.error?.message ?? questions.error?.message ?? "Erreur"); return; }
+      const responseRows = (responses.data ?? []) as AnswerRow[];
+      const questionRows = (questions.data ?? []) as AnswerQuestion[];
+      const questionIds = questionRows.map((row) => row.id);
+      const [optionRows, keyRows] = questionIds.length ? await Promise.all([
+        supabase.from("assessment_options").select("id,question_id,label").in("question_id", questionIds),
+        supabase.from("assessment_answer_keys").select("question_id,correct_option_ids,expected_text,explanation").in("question_id", questionIds),
+      ]) : [{data:[],error:null},{data:[],error:null}];
+      if (optionRows.error || keyRows.error) { setError(optionRows.error?.message ?? keyRows.error?.message ?? "Erreur"); return; }
+      const studentByAttempt = new Map(attempts.map((row) => [row.id as string, row.student_id as string]));
+      const qMap = new Map(questionRows.map((row) => [row.id, row]));
+      const kMap = new Map(((keyRows.data ?? []) as AnswerKey[]).map((row) => [row.question_id, row]));
+      setStudentAnswers(responseRows.flatMap((response) => {
+        const question = qMap.get(response.question_id);
+        const student_id = studentByAttempt.get(response.attempt_id);
+        if (!question || !student_id) return [];
+        return [{ student_id, response, question, options: ((optionRows.data ?? []) as AnswerOption[]).filter((option) => option.question_id === question.id), key: kMap.get(question.id) }];
+      }));
+      setAnswerGrades(Object.fromEntries(responseRows.map((row) => [row.id, { score: row.points_awarded === null ? "" : String(row.points_awarded), feedback: row.teacher_feedback ?? "" }])));
+    } else { setStudentAnswers([]); setAnswerGrades({}); }
+  }
+
+  async function saveAnswerGrade(answer: StudentAnswer) {
+    const draft = answerGrades[answer.response.id] ?? { score: "", feedback: "" };
+    const score = Number(draft.score.replace(",", "."));
+    if (!Number.isFinite(score) || score < 0 || score > answer.question.points) { setError("La note doit être comprise entre 0 et " + answer.question.points + "."); return; }
+    setBusy(true); setError(""); setNotice("");
+    const { error: failure } = await supabase.rpc("grade_assessment_written_response", { p_response_id: answer.response.id, p_points: score, p_feedback: draft.feedback });
+    setBusy(false);
+    if (failure) setError(failure.message); else { setNotice("Réponse écrite corrigée."); await openGrading(grading as Assessment); }
   }
 
   async function saveGrade(item: Assessment, student: RosterStudent) {
@@ -120,6 +175,7 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
             <div className="row">
               <button className="btn small" type="button" disabled={busy} onClick={() => void toggle(item, "published")}>{item.published ? t.unpublish : t.publish}</button>
               <button className="btn small" type="button" disabled={busy} onClick={() => void toggle(item, "results_published")}>{item.results_published ? t.hideResults : t.publishResults}</button>
+              <button className="btn small" type="button" disabled={busy} onClick={() => setQuestionsFor(item)}>Questions / corrigés</button>
               <button className="btn small primary" type="button" disabled={busy} onClick={() => void openGrading(item)}>{t.grades}</button>
               <button className="btn small" type="button" onClick={() => { setEditing(item); setNotice(""); }}>{t.edit}</button>
               <button className="btn small danger" type="button" disabled={busy} onClick={() => void remove(item)}>{t.remove}</button>
@@ -139,8 +195,19 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
           <label>{t.scale}<input name="max_score" inputMode="decimal" required defaultValue={editing === "new" ? "20" : String(editing.max_score)} /></label>
           <label>{t.due}<input name="due_date" type="date" defaultValue={editing === "new" ? "" : editing.due_date ?? ""} /></label>
           <label>{t.instructions}<textarea name="description" rows={4} defaultValue={editing === "new" ? "" : editing.description ?? ""} /></label>
+          <fieldset><legend>Types de réponses autorisés</legend>
+            <label className="check"><input type="checkbox" name="allow_multiple_choice" defaultChecked={editing === "new" ? true : editing.allow_multiple_choice} /> Activer les questions à choix multiples</label>
+            <label className="check"><input type="checkbox" name="allow_written" defaultChecked={editing === "new" ? false : editing.allow_written} /> Activer le champ de réponses écrites</label>
+          </fieldset>
           <div className="row"><button className="btn primary" type="submit" disabled={busy}>{busy ? t.saving : t.save}</button><button className="btn" type="button" onClick={() => setEditing(null)}>{t.cancel}</button></div>
         </form>
+      )}
+
+      {questionsFor && (
+        <div className="panel">
+          <div className="row between"><h3>Questions — {questionsFor.title}</h3><button className="btn small" type="button" onClick={() => setQuestionsFor(null)}>Fermer</button></div>
+          <AssessmentQuestionComposer key={questionsFor.id} assessmentId={questionsFor.id} allowMultipleChoice={questionsFor.allow_multiple_choice} allowWritten={questionsFor.allow_written} />
+        </div>
       )}
 
       {grading && (
@@ -154,6 +221,25 @@ export default function TeacherAssessments({ courseId, students }: { courseId: s
               return (
                 <li key={student.id} className="panel">
                   <strong>{student.name}</strong> <span className="muted small-text">{student.email}</span>
+                  {studentAnswers.filter((answer) => answer.student_id === student.id).map((answer) => (
+                    <div className="panel" key={answer.response.id}>
+                      <strong>{answer.question.prompt}</strong>
+                      {answer.question.question_type === "written" ? <>
+                        <p><strong>Réponse de l'élève :</strong> {answer.response.written_answer || "—"}</p>
+                        {answer.key?.expected_text && <p><strong>Réponse attendue :</strong> {answer.key.expected_text}</p>}
+                        {answer.key?.explanation && <p className="muted small-text">{answer.key.explanation}</p>}
+                        <div className="inline-form">
+                          <label>Points (sur {answer.question.points})<input inputMode="decimal" value={answerGrades[answer.response.id]?.score ?? ""} onChange={(event) => setAnswerGrades((old) => ({ ...old, [answer.response.id]: { ...(old[answer.response.id] ?? { score: "", feedback: "" }), score: event.target.value } }))} /></label>
+                          <label>Retour à l'élève<input value={answerGrades[answer.response.id]?.feedback ?? ""} onChange={(event) => setAnswerGrades((old) => ({ ...old, [answer.response.id]: { ...(old[answer.response.id] ?? { score: "", feedback: "" }), feedback: event.target.value } }))} /></label>
+                          <button className="btn small" type="button" disabled={busy} onClick={() => void saveAnswerGrade(answer)}>Corriger</button>
+                        </div>
+                      </> : <>
+                        <p>Choix de l'élève : {answer.options.filter((option) => answer.response.selected_option_ids.includes(option.id)).map((option) => option.label).join(", ") || "—"}</p>
+                        <p>Réponse(s) correcte(s) : {answer.options.filter((option) => answer.key?.correct_option_ids.includes(option.id)).map((option) => option.label).join(", ") || "—"}</p>
+                        <p className="muted small-text">{answer.response.points_awarded ?? 0} / {answer.question.points} pt</p>
+                      </>}
+                    </div>
+                  ))}
                   <div className="inline-form">
                     <label>{t.grade}<input inputMode="decimal" value={draft.score} onChange={(event) => update({ score: event.target.value })} placeholder={`/ ${grading.max_score}`} /></label>
                     <label>{t.comment}<input value={draft.comment} maxLength={1000} onChange={(event) => update({ comment: event.target.value })} /></label>
