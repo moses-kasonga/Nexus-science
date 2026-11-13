@@ -1,14 +1,21 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@^9";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("APP_ORIGIN") ?? "*",
+const appOrigin = Deno.env.get("APP_ORIGIN") ?? "https://nexus-science-rho.vercel.app";
+const allowedOrigins = new Set(
+  (Deno.env.get("APP_ALLOWED_ORIGINS") ?? appOrigin)
+    .split(",").map((value) => value.trim()).filter(Boolean),
+);
+
+const getCorsHeaders = (origin: string | null) => ({
+  "Access-Control-Allow-Origin": origin && allowedOrigins.has(origin) ? origin : appOrigin,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+  "Vary": "Origin",
+});
 
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+const json = (body: unknown, status = 200, origin: string | null = null) =>
+  new Response(JSON.stringify(body), { status, headers: { ...getCorsHeaders(origin), "Content-Type": "application/json" } });
 
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (char) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -60,8 +67,8 @@ function getEmailLanguage(value: string | null | undefined): SupportedLanguage {
 }
 
 Deno.serve(async (request) => {
-  if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (request.method !== "POST") return json({ error: "Méthode non autorisée." }, 405);
+  if (request.method === "OPTIONS") return new Response("ok", { headers: getCorsHeaders(request.headers.get("Origin")) });
+  if (request.method !== "POST") return json({ error: "Méthode non autorisée." }, 405, request.headers.get("Origin"));
 
   const authorization = request.headers.get("Authorization");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -72,13 +79,12 @@ Deno.serve(async (request) => {
   const smtpUser = Deno.env.get("SMTP_USER");
   const smtpPass = Deno.env.get("SMTP_PASS");
   const fromEmail = Deno.env.get("FEEDBACK_FROM_EMAIL") ?? smtpUser;
-  const appOrigin = Deno.env.get("APP_ORIGIN") ?? "https://nexus-science-rho.vercel.app";
 
   if (!authorization?.startsWith("Bearer ") || !supabaseUrl || !anonKey || !serviceKey) {
-    return json({ error: "Configuration ou session manquante." }, 401);
+    return json({ error: "Configuration ou session manquante." }, 401, request.headers.get("Origin"));
   }
   if (!smtpHost || !smtpUser || !smtpPass || !fromEmail || fromEmail.toLowerCase() !== smtpUser.toLowerCase() || ![465, 587].includes(smtpPort)) {
-    return json({ error: "La configuration SMTP de NEXUS SCIENCE est incomplète." }, 503);
+    return json({ error: "La configuration SMTP de NEXUS SCIENCE est incomplète." }, 503, request.headers.get("Origin"));
   }
 
   const token = authorization.slice(7);
@@ -91,19 +97,19 @@ Deno.serve(async (request) => {
   });
 
   const { data: authData, error: authError } = await callerClient.auth.getUser(token);
-  if (authError || !authData.user) return json({ error: "Session invalide." }, 401);
+  if (authError || !authData.user) return json({ error: "Session invalide." }, 401, request.headers.get("Origin"));
 
   const { data: profile, error: profileError } = await service
     .from("profiles").select("role").eq("id", authData.user.id).maybeSingle();
-  if (profileError || profile?.role !== "admin") return json({ error: "Réservé aux administrateurs." }, 403);
+  if (profileError || profile?.role !== "admin") return json({ error: "Réservé aux administrateurs." }, 403, request.headers.get("Origin"));
 
   let payload: { message_id?: string; subject?: string; body?: string };
-  try { payload = await request.json(); } catch { return json({ error: "Corps de requête invalide." }, 400); }
+  try { payload = await request.json(); } catch { return json({ error: "Corps de requête invalide." }, 400, request.headers.get("Origin")); }
   const messageId = payload.message_id?.trim();
   const subject = payload.subject?.trim();
   const body = payload.body?.trim();
   if (!messageId || !subject || /[\r\n]/.test(subject) || subject.length > 160 || !body || body.length < 3 || body.length > 10000) {
-    return json({ error: "Destinataire, objet ou message invalide." }, 400);
+    return json({ error: "Destinataire, objet ou message invalide." }, 400, request.headers.get("Origin"));
   }
 
   const { data: original, error: originalError } = await service
@@ -111,7 +117,7 @@ Deno.serve(async (request) => {
     .select("id, student_id, sender_role, reply_to_id, subject")
     .eq("id", messageId).maybeSingle();
   if (originalError || !original || original.sender_role !== "student" || original.reply_to_id) {
-    return json({ error: "Message initial introuvable." }, 404);
+    return json({ error: "Message initial introuvable." }, 404, request.headers.get("Origin"));
   }
 
   const [{ data: student, error: studentError }, { data: studentProfile }] = await Promise.all([
@@ -119,7 +125,7 @@ Deno.serve(async (request) => {
     service.from("profiles").select("first_name,last_name,preferred_language").eq("id", original.student_id).maybeSingle(),
   ]);
   const recipient = student.user?.email;
-  if (studentError || !recipient) return json({ error: "Adresse e-mail de l'élève introuvable." }, 422);
+  if (studentError || !recipient) return json({ error: "Adresse e-mail de l'élève introuvable." }, 422, request.headers.get("Origin"));
 
   const studentName = [studentProfile?.first_name, studentProfile?.last_name].filter(Boolean).join(" ").trim() || "étudiant";
   const language = getEmailLanguage(studentProfile?.preferred_language);
@@ -180,7 +186,7 @@ Deno.serve(async (request) => {
     });
   } catch (error) {
     console.error("SMTP delivery error", error instanceof Error ? error.message : "Unknown SMTP error");
-    return json({ error: "L'envoi par Gmail SMTP a échoué. Vérifiez les secrets SMTP et la disponibilité de la connexion." }, 502);
+    return json({ error: "L'envoi par Gmail SMTP a échoué. Vérifiez les secrets SMTP et la disponibilité de la connexion." }, 502, request.headers.get("Origin"));
   } finally {
     transporter.close();
   }
@@ -197,7 +203,7 @@ Deno.serve(async (request) => {
 
   if (insertError) {
     console.error("Reply persistence error", insertError);
-    return json({ error: "L'e-mail a été accepté, mais l'historique n'a pas pu être enregistré. Contactez le support technique." }, 500);
+    return json({ error: "L'e-mail a été accepté, mais l'historique n'a pas pu être enregistré. Contactez le support technique." }, 500, request.headers.get("Origin"));
   }
-  return json({ ok: true, reply });
+  return json({ ok: true, reply }, 200, request.headers.get("Origin"));
 });
