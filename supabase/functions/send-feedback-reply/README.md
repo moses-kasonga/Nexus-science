@@ -13,7 +13,7 @@ Configure these in **Supabase Dashboard → Edge Functions → Secrets**:
 | `SMTP_USER` | `nexus.science.contact@gmail.com` |
 | `SMTP_PASS` | Google App Password for the dedicated NEXUS SCIENCE Gmail account |
 | `FEEDBACK_FROM_EMAIL` | `nexus.science.contact@gmail.com` |
-| `APP_ORIGIN` | `https://nexus-science-rho.vercel.app` |
+| `APP_ORIGIN` | `https://nexus-science-rho.vercel.app` (base URL used in student emails) |\n| `APP_ALLOWED_ORIGINS` | `https://nexus-science-rho.vercel.app,https://nexus-science-git-feature-moise-assi-1f3adb-mkasongajunior-6102.vercel.app` (comma-separated exact browser origins allowed to invoke the function) |
 
 Supabase provides `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` to deployed Edge Functions automatically. Do not add or expose the service-role key in the frontend.
 
