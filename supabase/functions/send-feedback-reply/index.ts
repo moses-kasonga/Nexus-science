@@ -102,7 +102,7 @@ Deno.serve(async (request) => {
   const messageId = payload.message_id?.trim();
   const subject = payload.subject?.trim();
   const body = payload.body?.trim();
-  if (!messageId || !subject || /[\\r\\n]/.test(subject) || subject.length > 160 || !body || body.length < 3 || body.length > 10000) {
+  if (!messageId || !subject || /[\r\n]/.test(subject) || subject.length > 160 || !body || body.length < 3 || body.length > 10000) {
     return json({ error: "Destinataire, objet ou message invalide." }, 400);
   }
 
@@ -125,7 +125,7 @@ Deno.serve(async (request) => {
   const language = getEmailLanguage(studentProfile?.preferred_language);
   const copy = emailCopy[language];
   const studentUrl = new URL("/espace-etudiant", appOrigin).toString();
-  const safeBody = escapeHtml(body).replace(/\\n/g, "<br>");
+  const safeBody = escapeHtml(body).replace(/\n/g, "<br>");
   const safeSubject = escapeHtml(original.subject);
   const html = `
     <div style="font-family:Arial,sans-serif;line-height:1.65;color:#172b3a;max-width:640px;margin:0 auto">
@@ -158,7 +158,7 @@ Deno.serve(async (request) => {
     copy.note,
     "",
     copy.signature,
-  ].join("\\n");
+  ].join("\n");
 
   const transporter = nodemailer.createTransport({
     host: smtpHost,
