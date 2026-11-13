@@ -10,7 +10,7 @@ export default function AdminLayout() {
     pt: ["Navegação do administrador","Administração","Visão geral","Admissões","Candidaturas","Gestão","Utilizadores","Em breve","Professores","Cursos","Acesso dos alunos","Avaliações","Calendário","Feedback","Voltar ao site público","Terminar sessão","Área segura","Administrador","Página inicial","Assistente MOÏSE"],
     es: ["Navegación del administrador","Administración","Resumen","Admisiones","Expedientes de candidatura","Gestión","Usuarios","Próximamente","Profesores","Cursos","Acceso de alumnos","Evaluaciones","Calendario","Comentarios","Volver al sitio público","Cerrar sesión","Área segura","Administrador","Página de inicio","Asistente MOÏSE"]
   }[language];
-  const { profile, session, signOut } = useAuth();
+  const { profile, session } = useAuth();
 
   return (
     <section className="admin-shell">
@@ -33,7 +33,6 @@ export default function AdminLayout() {
         <div className="admin-sidebar-footer">
           <span className="admin-user">{displayName(profile, session?.user.email)}</span>
           <Link to="/">{labels[14]}</Link>
-          <button className="btn" type="button" onClick={() => void signOut()}>{labels[15]}</button>
         </div>
       </aside>
       <div className="admin-main">
