@@ -579,4 +579,6 @@ html[data-theme="dark"] .public-menu-backdrop{background:rgba(0,0,0,.62)}
 @media(max-width:760px){.admin-feedback-grid{grid-template-columns:1fr}.admin-feedback-inbox{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}.feedback-thread{padding:13px}}
 @media(max-width:460px){.feedback-form,.feedback-reply-form{padding:13px}.feedback-email-preview dl{grid-template-columns:1fr;gap:3px}.feedback-email-preview dd{margin-bottom:8px}}
 
-.student-logout-button{justify-self:start;border:0;background:transparent;color:#f3b7b7;padding:8px 0;text-align:left;font:inherit;font-size:.88rem;cursor:pointer}.student-logout-button:hover{color:#fff;text-decoration:underline}.student-logout-button:focus-visible{outline:2px solid #75c7c4;outline-offset:4px;border-radius:4px}
+.student-logout-button{width:100%;border:0;background:transparent;color:#f3b7b7;text-align:left;font:inherit;cursor:pointer}.student-logout-button:hover{color:#fff;text-decoration:underline}.student-logout-button:focus-visible{outline:2px solid #75c7c4;outline-offset:4px;border-radius:4px}
+
+.menu-auth-action{display:block;width:100%;padding:10px 8px;border:0;border-radius:9px;background:transparent;color:var(--ink);text-align:left;font:inherit;font-weight:600;cursor:pointer}.menu-auth-action:hover{background:var(--soft);color:var(--brand)}.menu-auth-action:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
