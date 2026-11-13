@@ -29,6 +29,7 @@ export default function AdminLayout() {
           <NavLink to="/admin/evaluations">{labels[11]}</NavLink>
           <NavLink to="/admin/calendrier">{labels[12]}</NavLink>
           <NavLink to="/admin/feedback">{labels[13]}</NavLink>
+          <NavLink to="/admin/smtp-test">Test SMTP</NavLink>
         </nav>
         <div className="admin-sidebar-footer">
           <span className="admin-user">{displayName(profile, session?.user.email)}</span>
