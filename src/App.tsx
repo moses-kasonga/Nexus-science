@@ -23,8 +23,6 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminCalendar from "./pages/admin/AdminCalendar";
 import AdminHomepage from "./pages/admin/AdminHomepage";
 import AdminFeedback from "./pages/admin/AdminFeedback";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminCalendar from "./pages/admin/AdminCalendar";
 import { CoursesRoute, StudentsRoute } from "./pages/admin/routes";
 import MoiseAssistantPage from "./pages/MoiseAssistantPage";
 
@@ -168,8 +166,6 @@ export default function App() {
             <Route path="calendrier" element={<AdminCalendar />} />
             <Route path="accueil" element={<AdminHomepage />} />
             <Route path="feedback" element={<AdminFeedback />} />
-            <Route path="utilisateurs" element={<AdminUsers />} />
-            <Route path="calendrier" element={<AdminCalendar />} />
           </Route>
           <Route path="*" element={<section className="wrap page"><h1>{pagesText[language].notFound}</h1><p><Link to="/">{pagesText[language].backToHome}</Link></p></section>} />
         </Routes>
