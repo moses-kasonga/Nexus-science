@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import { useT } from "../lib/i18n";
+import { adminMessages } from "../lib/adminMessages";
 
 type TurnstileApi = {
   render: (container: HTMLElement, options: {
@@ -28,6 +30,7 @@ const SCRIPT_ID = "cloudflare-turnstile-api";
 const SCRIPT_URL = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
 export function TurnstileWidget({ siteKey, onSuccess, onExpire, onError }: Props) {
+  const t = useT(adminMessages);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -74,5 +77,5 @@ export function TurnstileWidget({ siteKey, onSuccess, onExpire, onError }: Props
     };
   }, [siteKey, onSuccess, onExpire, onError]);
 
-  return <div ref={containerRef} aria-label="Vérification anti-robot" />;
+  return <div ref={containerRef} aria-label={t.antiBot} />;
 }
