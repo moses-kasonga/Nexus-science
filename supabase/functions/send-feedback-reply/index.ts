@@ -26,8 +26,7 @@ const emailCopy = {
     greeting: (name: string) => `Bonjour ${name},`,
     intro: "Notre équipe vient de répondre au message que vous nous avez envoyé sur NEXUS SCIENCE.",
     response: "Réponse de l'équipe NEXUS SCIENCE",
-    continue: "Pour répondre à notre équipe et poursuivre cet échange, connectez-vous à votre espace étudiant :",
-    button: "Accéder à mon espace étudiant",
+    access: "Pour consulter vos échanges, ouvrez NEXUS SCIENCE dans votre navigateur et connectez-vous à votre espace étudiant.",
     note: "Ceci est un message automatique. Merci de ne pas répondre directement à cet e-mail. Pour toute réponse, utilisez exclusivement votre espace étudiant NEXUS SCIENCE.",
     signature: "L'équipe NEXUS SCIENCE",
   },
@@ -35,8 +34,7 @@ const emailCopy = {
     greeting: (name: string) => `Hello ${name},`,
     intro: "Our team has replied to the message you sent through NEXUS SCIENCE.",
     response: "Reply from the NEXUS SCIENCE team",
-    continue: "To reply to our team and continue this conversation, sign in to your student area:",
-    button: "Open my student area",
+    access: "To view your messages, open NEXUS SCIENCE in your browser and sign in to your student area.",
     note: "This is an automated message. Please do not reply directly to this email. All replies must be sent exclusively from your NEXUS SCIENCE student area.",
     signature: "The NEXUS SCIENCE team",
   },
@@ -44,8 +42,7 @@ const emailCopy = {
     greeting: (name: string) => `Olá ${name},`,
     intro: "A nossa equipa respondeu à mensagem que enviou através da NEXUS SCIENCE.",
     response: "Resposta da equipa NEXUS SCIENCE",
-    continue: "Para responder à nossa equipa e continuar esta conversa, entre na sua área de estudante:",
-    button: "Aceder à minha área de estudante",
+    access: "Para consultar as suas mensagens, abra a NEXUS SCIENCE no navegador e inicie sessão na sua área de estudante.",
     note: "Esta é uma mensagem automática. Por favor, não responda diretamente a este e-mail. Todas as respostas devem ser enviadas exclusivamente através da sua área de estudante NEXUS SCIENCE.",
     signature: "A equipa NEXUS SCIENCE",
   },
@@ -53,8 +50,7 @@ const emailCopy = {
     greeting: (name: string) => `Hola ${name},`,
     intro: "Nuestro equipo ha respondido al mensaje que enviaste a través de NEXUS SCIENCE.",
     response: "Respuesta del equipo NEXUS SCIENCE",
-    continue: "Para responder a nuestro equipo y continuar esta conversación, inicia sesión en tu espacio de estudiante:",
-    button: "Acceder a mi espacio de estudiante",
+    access: "Para consultar tus mensajes, abre NEXUS SCIENCE en tu navegador e inicia sesión en tu espacio de estudiante.",
     note: "Este es un mensaje automático. No respondas directamente a este correo electrónico. Todas las respuestas deben enviarse exclusivamente desde tu espacio de estudiante NEXUS SCIENCE.",
     signature: "El equipo NEXUS SCIENCE",
   },
@@ -152,7 +148,6 @@ Deno.serve(async (request) => {
   const studentName = [studentProfile?.first_name, studentProfile?.last_name].filter(Boolean).join(" ").trim() || "étudiant";
   const language = getEmailLanguage(studentProfile?.preferred_language);
   const copy = emailCopy[language];
-  const studentUrl = new URL("/espace-etudiant", appOrigin).toString();
   const safeBody = escapeHtml(body).replace(/\n/g, "<br>");
   const safeSubject = escapeHtml(original.subject);
   const html = `
@@ -163,10 +158,7 @@ Deno.serve(async (request) => {
         <p style="margin:0 0 10px;color:#526575;font-size:13px;font-weight:700">${escapeHtml(copy.response)}</p>
         <div style="white-space:normal">${safeBody}</div>
       </div>
-      <p>${escapeHtml(copy.continue)}</p>
-      <p style="margin:24px 0">
-        <a href="${escapeHtml(studentUrl)}" style="display:inline-block;padding:12px 20px;background:#173b58;color:#fff;text-decoration:none;border-radius:8px;font-weight:700">${escapeHtml(copy.button)}</a>
-      </p>
+      <p>${escapeHtml(copy.access)}</p>
       <p style="color:#64748b;font-size:12px">${escapeHtml(copy.note)}</p>
       <p>${escapeHtml(copy.signature)}</p>
       <hr style="border:0;border-top:1px solid #e2e8f0;margin-top:24px">
@@ -180,8 +172,7 @@ Deno.serve(async (request) => {
     copy.response + ":",
     body,
     "",
-    copy.continue,
-    studentUrl,
+    copy.access,
     "",
     copy.note,
     "",
