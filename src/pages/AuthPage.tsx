@@ -40,7 +40,7 @@ function friendlyError(message: string, code: string | undefined, status: number
 }
 
 export default function AuthPage({ mode }: { mode: AuthMode }) {
-  const { session } = useAuth();
+  const { session, signOut } = useAuth();
   const t = useT(authText);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -68,6 +68,13 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
     });
     return () => data.subscription.unsubscribe();
   }, [isReset]);
+
+  // Lien d'un e-mail : toujours afficher le formulaire, même si un autre compte (ex. administrateur) est déjà connecté sur cet appareil.
+  const freshSession = searchParams.get("nouvelle_session") === "1" && mode === "login";
+  useEffect(() => {
+    if (freshSession && session) void signOut();
+  }, [freshSession, session]);
+  if (freshSession && session) return null;
 
   if (session && !isReset) return <Navigate to={destination} replace />;
 

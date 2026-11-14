@@ -130,7 +130,8 @@ Deno.serve(async (request) => {
   const studentName = [studentProfile?.first_name, studentProfile?.last_name].filter(Boolean).join(" ").trim() || "étudiant";
   const language = getEmailLanguage(studentProfile?.preferred_language);
   const copy = emailCopy[language];
-  const studentUrl = new URL("/espace-etudiant", appOrigin).toString();
+  // Formulaire de connexion : ne reprend jamais la session d'un autre compte (ex. administrateur).
+  const studentUrl = new URL("/connexion?retour=%2Fespace-etudiant&nouvelle_session=1", appOrigin).toString();
   const safeBody = escapeHtml(body).replace(/\n/g, "<br>");
   const safeSubject = escapeHtml(original.subject);
   const html = `
