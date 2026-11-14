@@ -66,14 +66,26 @@ function getEmailLanguage(value: string | null | undefined): SupportedLanguage {
   return value === "en" || value === "pt" || value === "es" ? value : "fr";
 }
 
+const getDefaultKey = (envName: string): string | undefined => {
+  const raw = Deno.env.get(envName);
+  if (!raw) return undefined;
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && typeof parsed.default === "string") return parsed.default;
+  } catch {
+    // A plain key value is also accepted for compatibility.
+  }
+  return raw;
+};
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: getCorsHeaders(request.headers.get("Origin")) });
   if (request.method !== "POST") return json({ error: "Méthode non autorisée." }, 405, request.headers.get("Origin"));
 
   const authorization = request.headers.get("Authorization");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? getDefaultKey("SUPABASE_PUBLISHABLE_KEYS");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? getDefaultKey("SUPABASE_SECRET_KEYS");
   const smtpHost = Deno.env.get("SMTP_HOST") ?? "smtp.gmail.com";
   const smtpPort = Number(Deno.env.get("SMTP_PORT") ?? "465");
   const smtpUser = Deno.env.get("SMTP_USER");
@@ -92,7 +104,17 @@ Deno.serve(async (request) => {
     global: { headers: { Authorization: authorization } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
+  // New sb_secret keys belong in the apikey header only; never send the user JWT with them.
+  const adminFetch = serviceKey.startsWith("sb_secret_")
+    ? (input: RequestInfo | URL, init?: RequestInit) => {
+        const headers = new Headers(init?.headers);
+        headers.delete("Authorization");
+        headers.set("apikey", serviceKey);
+        return fetch(input, { ...init, headers });
+      }
+    : fetch;
   const service = createClient(supabaseUrl, serviceKey, {
+    global: { fetch: adminFetch },
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
