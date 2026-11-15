@@ -308,9 +308,11 @@ const language = getEmailLanguage(studentProfile?.preferred_language);
 const copy = emailCopy[language];
 
 // Lien vers le formulaire de connexion : ne reprend jamais la session d'un autre compte (ex. administrateur).
+// Le lien reprend le site depuis lequel l'administrateur répond (s'il est autorisé), sinon APP_ORIGIN.
+const linkOrigin = origin && allowedOrigins.has(origin) ? origin : appOrigin;
 const studentUrl = new URL(
 "/connexion?retour=%2Fespace-etudiant&nouvelle_session=1",
-appOrigin,
+linkOrigin,
 ).toString();
 
 const safeBody = escapeHtml(body).replace(/\n/g, "<br>");
