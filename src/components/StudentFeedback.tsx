@@ -70,7 +70,7 @@ export default function StudentFeedback() {
       {messages.filter(m=>!m.reply_to_id).map(message=><article className="feedback-thread" key={message.id}>
         <div className="feedback-thread-heading"><strong>{message.subject}</strong><small>{t.date} {new Date(message.created_at).toLocaleString()}</small><button className="btn small danger" type="button" disabled={busy} onClick={()=>void removeMessage(message.id)}>{t.remove}</button></div>
         <p className="feedback-message feedback-message-student"><strong>{t.you}</strong>{message.body}</p>
-        {messages.filter(reply=>reply.reply_to_id===message.id).map(reply=><p className="feedback-message feedback-message-admin" key={reply.id}><strong>{t.admin}</strong>{reply.body}<small>{reply.email_sent_at? "E-mail envoyé · ":""}{new Date(reply.created_at).toLocaleString()}</small></p>)}
+        {messages.filter(reply=>reply.reply_to_id===message.id).map(reply=><div className="feedback-message feedback-message-admin" key={reply.id}><strong>{t.admin}</strong>{reply.body}<small>{reply.email_sent_at? "E-mail envoyé · ":""}{new Date(reply.created_at).toLocaleString()}</small><button className="btn small danger" type="button" disabled={busy} onClick={()=>void removeMessage(reply.id)}>{t.remove}</button></div>)}
       </article>)}
     </div>
   </section>;
