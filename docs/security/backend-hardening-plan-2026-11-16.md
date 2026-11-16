@@ -127,3 +127,75 @@ Les vérifications statiques de catalogue, migrations et code source ont été e
 3. Exécuter toute la matrice de tests sur une branche Supabase jetable.
 4. Faire relire le diff SQL et les résultats de test.
 5. Obtenir une autorisation explicite distincte avant toute application à Supabase Production ou fusion de PR.
+
+
+## 9. Revue complémentaire du 16 novembre — ACL INSERT et versions
+
+### 9.1 Privilèges INSERT : vérification ACL complète
+
+Inspection de `pg_class.relacl`, des ACL de colonnes, de `aclexplode`, de `has_table_privilege`, de `has_any_column_privilege`, et de `pg_auth_members` :
+
+- Le grantee `PUBLIC` (OID 0) ne possède aucun privilège INSERT sur la table `public.profiles`.
+- Aucun privilège INSERT n'est accordé à PUBLIC au niveau des colonnes.
+- `anon` et `authenticated` ont chacun INSERT au niveau table, hérité sur toutes les colonnes, ce qui explique le droit effectif d'insertion sur `first_name`, `last_name`, `avatar_url`, `bio` et `preferred_language`.
+- Aucune appartenance à un rôle supplémentaire n'a été trouvée pour `anon` ou `authenticated`. Les deux rôles ont `rolinherit=true`, mais aucun membership n'ajoute de privilège hérité.
+- Aucun grant option n'est présent dans l'ACL relevée.
+
+Conclusion : les deux REVOKE de la migration sont suffisants pour les privilèges actuels : le REVOKE table enlève le grant large, le REVOKE par colonnes retire toute éventuelle délégation colonne distincte. Aucun REVOKE PUBLIC supplémentaire n'est justifié, puisque PUBLIC ne possède actuellement aucun INSERT. Ne pas élargir la migration inutilement.
+
+Simulation transactionnelle effectuée (BEGIN / REVOKE / SET LOCAL ROLE / tentative INSERT / rollback implicite après refus) :
+- rôle anon : `42501 permission denied for table profiles`.
+- rôle authenticated : `42501 permission denied for table profiles`.
+
+Une simulation distincte des seuls privilèges après REVOKE a aussi retourné false pour table INSERT et any-column INSERT sur les deux rôles. Aucun INSERT n'a abouti et aucune donnée n'a été persistée.
+
+### 9.2 Schéma private et Data API
+
+Le projet actif ne possède pas encore de schéma `private`, ni de fonction `private.teaches_student(uuid)`. L'ancienne fonction `public.teaches_student(uuid)` existe toujours. Il est donc impossible de tester la nouvelle policy sur la base active sans appliquer la migration, ce qui est expressément interdit.
+
+Les paramètres runtime `pgrst.db_schemas` et `pgrst.db_extra_search_path` n'étaient pas lisibles par la connexion SQL utilisée. La liste des schémas exposés doit donc être confirmée dans Dashboard → Integrations → Data API. Supabase documente que le schéma `private` n'est pas accessible par l'API lorsqu'il n'est pas ajouté aux schémas exposés : https://supabase.com/docs/guides/api/securing-your-api.
+
+Droits proposés dans la migration :
+- retirer USAGE de PUBLIC/anon/authenticated puis réaccorder USAGE à authenticated ;
+- fonction privée SECURITY DEFINER, chemin vide, références qualifiées ;
+- EXECUTE retiré de PUBLIC et anon, accordé à authenticated car le moteur RLS évalue la policy sous le rôle de l'appelant ;
+- la fonction reste non appelable par RPC seulement si `private` n'est pas exposé à PostgREST.
+
+Aucun droit EXECUTE requis pour la policy ne doit être révoqué. Ne pas appliquer si l'exposition Data API de `private` n'est pas vérifiée.
+
+### 9.3 Unicité des versions de migration
+
+Inventaire des branches GitHub visibles au moment de la revue : main, branches feature/*, fix/*, integration/*, prep/*, security/*, temp/* et test/* (17 branches au total). Les arbres GitHub retournés n'étaient pas tronqués.
+
+Le préfixe `20261116000100` est déjà utilisé sur `feature/feedback-independent-history` par `20261116000100_feedback_message_deletions.sql`. La migration de sécurisation a donc été renommée sur cette branche uniquement en `20261116000200_backend_security_hardening.sql`. Le préfixe `20261116000200` n'apparaît dans aucune des 17 branches inspectées.
+
+Autre collision préexistante, indépendante de cette migration : `20261113000100` est utilisé par des migrations Feedback différentes dans `feature/student-admin-feedback` et `prep/feedback-function-4bf14de` (et une variante Feedback dans `feature/feedback-independent-history`). Cette collision doit être résolue lors de l'intégration de ces branches, sans modifier leurs migrations dans le cadre de cette revue.
+
+### 9.4 Matrice de tests complémentaire
+
+Les tentatives INSERT ci-dessus sont les seuls tests comportementaux exécutés, et elles ont été faites en transaction annulée. Les tests post-migration ci-dessous restent à exécuter sur une branche Supabase jetable :
+
+| Test | Identité / préparation | Résultat attendu | État |
+|---|---|---|---|
+| Inscription Auth | utilisateur jetable via Auth signup | Auth user créé, trigger crée un profil `student` | NON EXÉCUTÉ |
+| INSERT direct | anon | erreur permission denied / 42501 | SIMULATION EXÉCUTÉE : refus observé |
+| INSERT direct | authenticated | erreur permission denied / 42501 | SIMULATION EXÉCUTÉE : refus observé |
+| Lecture profil propre | étudiant | son profil visible | NON EXÉCUTÉ après migration |
+| Lecture autre profil | étudiant | profil non autorisé invisible | NON EXÉCUTÉ après migration |
+| Lecture élèves affectés | enseignant | élèves affectés visibles via private helper | NON EXÉCUTÉ |
+| Lecture élève non affecté | enseignant | profil invisible | NON EXÉCUTÉ |
+| Publication accueil | administrateur + brouillon jetable | singleton publié, UID et timestamp renseignés | NON EXÉCUTÉ |
+| Publication accueil | non-administrateur | erreur 42501 | NON EXÉCUTÉ |
+| Trigger rôle | étudiant/enseignant, tentative UPDATE role dans transaction | exception, aucune modification | NON EXÉCUTÉ après migration |
+| Trigger rôle | administrateur, tentative autorisée contrôlée sur fixture jetable | comportement admin conservé | NON EXÉCUTÉ |
+| RPC helper | authenticated via REST | endpoint public absent si private non exposé | NON EXÉCUTÉ |
+| Policy RLS privée | enseignant via vraie session Auth | la policy invoque private.teaches_student et conserve le périmètre | NON EXÉCUTÉ |
+
+Aucun compte réel n'a été créé, modifié ou utilisé pour ces tests complémentaires. Aucune migration n'a été appliquée.
+
+### 9.5 Fichiers corrigés dans cette revue
+
+- Migration renommée : `supabase/migrations/20261116000200_backend_security_hardening.sql`.
+- Le fichier `20261116000100_backend_security_hardening.sql` a été retiré de cette branche seulement pour éviter le conflit de version. Aucune migration Feedback existante n'a été modifiée ni supprimée.
+- Cette revue documentaire complète les conditions de validation et les tests.
+
