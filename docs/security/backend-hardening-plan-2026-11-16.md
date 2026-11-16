@@ -16,12 +16,13 @@
 | `anon` et `authenticated` possèdent INSERT sur `profiles` | Révoquer INSERT au niveau table et colonnes | Bloquer les insertions directes via API tout en gardant le trigger Auth |
 | Protection mots de passe compromis désactivée | Aucun changement Auth dans cette branche | Fonction indisponible sur l'offre Free actuelle |
 
-## 2. Fichiers de la branche
+## 2. Fichiers présents sur la branche
 
-- `supabase/migrations/20261116000100_backend_security_hardening.sql` — migration proposée, non exécutée.
-- `docs/security/backend-hardening-plan-2026-11-16.md` — cette note de préparation.
+- `supabase/migrations/20261116000200_backend_security_hardening.sql` — migration proposée, non exécutée.
+- `docs/security/backend-hardening-plan-2026-11-16.md` — rapport technique et conditions de validation.
+- `docs/security/backend-hardening-test-matrix.md` — matrice des tests prévus et de leur état.
 
-Aucun fichier TypeScript de l'application et aucune migration existante ne sont modifiés.
+Ces trois fichiers sont les seuls livrables de sécurisation ajoutés dans le diff final de cette branche. Aucun fichier TypeScript de l'application ni aucune migration Feedback existante n'a été modifié.
 
 ## 3. Conception SQL et dépendances
 
@@ -196,6 +197,101 @@ Aucun compte réel n'a été créé, modifié ou utilisé pour ces tests complé
 ### 9.5 Fichiers corrigés dans cette revue
 
 - Migration renommée : `supabase/migrations/20261116000200_backend_security_hardening.sql`.
-- Le fichier `20261116000100_backend_security_hardening.sql` a été retiré de cette branche seulement pour éviter le conflit de version. Aucune migration Feedback existante n'a été modifiée ni supprimée.
+- La première version de la migration, portant le préfixe `20261116000100`, a été retirée de cette branche uniquement pour éviter le conflit de version. Aucune migration Feedback existante n'a été modifiée ni supprimée.
 - Cette revue documentaire complète les conditions de validation et les tests.
 
+
+
+## 10. Vérification manuelle de l'exposition Data API — procédure exacte
+
+L'information n'a pas pu être lue depuis les métadonnées projet ni depuis les paramètres PostgreSQL accessibles dans cette revue. Aucune modification de configuration n'a été tentée.
+
+1. Ouvrir le projet exact dans Supabase Dashboard : https://supabase.com/dashboard/project/zggyzsnracscupaigjcs/integrations/data_api/overview
+2. Vérifier le nom du projet et le project ref dans le Dashboard : `zggyzsnracscupaigjcs`.
+3. Dans la page **Integrations → Data API**, repérer la section / le champ **Exposed schemas** (schémas exposés).
+4. Lire toute la liste affichée, sans cliquer sur Save / Apply.
+5. Confirmer que `private` n'y figure pas. Les schémas applicatifs publics usuels peuvent y figurer ; c'est la présence de `private` qui bloque la stratégie d'isolement proposée.
+6. Si `private` figure dans la liste, arrêter la validation : ne pas appliquer la migration et demander une autorisation séparée pour modifier cette configuration.
+7. Si `private` est absent, noter la date et une capture de la liste pour le dossier de validation, sans exposer les clés API.
+
+Le paramètre à contrôler est la liste des schémas exposés par la Data API / PostgREST, pas le simple privilège SQL USAGE. Accorder USAGE à `authenticated` pour permettre l'évaluation RLS n'expose pas à lui seul le schéma via PostgREST. La non-exposition de `private` est la barrière qui empêche le routage RPC direct par la Data API.
+
+Après application sur un environnement de test uniquement, un contrôle complémentaire pourra tenter l'appel REST à `/rest/v1/rpc/teaches_student` avec un jeton de test. Ce contrôle HTTP n'est pas à exécuter sur Production dans le cadre de cette mission.
+
+Référence officielle : https://supabase.com/docs/guides/api/securing-your-api (section Data API / exposed schemas et exemples de schémas internes).
+
+## 11. Dépendances INSERT — limites de l'audit du dépôt
+
+La conclusion « aucun autre INSERT direct trouvé » est limitée aux éléments effectivement inspectés :
+- les fichiers suivis par Git dans le dépôt `moses-kasonga/Nexus-science`, sur la branche de sécurisation ;
+- les références applicatives recherchées pour `profiles` avec les opérations `insert` / `upsert` ;
+- les fonctions PostgreSQL et triggers inspectés dans le projet Supabase ciblé ;
+- les privilèges effectifs du catalogue au moment de l'audit.
+
+Une recherche Git ne peut pas inventorier les systèmes qui ne sont pas versionnés dans ce dépôt, les secrets et variables d'environnement, les jobs configurés dans des consoles tierces, ni les scripts exécutés depuis des postes ou serveurs externes. L'absence d'appel trouvé dans le code n'est donc pas une preuve qu'aucun système externe n'écrit dans la table.
+
+Avant toute révocation en production, faire confirmer manuellement les éléments suivants, sans communiquer ni copier les secrets :
+- **Vercel** : fonctions serverless / API routes / Server Actions, jobs Cron, scripts de build ou d'administration, variables d'environnement et intégrations du projet Vercel relié à NEXUS. Identifier les opérations qui écrivent dans `public.profiles` et le rôle/credential utilisé.
+- **Supabase Edge Functions** : inventaire de toutes les fonctions déployées dans le projet exact, y compris celles dont le code n'est pas présent dans le dépôt ; rechercher les appels `.from('profiles').insert()`, `.upsert()`, SQL direct et RPC qui insèrent.
+- **Automatisations externes** : n8n, Make, Zapier, webhooks, outils d'administration, formulaires tiers, tâches planifiées ou scripts ETL/import qui pourraient écrire dans `profiles`. Il s'agit de catégories à vérifier, pas d'intégrations dont l'existence est affirmée.
+- **Accès PostgreSQL directs** : scripts Python/Node/psql, outils BI, consoles SQL, tâches de maintenance ou imports utilisant un rôle de base de données.
+- **CI/CD et opérations manuelles** : GitHub Actions, runners, scripts locaux d'administration et procédures d'import.
+
+Pour chaque flux trouvé, noter : propriétaire du système, fréquence, table/colonnes écrites, mécanisme d'authentification et rôle PostgreSQL effectif. Les flux utilisant `service_role` ou `postgres` ne sont pas bloqués par les REVOKE visant uniquement `anon` et `authenticated`; ils doivent néanmoins être inventoriés et protégés côté serveur. Le trigger `handle_new_user()` reste un flux distinct : SECURITY DEFINER détenu par postgres, insertion du profil avec rôle student.
+
+Aucun autre privilège n'est révoqué ou proposé dans cette revue.
+
+## 12. Préparation d'un environnement Supabase jetable
+
+### État observé
+
+- Projet : `zggyzsnracscupaigjcs`, statut `ACTIVE_HEALTHY`.
+- Organisation propriétaire : `Nexus-science`, offre `Free`.
+- Estimation de création d'une branche : **0,01344 USD par heure** au tarif de compute Micro retourné par Supabase pour cette organisation. Ce montant est un point de départ de compute, pas une garantie du coût total ; les autres usages de la branche peuvent s'ajouter. Les usages de branches Preview sont facturés et ne sont pas couverts par le Spend Cap selon la documentation Supabase.
+- La liste des branches renvoie actuellement une entrée nommée `main`, marquée `MIGRATIONS_FAILED`, `with_data=false`, et un statut de projet preview `ACTIVE_HEALTHY`. Cette entrée n'est pas considérée comme un environnement de test propre et ne doit pas être réutilisée sans diagnostic distinct.
+- Aucune nouvelle branche n'a été créée. Aucun coût n'a été engagé par une création de branche.
+
+### Prérequis avant création ultérieure
+
+1. Obtenir une autorisation distincte pour créer une branche et accepter son coût horaire.
+2. Confirmer les permissions de propriétaire/administrateur sur l'organisation Supabase `Nexus-science`.
+3. Vérifier le branchement GitHub de Supabase et s'assurer que la source est bien `moses-kasonga/Nexus-science` et la branche Git `security/backend-hardening-2026-11-16`, jamais un dépôt/projet MOÏSE.
+4. Vérifier que la branche sera data-less : aucun utilisateur, profil, secret, fichier Storage ou donnée Production ne doit être cloné.
+5. Préparer des identités et fixtures jetables uniquement dans l'environnement de test. Ne pas réutiliser les comptes réels.
+6. Vérifier la configuration Auth, les fournisseurs email/OAuth et les secrets requis pour les tests ; ne pas recopier de secrets Production.
+7. Vérifier l'historique des migrations de l'environnement neuf avant d'appliquer la migration de sécurisation.
+
+### Procédure prévue — non exécutée
+
+1. Dans Supabase Dashboard, sélectionner le projet `zggyzsnracscupaigjcs`, ouvrir **Branches**, puis préparer une branche de développement dédiée, par exemple `qa-backend-hardening-2026-11-16`.
+2. S'assurer que cette branche est isolée, data-less et possède son propre project ref, URL API et clés propres à cette branche.
+3. Vérifier le statut de santé des services Database, Auth, API et Storage.
+4. Dans un clone local du dépôt, checkout `security/backend-hardening-2026-11-16`. Vérifier `git status` et `git branch --show-current` avant toute commande Supabase.
+5. Lier la CLI uniquement au project ref de la branche jetable, jamais au project ref de Production :
+   `supabase link --project-ref <BRANCH_PROJECT_REF>`.
+6. Comparer l'historique avec `supabase migration list --linked`. Vérifier que la migration `20261116000200` est en attente et que les migrations antérieures sont cohérentes.
+7. Exécuter d'abord `supabase db push --dry-run` et lire toute la liste des migrations qui seraient appliquées. Si une migration inattendue apparaît, arrêter.
+8. Après autorisation distincte de test, appliquer uniquement sur le project ref jetable, puis exécuter la matrice `docs/security/backend-hardening-test-matrix.md`.
+9. Ne jamais utiliser `supabase db reset --linked` sans vérifier le project ref : cette commande est destructive pour la base liée.
+10. Après validation, conserver les résultats de test et supprimer la branche jetable uniquement après autorisation, si elle n'est plus nécessaire.
+
+Documentation officielle :
+- Branching : https://supabase.com/docs/guides/deployment/branching
+- Working with branches : https://supabase.com/docs/guides/deployment/branching/working-with-branches
+- Coûts des branches : https://supabase.com/docs/guides/platform/manage-your-usage/branching
+- CLI `db push` et option `--dry-run` : https://supabase.com/docs/reference/cli/supabase-db-push
+- Comparaison de l'historique : https://supabase.com/docs/reference/cli/supabase-migration-list
+
+### Décision
+
+L'offre actuelle est Free, mais Supabase retourne une estimation horaire de compute pour la branche. La faisabilité technique est donc établie, sous réserve de l'autorisation de coût et des permissions. La création est volontairement reportée. Ne pas utiliser l'entrée existante `main` en état `MIGRATIONS_FAILED` comme environnement de validation.
+
+## 13. Contrôle documentaire final
+
+- Nom canonique de la migration : `supabase/migrations/20261116000200_backend_security_hardening.sql`.
+- Le préfixe `20261116000200` est unique dans l'inventaire des branches Git inspectées lors de la revue précédente.
+- L'ancien nom de fichier a été remplacé dans ce rapport ; l'ancien fichier n'est pas présent dans l'arbre de la branche.
+- Les trois fichiers livrés sont listés à la section 2.
+- Aucun réglage Data API n'a été modifié.
+- Aucune branche Supabase n'a été créée.
+- Aucune migration n'a été appliquée, ni sur Production ni sur un environnement de développement.
