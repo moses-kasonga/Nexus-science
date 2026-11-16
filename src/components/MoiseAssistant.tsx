@@ -148,7 +148,7 @@ export default function MoiseAssistant({ role, accessToken }: { role: Role; acce
       <div className="moise-assistant-intro"><strong>{roleDescription}</strong></div>
       <div className="moise-message-list" aria-live="polite">
         {messages.length === 0 && <div className="moise-welcome"><strong>{t.welcome}</strong><p>{roleDescription}</p></div>}
-        {messages.map((message) => <article className={"moise-message " + message.role} key={message.id}><span>{message.role === "user" ? "Vous" : "MOÏSE"}</span>{message.attachment && <small className="moise-message-attachment">📎 {message.attachment.name}</small>}<p>{message.content || (sending && message.role === "assistant" ? t.sending : "")}</p></article>)}
+        {messages.map((message) => <article className={"moise-message " + message.role} key={message.id}><span>{message.role === "user" ? "Vous" : "MOÏSE"}</span>{message.attachment && <small className="moise-message-attachment">📎 {message.attachment.name}</small>}<p>{message.content ? message.content.split(/(\*\*[^*]+\*\*)/g).map((part, index) => part.startsWith("**") && part.endsWith("**") ? <strong key={index}>{part.slice(2, -2)}</strong> : part) : (sending && message.role === "assistant" ? t.sending : "")}</p></article>)}
         <div ref={bottomRef} />
       </div>
       {connected === false && <p className="moise-assistant-error" role="status">{t.offline}</p>}
