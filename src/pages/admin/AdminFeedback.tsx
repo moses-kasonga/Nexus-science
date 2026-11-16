@@ -89,9 +89,9 @@ export default function AdminFeedback() {
       })}</div>
       {selected&&<div className="admin-feedback-detail">
         <div className="admin-feedback-meta"><span><strong>{studentName}</strong><small>{person?.email||t.noEmail}</small></span><small>{t.received} {new Date(selected.created_at).toLocaleString()}</small></div>
-        <h3>{selected.subject}</h3><p className="feedback-message feedback-message-student">{selected.body}<button className="btn small danger" type="button" disabled={busy} onClick={()=>void removeMessage(selected.id)}>{t.remove}</button></p>
+        <h3>{selected.subject}</h3><div className="feedback-message feedback-message-student">{selected.body}<button className="btn small danger" type="button" disabled={busy} onClick={()=>void removeMessage(selected.id)}>{t.remove}</button></div>
         <h3>{t.history}</h3>
-        {replies.map(reply=><p className="feedback-message feedback-message-admin" key={reply.id}>{reply.body}<small>{reply.email_sent_at?t.emailSent:""}</small><button className="btn small danger" type="button" disabled={busy} onClick={()=>void removeMessage(reply.id)}>{t.remove}</button></p>)}
+        {replies.map(reply=><div className="feedback-message feedback-message-admin" key={reply.id}>{reply.body}<small>{reply.email_sent_at?t.emailSent:""}</small><button className="btn small danger" type="button" disabled={busy} onClick={()=>void removeMessage(reply.id)}>{t.remove}</button></div>)}
         {!preview&&<div className="feedback-reply-form">
           <h3>{t.reply}</h3>
           <label>{t.subject}<input value={subject} maxLength={160} onChange={e=>setSubject(e.target.value)}/></label>
