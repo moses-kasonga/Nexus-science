@@ -50,11 +50,11 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'SEC-08 FAIL preferred_language: colonne public.profiles.preferred_language absente'; END IF;
   IF v_type IS DISTINCT FROM 'text' THEN RAISE EXCEPTION 'SEC-08 FAIL preferred_language: type attendu text, obtenu %',v_type; END IF;
   IF v_not_null IS DISTINCT FROM true THEN RAISE EXCEPTION 'SEC-08 FAIL preferred_language: colonne doit être NOT NULL'; END IF;
-  IF regexp_replace(coalesce(v_default,''),'\s+','','g') IS DISTINCT FROM '''fr''::text' THEN
+  IF regexp_replace(coalesce(v_default,''),'[[:space:]]+','','g') IS DISTINCT FROM '''fr''::text' THEN
     RAISE EXCEPTION 'SEC-08 FAIL preferred_language: DEFAULT attendu ''fr'', expression catalogue=%',v_default;
   END IF;
   SELECT count(*),
-         count(*) FILTER (WHERE regexp_replace(regexp_replace(pg_get_constraintdef(c.oid),'\s+','','g'),'[()]','','g')
+         count(*) FILTER (WHERE regexp_replace(regexp_replace(pg_get_constraintdef(c.oid),'[[:space:]]+','','g'),'[()]','','g')
            = 'CHECKpreferred_language=ANYARRAY[''fr''::text,''en''::text,''pt''::text,''es''::text]'),
          min(pg_get_constraintdef(c.oid))
     INTO v_check_count,v_exact_check_count,v_check_def
