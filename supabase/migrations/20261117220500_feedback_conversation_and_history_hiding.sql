@@ -22,7 +22,7 @@ begin
     where root_message.id = p_root_message_id
       and root_message.reply_to_id is null
 
-    union all
+    union
 
     select child_message.id
     from public.feedback_messages as child_message
