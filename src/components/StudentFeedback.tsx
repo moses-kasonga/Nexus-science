@@ -9,10 +9,10 @@ export default function StudentFeedback() {
   const { session } = useAuth();
   const language = useLanguage();
   const t = {
-    fr: { title:"Contacter l'administration", intro:"Une question, une difficulté ou une suggestion ? Écris à l'équipe NEXUS SCIENCE. Tu retrouveras ici les réponses.", subject:"Objet", subjectPh:"Résume ta demande", body:"Ton message", bodyPh:"Explique-nous clairement ta demande…", send:"Envoyer le feedback", sending:"Envoi…", history:"Mes échanges", empty:"Aucun message pour le moment.", sent:"Ton message a bien été transmis à l'administration.", error:"Impossible d'envoyer le message.", admin:"Administration", you:"Vous", loading:"Chargement des échanges…", date:"Envoyé le", remove:"Supprimer ce message", confirmRemove:"Supprimer ce message de votre espace ? Cette action ne concerne que votre compte.", removeError:"Impossible de supprimer ce message." },
+    fr: { title:"Contacter l'administration", intro:"Une question, une difficulté ou une suggestion ? Écris à l'équipe NEXUS SCIENCE. Tu retrouveras ici les réponses.", subject:"Objet", subjectPh:"Résume ta demande", body:"Ton message", bodyPh:"Explique-nous clairement ta demande…", send:"Envoyer le feedback", sending:"Envoi…", history:"Mes échanges", empty:"Aucun message pour le moment.", sent:"Ton message a bien été transmis à l'administration.", error:"Impossible d'envoyer le message.", admin:"Administration", you:"Vous", loading:"Chargement des échanges…", date:"Envoyé le", remove:"Supprimer ce message", confirmRemove:"Supprimer ce message de votre espace ? Cette action ne concerne que votre compte.", removeError:"Impossible de supprimer ce message.", removeConversation:"Supprimer cette conversation", confirmRemoveConversation:"Supprimer toute cette conversation de votre espace ? Elle restera visible par l’administration.", clearHistory:"Vider tout mon historique", confirmClearHistory:"Vider tout votre historique ? Cette action ne concerne que votre compte.", clearError:"Impossible de vider votre historique.", },
     en: { title:"Contact the administration", intro:"Have a question, issue or suggestion? Write to the NEXUS SCIENCE team. Replies will appear here.", subject:"Subject", subjectPh:"Summarise your request", body:"Your message", bodyPh:"Explain your request clearly…", send:"Send feedback", sending:"Sending…", history:"My messages", empty:"No messages yet.", sent:"Your message was sent to the administration.", error:"Unable to send the message.", admin:"Administration", you:"You", loading:"Loading messages…", date:"Sent on", remove:"Delete this message", confirmRemove:"Delete this message from your space? This only affects your account.", removeError:"Unable to delete this message." },
     pt: { title:"Contactar a administração", intro:"Tem uma dúvida, dificuldade ou sugestão? Escreva à equipa NEXUS SCIENCE. As respostas aparecerão aqui.", subject:"Assunto", subjectPh:"Resuma o seu pedido", body:"A sua mensagem", bodyPh:"Explique claramente o seu pedido…", send:"Enviar feedback", sending:"A enviar…", history:"As minhas mensagens", empty:"Ainda não há mensagens.", sent:"A mensagem foi enviada à administração.", error:"Não foi possível enviar a mensagem.", admin:"Administração", you:"Você", loading:"A carregar mensagens…", date:"Enviado em", remove:"Eliminar esta mensagem", confirmRemove:"Eliminar esta mensagem do seu espaço? Isto afeta apenas a sua conta.", removeError:"Não foi possível eliminar esta mensagem." },
-    es: { title:"Contactar con la administración", intro:"¿Tienes una pregunta, dificultad o sugerencia? Escribe al equipo de NEXUS SCIENCE. Las respuestas aparecerán aquí.", subject:"Asunto", subjectPh:"Resume tu solicitud", body:"Tu mensaje", bodyPh:"Explica claramente tu solicitud…", send:"Enviar comentarios", sending:"Enviando…", history:"Mis mensajes", empty:"Todavía no hay mensajes.", sent:"Tu mensaje se ha enviado a la administración.", error:"No se pudo enviar el mensaje.", admin:"Administración", you:"Tú", loading:"Cargando mensajes…", date:"Enviado el", remove:"Eliminar este mensaje", confirmRemove:"¿Eliminar este mensaje de tu espacio? Solo afecta a tu cuenta.", removeError:"No se pudo eliminar el mensaje." },
+    es: { title:"Contactar con la administración", intro:"¿Tienes una pregunta, dificultad o sugerencia? Escribe al equipo de NEXUS SCIENCE. Las respuestas aparecerán aquí.", subject:"Asunto", subjectPh:"Resume tu solicitud", body:"Tu mensaje", bodyPh:"Explica claramente tu solicitud…", send:"Enviar comentarios", sending:"Enviando…", history:"Mis mensajes", empty:"Todavía no hay mensajes.", sent:"Tu mensaje se ha enviado a la administración.", error:"No se pudo enviar el mensaje.", admin:"Administración", you:"Tú", loading:"Cargando mensajes…", date:"Enviado el", remove:"Eliminar este mensaje", confirmRemove:"¿Eliminar este mensaje de tu espacio? Solo afecta a tu cuenta.", removeError:"No se pudo eliminar el mensaje.", removeConversation:"Eliminar esta conversación", confirmRemoveConversation:"¿Eliminar toda esta conversación de tu espacio? Seguirá visible para la administración.", clearHistory:"Borrar todo mi historial", confirmClearHistory:"¿Borrar todo tu historial? Solo afecta a tu cuenta.", clearError:"No se pudo borrar el historial.", },
   }[language];
   const [subject,setSubject]=useState("");
   const [body,setBody]=useState("");
@@ -44,6 +44,24 @@ export default function StudentFeedback() {
     await refresh();
   }
 
+  async function removeConversation(rootMessageId: string) {
+    if (!window.confirm(t.confirmRemoveConversation)) return;
+    setBusy(true); setError(""); setNotice("");
+    const { error: failure } = await supabase.rpc("hide_feedback_conversation", { p_root_message_id: rootMessageId });
+    setBusy(false);
+    if (failure) { setError(failure.message || t.removeError); return; }
+    await refresh();
+  }
+
+  async function clearHistory() {
+    if (!window.confirm(t.confirmClearHistory)) return;
+    setBusy(true); setError(""); setNotice("");
+    const { error: failure } = await supabase.rpc("hide_all_feedback_history");
+    setBusy(false);
+    if (failure) { setError(failure.message || t.clearError); return; }
+    await refresh();
+  }
+
   async function submit(event:FormEvent) {
     event.preventDefault(); if(!session?.user.id) return;
     setBusy(true);setError("");setNotice("");
@@ -64,11 +82,11 @@ export default function StudentFeedback() {
       {error&&<p className="notice error" role="alert">{error}</p>}{notice&&<p className="notice ok" role="status">{notice}</p>}
       <button className="student-button" type="submit" disabled={busy}>{busy?t.sending:t.send}</button>
     </form>
-    <div className="feedback-history"><h3>{t.history}</h3>
+    <div className="feedback-history"><div className="feedback-history-heading"><h3>{t.history}</h3><button className="btn small danger" type="button" disabled={busy||loading} onClick={()=>void clearHistory()}>{t.clearHistory}</button></div>
       {loading&&<p className="student-muted">{t.loading}</p>}
       {!loading&&messages.length===0&&<p className="student-muted">{t.empty}</p>}
       {messages.filter(m=>!m.reply_to_id).map(message=><article className="feedback-thread" key={message.id}>
-        <div className="feedback-thread-heading"><strong>{message.subject}</strong><small>{t.date} {new Date(message.created_at).toLocaleString()}</small><button className="btn small danger" type="button" disabled={busy} onClick={()=>void removeMessage(message.id)}>{t.remove}</button></div>
+        <div className="feedback-thread-heading"><strong>{message.subject}</strong><small>{t.date} {new Date(message.created_at).toLocaleString()}</small><button className="btn small danger" type="button" disabled={busy} onClick={()=>void removeConversation(message.id)}>{t.removeConversation}</button></div>
         <p className="feedback-message feedback-message-student"><strong>{t.you}</strong>{message.body}</p>
         {messages.filter(reply=>reply.reply_to_id===message.id).map(reply=><div className="feedback-message feedback-message-admin" key={reply.id}><strong>{t.admin}</strong>{reply.body}<small>{reply.email_sent_at? "E-mail envoyé · ":""}{new Date(reply.created_at).toLocaleString()}</small><button className="btn small danger" type="button" disabled={busy} onClick={()=>void removeMessage(reply.id)}>{t.remove}</button></div>)}
       </article>)}
