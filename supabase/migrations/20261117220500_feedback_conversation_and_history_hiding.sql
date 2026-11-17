@@ -16,19 +16,22 @@ begin
       using errcode = '42501';
   end if;
 
+  with recursive thread_messages(id) as (
+    select root_message.id
+    from public.feedback_messages as root_message
+    where root_message.id = p_root_message_id
+      and root_message.reply_to_id is null
+
+    union all
+
+    select child_message.id
+    from public.feedback_messages as child_message
+    join thread_messages as parent_message
+      on child_message.reply_to_id = parent_message.id
+  )
   insert into public.feedback_message_deletions (message_id, user_id)
-  select message_row.id, (select auth.uid())
-  from public.feedback_messages as message_row
-  where (
-      message_row.id = p_root_message_id
-      or message_row.reply_to_id = p_root_message_id
-    )
-    and exists (
-      select 1
-      from public.feedback_messages as root_message
-      where root_message.id = p_root_message_id
-        and root_message.reply_to_id is null
-    )
+  select thread_messages.id, (select auth.uid())
+  from thread_messages
   on conflict (message_id, user_id) do nothing;
 
   get diagnostics affected_rows = row_count;
