@@ -37,6 +37,40 @@ UPDATE public.profiles SET role='teacher' WHERE id=current_setting('test.teacher
 UPDATE public.profiles SET role='admin' WHERE id=current_setting('test.admin_id')::uuid;
 ALTER TABLE public.profiles ENABLE TRIGGER profiles_prevent_role_change;
 
+-- SEC-08 : schéma réel de profiles.preferred_language (catalogues PostgreSQL).
+DO $
+DECLARE v_type text; v_not_null boolean; v_default text;
+        v_check_count integer; v_exact_check_count integer; v_check_def text;
+BEGIN
+  SELECT format_type(a.atttypid,a.atttypmod),a.attnotnull,pg_get_expr(d.adbin,d.adrelid)
+    INTO v_type,v_not_null,v_default
+    FROM pg_attribute a LEFT JOIN pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
+   WHERE a.attrelid=to_regclass('public.profiles') AND a.attname='preferred_language'
+     AND a.attnum>0 AND NOT a.attisdropped;
+  IF NOT FOUND THEN RAISE EXCEPTION 'SEC-08 FAIL preferred_language: colonne public.profiles.preferred_language absente'; END IF;
+  IF v_type IS DISTINCT FROM 'text' THEN RAISE EXCEPTION 'SEC-08 FAIL preferred_language: type attendu text, obtenu %',v_type; END IF;
+  IF v_not_null IS DISTINCT FROM true THEN RAISE EXCEPTION 'SEC-08 FAIL preferred_language: colonne doit être NOT NULL'; END IF;
+  IF regexp_replace(coalesce(v_default,''),'\s+','','g') IS DISTINCT FROM '''fr''::text' THEN
+    RAISE EXCEPTION 'SEC-08 FAIL preferred_language: DEFAULT attendu ''fr'', expression catalogue=%',v_default;
+  END IF;
+  SELECT count(*),
+         count(*) FILTER (WHERE regexp_replace(regexp_replace(pg_get_constraintdef(c.oid),'\s+','','g'),'[()]','','g')
+           = 'CHECKpreferred_language=ANYARRAY[''fr''::text,''en''::text,''pt''::text,''es''::text]'),
+         min(pg_get_constraintdef(c.oid))
+    INTO v_check_count,v_exact_check_count,v_check_def
+    FROM pg_constraint c
+   WHERE c.conrelid='public.profiles'::regclass AND c.contype='c'
+     AND pg_get_expr(c.conbin,c.conrelid) LIKE '%preferred_language%';
+  IF v_check_count<>1 OR v_exact_check_count<>1 OR v_check_def IS NULL THEN
+    RAISE EXCEPTION 'SEC-08 FAIL preferred_language: une unique CHECK validant exactement fr/en/pt/es est requise; nombre de CHECK=%; définition observée=%',v_check_count,v_check_def;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_constraint c WHERE c.conrelid='public.profiles'::regclass
+       AND c.contype='c' AND pg_get_expr(c.conbin,c.conrelid) LIKE '%preferred_language%' AND NOT c.convalidated) THEN
+    RAISE EXCEPTION 'SEC-08 FAIL preferred_language: contrainte CHECK non validée';
+  END IF;
+  RAISE NOTICE 'PASS SEC-08: preferred_language text NOT NULL DEFAULT ''fr'' CHECK fr/en/pt/es';
+END $;
+
 -- Colonnes exactes issues du baseline : admin_id TEXT, teacher_id UUID.
 INSERT INTO public.courses(admin_id,name,category,description,teacher_id,published)
 VALUES(current_setting('test.admin_id'),'NEXUS SECURITY TEST','test','fixture',current_setting('test.teacher_id')::uuid,false)
@@ -61,7 +95,7 @@ BEGIN
    WHERE t.tgrelid='public.profiles'::regclass AND t.tgname='profiles_prevent_role_change'
      AND NOT t.tgisinternal AND t.tgenabled IN ('O','A')
      AND p.oid='public.prevent_role_change()'::regprocedure;
-  IF v_count<>1 THEN RAISE EXCEPTION 'SEC-04 FAIL: trigger prevent_role_change absent/inactif'; END IF;
+  IF v_count<>1 THEN RAISE EXCEPTION 'SEC-07 FAIL: trigger prevent_role_change absent/inactif'; END IF;
 
   -- Fonctions SECURITY DEFINER requises et search_path vide.
   SELECT prosecdef,proconfig INTO v_definer,v_cfg FROM pg_proc WHERE oid='public.publish_homepage_content()'::regprocedure;
@@ -78,16 +112,26 @@ BEGIN
   END IF;
   SELECT prosecdef,proconfig INTO v_definer,v_cfg FROM pg_proc WHERE oid='public.handle_new_user()'::regprocedure;
   IF NOT coalesce(v_definer,false) OR NOT coalesce(v_cfg @> ARRAY['search_path=""'],false) THEN
-    RAISE EXCEPTION 'SEC-05 FAIL handle_new_user: definer=%, config=%',v_definer,v_cfg;
+    RAISE EXCEPTION 'SEC-04 FAIL handle_new_user: definer=%, config=%',v_definer,v_cfg;
   END IF;
-  SELECT prosecdef INTO v_definer FROM pg_proc WHERE oid='public.current_user_is_admin()'::regprocedure;
-  IF NOT coalesce(v_definer,false) THEN RAISE EXCEPTION 'SECURITY DEFINER FAIL current_user_is_admin()'; END IF;
+  -- SEC-06 : existence, SECURITY DEFINER et search_path vide, vérifiés via pg_proc.
+  IF to_regprocedure('public.current_user_is_admin()') IS NULL THEN
+    RAISE EXCEPTION 'SEC-06 FAIL current_user_is_admin(): fonction public.current_user_is_admin() absente';
+  END IF;
+  SELECT p.prosecdef, p.proconfig INTO v_definer, v_cfg
+    FROM pg_proc AS p WHERE p.oid = to_regprocedure('public.current_user_is_admin()');
+  IF NOT coalesce(v_definer, false) THEN
+    RAISE EXCEPTION 'SEC-06 FAIL current_user_is_admin(): prosecdef doit être true (valeur=%)', v_definer;
+  END IF;
+  IF NOT coalesce(v_cfg @> ARRAY['search_path=""'], false) THEN
+    RAISE EXCEPTION 'SEC-06 FAIL current_user_is_admin(): pg_proc.proconfig doit contenir search_path="" (valeur=%)', v_cfg;
+  END IF;
 
   SELECT count(*) INTO v_count FROM pg_trigger t JOIN pg_proc p ON p.oid=t.tgfoid
    WHERE t.tgrelid='auth.users'::regclass AND t.tgname='on_auth_user_created'
      AND NOT t.tgisinternal AND t.tgenabled IN ('O','A')
      AND p.oid='public.handle_new_user()'::regprocedure;
-  IF v_count<>1 THEN RAISE EXCEPTION 'AUTH-02 FAIL: trigger Auth absent/inactif'; END IF;
+  IF v_count<>1 THEN RAISE EXCEPTION 'SEC-05 FAIL: trigger Auth on_auth_user_created absent/inactif'; END IF;
 
   IF NOT has_schema_privilege('authenticated','private','USAGE')
      OR NOT has_function_privilege('authenticated','private.teaches_student(uuid)','EXECUTE')
@@ -123,30 +167,35 @@ BEGIN
   END IF;
 END $$;
 
-DO $$
-DECLARE v_role text; v_public boolean;
+DO $
+DECLARE v_public_table_insert boolean; v_public_column_insert boolean; v_role text;
 BEGIN
+  -- ACL-01/02 : privilèges effectifs, y compris les droits hérités de PUBLIC.
   FOREACH v_role IN ARRAY ARRAY['anon','authenticated'] LOOP
     IF has_table_privilege(v_role,'public.profiles','INSERT')
        OR has_any_column_privilege(v_role,'public.profiles','INSERT') THEN
-      RAISE EXCEPTION 'ACL FAIL: % conserve INSERT profiles',v_role;
+      RAISE EXCEPTION 'ACL-% FAIL: % conserve un INSERT effectif sur profiles (table ou colonne)',
+        CASE v_role WHEN 'anon' THEN '01' ELSE '02' END,v_role;
     END IF;
   END LOOP;
-  SELECT EXISTS(SELECT 1 FROM pg_class c CROSS JOIN LATERAL aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) a
+  -- ACL-03 : observation seulement ; la migration cible ne révoque pas INSERT de PUBLIC.
+  SELECT EXISTS (SELECT 1 FROM pg_class c CROSS JOIN LATERAL aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) a
     WHERE c.oid='public.profiles'::regclass AND a.grantee=0 AND a.privilege_type='INSERT')
-    OR EXISTS(SELECT 1 FROM pg_attribute att CROSS JOIN LATERAL aclexplode(att.attacl) a
+    INTO v_public_table_insert;
+  SELECT EXISTS (SELECT 1 FROM pg_attribute att CROSS JOIN LATERAL aclexplode(att.attacl) a
     WHERE att.attrelid='public.profiles'::regclass AND att.attnum>0 AND NOT att.attisdropped
-      AND a.grantee=0 AND a.privilege_type='INSERT') INTO v_public;
-  IF v_public THEN RAISE EXCEPTION 'ACL FAIL: PUBLIC conserve INSERT'; END IF;
+      AND a.grantee=0 AND a.privilege_type='INSERT') INTO v_public_column_insert;
+  RAISE NOTICE 'INFO ACL-03 PUBLIC INSERT explicite: table=%, colonnes=%; la migration ne révoque pas PUBLIC',
+    v_public_table_insert,v_public_column_insert;
   IF NOT has_column_privilege('authenticated','public.profiles','first_name','UPDATE')
      OR NOT has_column_privilege('authenticated','public.profiles','avatar_url','UPDATE') THEN
     RAISE EXCEPTION 'RLS-06 FAIL: UPDATE colonnes permises absent';
   END IF;
-  RAISE NOTICE 'PASS ACL-01/02/03 et RLS-06';
-  RAISE NOTICE 'INFO ACL-04 service_role INSERT table=%, colonnes=%',
+  RAISE NOTICE 'PASS ACL-01/02 et RLS-06';
+  RAISE NOTICE 'INFO ACL-04 service_role INSERT effectif: table=%, colonnes=%',
     has_table_privilege('service_role','public.profiles','INSERT'),
     has_any_column_privilege('service_role','public.profiles','INSERT');
-END $$;
+END $;
 
 SET LOCAL ROLE anon;
 DO $$ BEGIN
