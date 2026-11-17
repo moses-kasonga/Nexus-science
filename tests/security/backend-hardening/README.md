@@ -24,7 +24,7 @@ Le baseline `20261108000000_baseline_schema.sql` reste un **snapshot reconstitu�
 
 ## Prérequis
 
-Bash, Git, Supabase CLI, Docker opérationnel, `curl`, `jq`, `psql`, `openssl`, `python3`, configuration locale Supabase autoritative et historique complet des migrations. La stack locale doit avoir été reconstruite par le processus normal sur une base jetable. Aucun secret `service_role` n'est utilisé.
+Bash, Git, Supabase CLI, Docker opérationnel, `curl`, `jq`, `psql`, `openssl`, `python3`, configuration locale reconstruite et validée avec la version de Supabase CLI utilisée et historique complet des migrations. La stack locale doit avoir été reconstruite par le processus normal sur une base jetable. Aucun secret `service_role` n'est utilisé.
 
 ## Commandes
 
