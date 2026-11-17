@@ -1,6 +1,6 @@
 -- Least privilege for per-user Feedback message hiding.
--- Revoke both table-level and column-level grants, including grants inherited
--- from PUBLIC. RLS remains enabled and the existing policies are unchanged.
+-- Revoke both table-level and column-level grants. RLS remains enabled and
+-- the existing policies are unchanged.
 
 revoke all privileges
   on table public.feedback_message_deletions
@@ -14,32 +14,15 @@ grant select, insert
   on table public.feedback_message_deletions
   to authenticated;
 
--- Fail closed if PUBLIC ACLs or effective privileges inherited through role
--- membership still expose the table beyond the intended contract.
+-- Verify effective privileges. PUBLIC grants are inherited by every role,
+-- including anon and authenticated, so these checks also detect PUBLIC access.
+-- This avoids parsing PostgreSQL ACL arrays directly.
 do $$
 declare
   v_table regclass := 'public.feedback_message_deletions'::regclass;
   v_privilege text;
   v_column text;
 begin
-  if exists (
-    select 1
-    from pg_class c
-    cross join lateral aclexplode(coalesce(c.relacl, acldefault('r', c.relowner))) acl
-    where c.oid = v_table
-      and acl.grantee = 0
-  ) or exists (
-    select 1
-    from pg_attribute a
-    cross join lateral aclexplode(coalesce(a.attacl, '{}'::aclitem[])) acl
-    where a.attrelid = v_table
-      and a.attnum > 0
-      and not a.attisdropped
-      and acl.grantee = 0
-  ) then
-    raise exception 'PUBLIC still has direct privileges on feedback_message_deletions';
-  end if;
-
   foreach v_privilege in array array[
     'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER'
   ] loop
@@ -71,4 +54,4 @@ $$;
 -- Expected effective table privileges:
 -- anon:          none
 -- authenticated: SELECT, INSERT only
--- PUBLIC:        none
+-- PUBLIC:        no effective access (covered by the role checks above)
