@@ -38,7 +38,7 @@ UPDATE public.profiles SET role='admin' WHERE id=current_setting('test.admin_id'
 ALTER TABLE public.profiles ENABLE TRIGGER profiles_prevent_role_change;
 
 -- SEC-08 : schéma réel de profiles.preferred_language (catalogues PostgreSQL).
-DO $
+DO $$
 DECLARE v_type text; v_not_null boolean; v_default text;
         v_check_count integer; v_exact_check_count integer; v_check_def text;
 BEGIN
@@ -69,7 +69,7 @@ BEGIN
     RAISE EXCEPTION 'SEC-08 FAIL preferred_language: contrainte CHECK non validée';
   END IF;
   RAISE NOTICE 'PASS SEC-08: preferred_language text NOT NULL DEFAULT ''fr'' CHECK fr/en/pt/es';
-END $;
+END $$;
 
 -- Colonnes exactes issues du baseline : admin_id TEXT, teacher_id UUID.
 INSERT INTO public.courses(admin_id,name,category,description,teacher_id,published)
@@ -167,7 +167,7 @@ BEGIN
   END IF;
 END $$;
 
-DO $
+DO $$
 DECLARE v_public_table_insert boolean; v_public_column_insert boolean; v_role text;
 BEGIN
   -- ACL-01/02 : privilèges effectifs, y compris les droits hérités de PUBLIC.
@@ -195,7 +195,7 @@ BEGIN
   RAISE NOTICE 'INFO ACL-04 service_role INSERT effectif: table=%, colonnes=%',
     has_table_privilege('service_role','public.profiles','INSERT'),
     has_any_column_privilege('service_role','public.profiles','INSERT');
-END $;
+END $$;
 
 SET LOCAL ROLE anon;
 DO $$ BEGIN
