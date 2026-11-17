@@ -23,9 +23,9 @@ for x in supabase curl jq psql openssl python3; do need "$x"; done
 # Status local seulement. Aucun link, project-ref, remote ou apply.
 STATUS="$(supabase status -o env 2>/dev/null)" || fail 'stack Supabase locale non démarrée'
 getv(){ printf '%s\n' "$STATUS" | sed -n "s/^$1=//p" | head -1 | sed -E 's/^"(.*)"$/\1/;s/^\x27(.*)\x27$/\1/'; }
-API_URL="\${LOCAL_SUPABASE_URL:-$(getv API_URL)}"
-DB_URL="\${LOCAL_SUPABASE_DB_URL:-$(getv DB_URL)}"
-ANON_KEY="\${LOCAL_SUPABASE_ANON_KEY:-$(getv ANON_KEY)}"
+API_URL="${LOCAL_SUPABASE_URL:-$(getv API_URL)}"
+DB_URL="${LOCAL_SUPABASE_DB_URL:-$(getv DB_URL)}"
+ANON_KEY="${LOCAL_SUPABASE_ANON_KEY:-$(getv ANON_KEY)}"
 [[ -n "$API_URL" && -n "$DB_URL" && -n "$ANON_KEY" ]] || fail 'URL/API key locale manquante'
 
 # API : URL loopback only, puis épinglage sur l'IP peer réellement observée.
@@ -47,9 +47,9 @@ PY
 DB_URL="$(python3 "$GUARD" "$DB_URL")" || fail 'URI PostgreSQL non locale ou ambiguë'
 unset PGHOST PGHOSTADDR PGSERVICE PGSERVICEFILE PGPORT PGDATABASE PGUSER PGPASSWORD PGPASSFILE PGOPTIONS PGSSLMODE PGCHANNELBINDING PGTARGETSESSIONATTRS PGCONNECT_TIMEOUT PGAPPNAME PGCLIENTENCODING PGSYSCONFDIR PGREQUIREAUTH PGGSSENCMODE PGKRBSRVNAME PGREALM PGSSLROOTCERT PGSSLCERT PGSSLKEY
 validate_db(){ python3 "$GUARD" "$DB_URL" >/dev/null || fail 'cible PostgreSQL refusée'; }
-psql_local(){ validate_db; env -i PATH="$PATH" HOME="\${HOME:-/tmp}" LANG=C LC_ALL=C psql "$DB_URL" -X -v ON_ERROR_STOP=1 "$@"; }
+psql_local(){ validate_db; env -i PATH="$PATH" HOME="${HOME:-/tmp}" LANG=C LC_ALL=C psql "$DB_URL" -X -v ON_ERROR_STOP=1 "$@"; }
 
-API_IP="$(env -i PATH="$PATH" HOME="\${HOME:-/tmp}" LANG=C LC_ALL=C curl -q --noproxy '*' --connect-timeout 5 --max-time 15 -fsS -o /dev/null -w '%{remote_ip}' "$API_URL/auth/v1/health")" || fail 'API/Auth locale indisponible'
+API_IP="$(env -i PATH="$PATH" HOME="${HOME:-/tmp}" LANG=C LC_ALL=C curl -q --noproxy '*' --connect-timeout 5 --max-time 15 -fsS -o /dev/null -w '%{remote_ip}' "$API_URL/auth/v1/health")" || fail 'API/Auth locale indisponible'
 API_URL="$(python3 - "$API_IP" "$API_URL" <<'PY'
 import ipaddress,sys
 from urllib.parse import urlsplit
@@ -72,7 +72,7 @@ CLEANUP_FAILED=0
 cleanup(){
  local id
  printf 'Nettoyage Auth local…\n' >&2
- for id in "\${CREATED_IDS[@]}"; do
+ for id in "${CREATED_IDS[@]}"; do
   [[ "$id" =~ ^[0-9a-fA-F-]{36}$ ]] || { echo "ERREUR NETTOYAGE: UUID invalide $id" >&2; CLEANUP_FAILED=1; continue; }
   psql_local -c "DELETE FROM auth.users WHERE id = '$id'::uuid" >/dev/null || { echo "ERREUR NETTOYAGE: suppression impossible pour $id" >&2; CLEANUP_FAILED=1; }
  done
@@ -88,7 +88,7 @@ trap 'exit 143' TERM
 signup(){
  local label="$1" email="$2" body response id
  body="$(jq -n --arg e "$email" --arg p "$PASSWORD" '{email:$e,password:$p,data:{first_name:"Nexus",last_name:"Security Test"}}')"
- response="$(env -i PATH="$PATH" HOME="\${HOME:-/tmp}" LANG=C LC_ALL=C curl -q --noproxy '*' -fsS "$API_URL/auth/v1/signup" -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' --data "$body")" || fail "signup local échoué: $label"
+ response="$(env -i PATH="$PATH" HOME="${HOME:-/tmp}" LANG=C LC_ALL=C curl -q --noproxy '*' -fsS "$API_URL/auth/v1/signup" -H "apikey: $ANON_KEY" -H 'Content-Type: application/json' --data "$body")" || fail "signup local échoué: $label"
  id="$(printf '%s' "$response" | jq -r '.id // .user.id // empty')"
  [[ "$id" =~ ^[0-9a-fA-F-]{36}$ ]] || fail "UUID Auth invalide pour $label (nettoyage email de secours actif)"
  CREATED_IDS+=("$id")
