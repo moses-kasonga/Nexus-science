@@ -7,9 +7,11 @@
 
 ## État de préparation
 
-Le runner est strictement **post-reconstruction** : il ne démarre pas Supabase, ne réinitialise pas PostgreSQL et n'applique aucune migration. Il exige que la migration cible soit déjà enregistrée dans l'historique de la base locale.
+Le runner est strictement **post-reconstruction** : il ne démarre pas Supabase, ne réinitialise pas PostgreSQL et n'applique aucune migration. Il exige que la migration cible soit déjà enregistrée dans l'historique de la base locale. La reconstruction complète n'est pas encore validée ; aucun succès SQL ne peut être déduit des contrôles statiques.
 
-L'inspection du dépôt a révélé que `supabase/config.toml` est absent. Le baseline `20261108000000_baseline_schema.sql` indique qu'il reconstitue l'état du schéma et ne représente pas l'historique complet des migrations d'origine. **Ne pas inventer le config, ne pas convertir le baseline en historique, ne pas sauter ou modifier une migration antérieure qui échoue.** Le runner s'arrête si `supabase/config.toml` manque.
+L'inspection du dépôt a révélé que `supabase/config.toml` est absent. Le baseline `20261108000000_baseline_schema.sql` est un **snapshot reconstitué**, pas l'historique original des migrations. Les migrations ultérieures ajoutent des objets absents de ce snapshot : fonctions, politiques, colonnes, tables et métadonnées de cours/enseignants, évaluations, contenus et médias. Les dépendances gérées par la plateforme, notamment Supabase Auth (`auth.users`, `auth.uid()`, rôles API) et Storage (`storage.buckets`, `storage.objects`, fonctions associées), doivent exister dans une stack locale correctement initialisée. Les seuls fichiers SQL du dépôt ne recréent pas ces composants.
+
+`supabase/config.toml` est absent de la branche. **Ne pas inventer ce fichier, ne pas convertir le baseline en historique, ne pas fabriquer de migrations historiques et ne pas sauter, renommer, réordonner ou modifier une migration antérieure qui échoue.** Le runner s'arrête si `supabase/config.toml` manque. En l'état, la reconstruction fidèle et complète n'est pas validée.
 
 ## Fichiers
 
@@ -65,6 +67,8 @@ La fonction `signup` est appelée dans le shell principal, sans substitution de 
 Le nettoyage est exécuté après une erreur de signup, un échec SQL ou une interruption INT/TERM. Chaque échec est explicitement signalé et force un code de sortie non nul. Toutes les suppressions passent par le même garde-fou PostgreSQL loopback et ciblent uniquement `auth.users` de la base locale. Si le nettoyage échoue, vérifier manuellement uniquement la base locale jetable.
 
 ## Couverture et limites
+
+Les assertions SEC-06 et SEC-08 contrôlent les métadonnées réelles de `current_user_is_admin()` et de `profiles.preferred_language` via les catalogues PostgreSQL. Les contrôles INSERT distinguent les privilèges effectifs d'`anon`/`authenticated` des ACL explicites de `PUBLIC` : la migration cible révoque les deux rôles API, mais ne révoque pas explicitement `PUBLIC`.
 
 Les assertions couvrent les colonnes et tables visibles dans les migrations du dépôt : `profiles`, `courses`, `course_teachers`, `enrollments`, `homepage_content_drafts`, `homepage_content_published`. Elles couvrent signup/profile, INSERT interdit, RLS étudiant/enseignant/admin, UPDATE des colonnes permises, helper privé, trigger de rôle, publication, ACL, `SECURITY DEFINER` et `search_path=''`.
 
