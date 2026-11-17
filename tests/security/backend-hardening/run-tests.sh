@@ -74,9 +74,9 @@ cleanup(){
  printf 'Nettoyage Auth local…\n' >&2
  for id in "\${CREATED_IDS[@]}"; do
   [[ "$id" =~ ^[0-9a-fA-F-]{36}$ ]] || { echo "ERREUR NETTOYAGE: UUID invalide $id" >&2; CLEANUP_FAILED=1; continue; }
-  psql_local -v uid="$id" -c "DELETE FROM auth.users WHERE id=:'uid'::uuid" >/dev/null || { echo "ERREUR NETTOYAGE: suppression impossible pour $id" >&2; CLEANUP_FAILED=1; }
+  psql_local -c "DELETE FROM auth.users WHERE id = '$id'::uuid" >/dev/null || { echo "ERREUR NETTOYAGE: suppression impossible pour $id" >&2; CLEANUP_FAILED=1; }
  done
- psql_local -v prefix="$EMAIL_PREFIX" -c "DELETE FROM auth.users WHERE email LIKE (:'prefix' || '%')" >/dev/null || { echo 'ERREUR NETTOYAGE: suppression de secours par email impossible' >&2; CLEANUP_FAILED=1; }
+ psql_local -c "DELETE FROM auth.users WHERE email LIKE '$EMAIL_PREFIX%'" >/dev/null || { echo 'ERREUR NETTOYAGE: suppression de secours par email impossible' >&2; CLEANUP_FAILED=1; }
  if ((CLEANUP_FAILED)); then echo 'ÉCHEC: nettoyage incomplet ; vérifier uniquement la base locale.' >&2; return 1; fi
  echo 'Nettoyage local terminé.' >&2
 }
