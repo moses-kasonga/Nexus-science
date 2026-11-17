@@ -1,0 +1,10 @@
+# Configuration locale reconstruite pour les tests de sécurité NEXUS SCIENCE.
+# Ce fichier n'est PAS une copie de la configuration originale du projet hébergé.
+# Il ne contient aucun identifiant de projet distant, aucun secret et aucune section [remotes].
+# Seul l'identifiant local est fixé ; les autres paramètres utilisent les valeurs par défaut
+# de la version de Supabase CLI installée dans l'environnement de test.
+#
+# Usage strictement local : ne pas exécuter supabase link, db push --remote,
+# db reset --remote, functions deploy, ni aucune commande ciblant un projet hébergé.
+
+project_id = "nexus-science-local-security-tests"
