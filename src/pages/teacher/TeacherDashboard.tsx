@@ -47,7 +47,11 @@ export default function TeacherDashboard() {
     <section className="wrap page">
       <p className="eyebrow">{labels[0]}</p>
       <h1>{labels[3]} {displayName(profile, session.user.email)}</h1>
-      <p className="muted">{labels[4]}</p>
+      <p className="muted">{labels[4]}</p>\n      <div className="panel" style={{ margin: "1.25rem 0", padding: "1rem" }}>
+        <strong>MOÏSE — {language === "fr" ? "Assistant pédagogique" : language === "pt" ? "Assistente pedagógico" : language === "es" ? "Asistente pedagógico" : "Teaching assistant"}</strong>
+        <p className="muted">{language === "fr" ? "Préparez vos leçons, exercices et évaluations avec votre assistant." : language === "pt" ? "Prepare aulas, exercícios e avaliações com o seu assistente." : language === "es" ? "Prepara lecciones, ejercicios y evaluaciones con tu asistente." : "Prepare lessons, exercises and assessments with your assistant."}</p>
+        <Link className="btn primary small" to="/moise">{language === "fr" ? "Ouvrir MOÏSE →" : language === "pt" ? "Abrir MOÏSE →" : language === "es" ? "Abrir MOÏSE →" : "Open MOÏSE →"}</Link>
+      </div>
       <Feedback error={error} />
       {courses === null && <p className="muted" role="status">{labels[5]}</p>}
       {courses?.length === 0 && !error && <p className="notice">{labels[6]}</p>}

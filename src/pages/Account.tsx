@@ -5,7 +5,7 @@ import { useT } from "../lib/i18n";
 import { pagesText } from "../lib/translations";
 
 export default function Account() {
-  const { session, profile, loading, signOut } = useAuth();
+  const { session, profile, loading } = useAuth();
   const t = useT(pagesText);
   if (loading) return <section className="wrap page"><p className="muted" role="status">{t.loading}</p></section>;
   if (!session) return <Navigate to="/connexion" replace />;
@@ -22,7 +22,7 @@ export default function Account() {
       </dl>
       {profile?.role === "admin" && <p><Link className="btn" to="/admin">{t.goAdmin}</Link></p>}
       {profile?.role === "teacher" && <p><Link className="btn primary" to="/enseignant">{t.goTeacher}</Link></p>}
-      <p><Link className="btn" to="/">{t.seeCourses}</Link> <button className="btn" onClick={() => void signOut()}>{t.signOut}</button></p>
+      <p><Link className="btn" to="/">{t.seeCourses}</Link></p>
     </section>
   );
 }

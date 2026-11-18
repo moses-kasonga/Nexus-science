@@ -16,8 +16,10 @@ export default function AdminDashboard() {
       pending: "Candidatures en attente",
       pendingHint: "À examiner",
       next: "Prochaines étapes",
-      roadmap: "Les écrans de gestion des utilisateurs, des enseignants, des formations, du calendrier et des retours seront ajoutés dans les lots suivants.",
-      rls: "Le nombre total d’utilisateurs n’est pas affiché : les règles RLS actuelles n’autorisent pas encore la lecture des profils des autres membres."
+      roadmap: "Le suivi des retours (feedback) sera ajouté dans un prochain lot. Les écrans Utilisateurs et Calendrier sont disponibles dans le menu.",
+      users: "Utilisateurs",
+      studentsLabel: "élèves",
+      teachersLabel: "enseignants"
     },
     en: {
       eyebrow: "Platform overview",
@@ -31,8 +33,10 @@ export default function AdminDashboard() {
       pending: "Pending applications",
       pendingHint: "To review",
       next: "Next steps",
-      roadmap: "User, teacher, course, calendar and feedback management screens will be added in upcoming releases.",
-      rls: "The total number of users is not displayed: the current RLS policies do not yet allow reading other members’ profiles."
+      roadmap: "Feedback tracking will be added in an upcoming release. The Users and Calendar screens are available in the menu.",
+      users: "Users",
+      studentsLabel: "students",
+      teachersLabel: "teachers"
     },
     pt: {
       eyebrow: "Painel de controlo da plataforma",
@@ -46,8 +50,10 @@ export default function AdminDashboard() {
       pending: "Candidaturas pendentes",
       pendingHint: "Por analisar",
       next: "Próximas etapas",
-      roadmap: "As páginas de gestão de utilizadores, professores, cursos, calendário e feedback serão adicionadas nas próximas versões.",
-      rls: "O número total de utilizadores não é apresentado: as regras RLS atuais ainda não permitem consultar os perfis dos outros membros."
+      roadmap: "O acompanhamento do feedback será adicionado numa próxima versão. As páginas Utilizadores e Calendário já estão disponíveis no menu.",
+      users: "Utilizadores",
+      studentsLabel: "alunos",
+      teachersLabel: "professores"
     },
     es: {
       eyebrow: "Panel de control de la plataforma",
@@ -61,8 +67,10 @@ export default function AdminDashboard() {
       pending: "Solicitudes pendientes",
       pendingHint: "Por revisar",
       next: "Próximos pasos",
-      roadmap: "Las pantallas de gestión de usuarios, profesores, cursos, calendario y comentarios se añadirán en próximas versiones.",
-      rls: "No se muestra el número total de usuarios: las reglas RLS actuales todavía no permiten consultar los perfiles de otros miembros."
+      roadmap: "El seguimiento de comentarios se añadirá en una próxima versión. Las pantallas Usuarios y Calendario ya están disponibles en el menú.",
+      users: "Usuarios",
+      studentsLabel: "alumnos",
+      teachersLabel: "profesores"
     }
   });
   const [summary, setSummary] = useState<AdminSummary | null>(null);
@@ -86,6 +94,7 @@ export default function AdminDashboard() {
       {!summary && !error && <p className="muted" role="status">{t.loading}</p>}
       {summary && (
         <div className="admin-stats">
+          <article className="admin-stat"><span>{t.users}</span><strong>{summary.users}</strong><small>{summary.students} {t.studentsLabel} · {summary.teachers} {t.teachersLabel}</small></article>
           <article className="admin-stat"><span>{t.courses}</span><strong>{summary.courses}</strong><small>{t.coursesHint}</small></article>
           <article className="admin-stat"><span>{t.sessions}</span><strong>{summary.sessions}</strong><small>{t.sessionsHint}</small></article>
           <article className="admin-stat"><span>{t.pending}</span><strong>{summary.pendingApplications}</strong><small>{t.pendingHint}</small></article>
@@ -94,7 +103,6 @@ export default function AdminDashboard() {
       <div className="admin-note">
         <h3>{t.next}</h3>
         <p>{t.roadmap}</p>
-        <p className="muted">{t.rls}</p>
       </div>
     </section>
   );
