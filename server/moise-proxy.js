@@ -105,7 +105,10 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
     sendJson(res, 503, { error: "The MOÏSE proxy cannot verify sessions (Supabase settings missing).", code: "not_configured" });
     return;
   }
+  const requestStartedAt = Date.now();
+  const authStartedAt = Date.now();
   const session = await verifySession(supabase, authorization);
+  console.info("[moise-proxy] stage timing", { stage: "nexus_auth", durationMs: Date.now() - authStartedAt });
   if (session === "invalid") {
     sendJson(res, 401, { error: "A valid NEXUS session is required.", code: "invalid_session" });
     return;
@@ -141,7 +144,9 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
     body = Buffer.concat(chunks);
     headers["Content-Type"] = "application/json";
 
+    const quotaStartedAt = Date.now();
     const quota = await consumeQuota(supabase, authorization);
+    console.info("[moise-proxy] stage timing", { stage: "daily_quota", durationMs: Date.now() - quotaStartedAt });
     if (quota === "auth_rejected") {
       sendJson(res, 502, { error: "Supabase rejected authorization for the quota check.", code: "quota_auth_rejected" });
       return;
@@ -157,6 +162,7 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
   }
 
   try {
+    const upstreamStartedAt = Date.now();
     const upstream = await fetch(upstreamOrigin.replace(/\/$/, "") + "/api" + upstreamPath, {
       method: allowedMethod,
       headers,
@@ -164,6 +170,7 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
       redirect: "manual",
     });
 
+    console.info("[moise-proxy] stage timing", { stage: "upstream_headers", durationMs: Date.now() - upstreamStartedAt, status: upstream.status, elapsedMs: Date.now() - requestStartedAt });
     res.statusCode = upstream.status;
     const responseType = upstream.headers.get("content-type");
     if (responseType) res.setHeader("Content-Type", responseType);
@@ -178,10 +185,15 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
     }
 
     const reader = upstream.body.getReader();
+    let firstChunkLogged = false;
     try {
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
+        if (!firstChunkLogged) {
+          firstChunkLogged = true;
+          console.info("[moise-proxy] stage timing", { stage: "first_upstream_chunk", elapsedMs: Date.now() - requestStartedAt });
+        }
         if (!res.write(Buffer.from(value))) {
           await new Promise((resolve) => res.once("drain", resolve));
         }
