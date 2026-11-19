@@ -20,7 +20,7 @@ export default function Account() {
         <div><dt>{t.email}</dt><dd>{session.user.email}</dd></div>
         <div><dt>{t.role}</dt><dd>{profile ? (profile.role === "admin" ? t.roleAdmin : profile.role === "teacher" ? t.roleTeacher : t.roleStudent) : t.profileUnavailable}</dd></div>
       </dl>
-      {profileIssue && <p className="notice" role="alert">{profileIssue.kind === "not_found" ? t.profileNotFound : t.profileLoadFailed} {profileIssue.code && <span>({profileIssue.code})</span>}</p>}
+      {profileIssue && <p className="notice" role="alert">{profileIssue.kind === "not_found" ? t.profileNotFound : t.profileLoadFailed} {(profileIssue.code || profileIssue.status) && <span>({profileIssue.code || "error"}{profileIssue.status ? ` · HTTP ${profileIssue.status}` : ""})</span>}</p>}
       {profile?.role === "admin" && <p><Link className="btn" to="/admin">{t.goAdmin}</Link></p>}
       {profile?.role === "teacher" && <p><Link className="btn primary" to="/enseignant">{t.goTeacher}</Link></p>}
       <p><Link className="btn" to="/">{t.seeCourses}</Link></p>
