@@ -45,9 +45,9 @@ export default function MoiseAssistant({ role, accessToken }: { role: Role; acce
     void (async () => {
       try {
         const response = await fetch(apiBase + "/nexus/chat/status", { headers: { Authorization: "Bearer " + accessToken } });
-        const result = await response.json().catch(() => ({})) as { connected?: boolean; error?: string };
+        const result = await response.json().catch(() => ({})) as { connected?: boolean; error?: string; code?: string };
         if (!response.ok) {
-          if (active) { setConnected(false); setError(result.error || `Erreur de connexion MOÏSE (HTTP ${response.status}).`); }
+          if (active) { setConnected(false); setError(withDiagnostic(result.error || "Erreur de connexion MOÏSE.", response.status, result.code)); }
           return;
         }
         if (active) {
@@ -94,7 +94,8 @@ export default function MoiseAssistant({ role, accessToken }: { role: Role; acce
       });
       if (!response.ok || !response.body) {
         const result = await response.json().catch(() => ({})) as { error?: string; code?: string };
-        throw new Error(result.code === "quota_exceeded" ? t.quota : result.code === "invalid_session" ? t.session : result.error || t.error);
+        const message = result.code === "quota_exceeded" ? t.quota : result.code === "invalid_session" ? t.session : result.error || t.error;
+        throw new Error(withDiagnostic(message, response.status, result.code));
       }
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
