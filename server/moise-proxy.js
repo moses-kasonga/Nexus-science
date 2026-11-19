@@ -118,6 +118,7 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
   const headers = {
     Authorization: authorization,
     "x-vercel-protection-bypass": bypassSecret,
+    "x-nexus-apikey": supabase.key,
     Accept: allowedMethod === "POST" ? "text/event-stream" : "application/json",
   };
   let body;
