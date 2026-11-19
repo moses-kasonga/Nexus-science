@@ -177,6 +177,7 @@ const pagesFr = {
   // Mon compte
   loading: "Chargement…", account: "Mon compte", name: "Nom", email: "Adresse e-mail", role: "Rôle",
   roleStudent: "Élève", roleTeacher: "Enseignant", roleAdmin: "Administrateur",
+  profileUnavailable: "Profil indisponible", profileLoadFailed: "Impossible de charger le profil.", profileNotFound: "Aucun profil associé à cette session.",
   pendingInvite: "Vous avez une invitation enseignant en attente.", continueApplication: "Continuer ma candidature",
   roleStaysStudent: "Votre rôle reste « Élève » tant que l'administration n'a pas approuvé la candidature.",
   goAdmin: "Accéder à l’administration", goTeacher: "Accéder à mon espace enseignant", seeCourses: "Voir les cours", signOut: "Se déconnecter",
@@ -222,6 +223,7 @@ export type PagesText = typeof pagesFr;
 const pagesEn: PagesText = {
   loading: "Loading…", account: "My account", name: "Name", email: "E-mail address", role: "Role",
   roleStudent: "Student", roleTeacher: "Teacher", roleAdmin: "Administrator",
+  profileUnavailable: "Profile unavailable", profileLoadFailed: "Unable to load the profile.", profileNotFound: "No profile is associated with this session.",
   pendingInvite: "You have a pending teacher invitation.", continueApplication: "Continue my application",
   roleStaysStudent: "Your role stays “Student” until the administration approves the application.",
   goAdmin: "Go to administration", goTeacher: "Go to my teacher space", seeCourses: "View courses", signOut: "Sign out",
@@ -262,6 +264,7 @@ const pagesEn: PagesText = {
 const pagesPt: PagesText = {
   loading: "A carregar…", account: "A minha conta", name: "Nome", email: "Endereço de e-mail", role: "Função",
   roleStudent: "Aluno", roleTeacher: "Professor", roleAdmin: "Administrador",
+  profileUnavailable: "Perfil indisponível", profileLoadFailed: "Não foi possível carregar o perfil.", profileNotFound: "Não existe um perfil associado a esta sessão.",
   pendingInvite: "Tem um convite de professor pendente.", continueApplication: "Continuar a minha candidatura",
   roleStaysStudent: "A sua função continua a ser «Aluno» até a administração aprovar a candidatura.",
   goAdmin: "Aceder à administração", goTeacher: "Aceder ao meu espaço de professor", seeCourses: "Ver os cursos", signOut: "Terminar sessão",
@@ -302,6 +305,7 @@ const pagesPt: PagesText = {
 const pagesEs: PagesText = {
   loading: "Cargando…", account: "Mi cuenta", name: "Nombre", email: "Dirección de correo", role: "Rol",
   roleStudent: "Alumno", roleTeacher: "Profesor", roleAdmin: "Administrador",
+  profileUnavailable: "Perfil no disponible", profileLoadFailed: "No se pudo cargar el perfil.", profileNotFound: "No hay ningún perfil asociado a esta sesión.",
   pendingInvite: "Tienes una invitación de profesor pendiente.", continueApplication: "Continuar mi candidatura",
   roleStaysStudent: "Tu rol sigue siendo «Alumno» hasta que la administración apruebe la candidatura.",
   goAdmin: "Ir a la administración", goTeacher: "Ir a mi espacio de profesor", seeCourses: "Ver los cursos", signOut: "Cerrar sesión",
