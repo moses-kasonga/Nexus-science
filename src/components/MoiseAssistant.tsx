@@ -10,7 +10,7 @@ const apiBase = "/api/moise";
 const allowedFiles = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp", "image/gif"]);
 const maxFileBytes = 2 * 1024 * 1024;
 
-function readFileAsDataUrl(file: File): Promise<string> {
+function withDiagnostic(message: string, status: number | string, code?: string): string {\n  return `${message} [Diagnostic : HTTP ${status}${code ? ` · ${code}` : ""}]`;\n}\n\nfunction readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Lecture du fichier impossible."));
@@ -55,7 +55,7 @@ export default function MoiseAssistant({ role, accessToken }: { role: Role; acce
           if (result.connected !== true) setError("Le fournisseur IA n'est pas configuré sur ce serveur.");
         }
       } catch {
-        if (active) { setConnected(false); setError("Impossible de joindre le serveur MOÏSE (réseau ou CORS)."); }
+        if (active) { setConnected(false); setError(withDiagnostic("Impossible de joindre le serveur MOÏSE (réseau ou CORS).", "NETWORK")); }
       }
     })();
     return () => { active = false; };
@@ -105,12 +105,12 @@ export default function MoiseAssistant({ role, accessToken }: { role: Role; acce
         if (!line.startsWith("data:")) return;
         const raw = line.slice(5).trim();
         if (!raw) return;
-        const packet = JSON.parse(raw) as { type?: string; text?: string; error?: string; content?: string };
+        const packet = JSON.parse(raw) as { type?: string; text?: string; error?: string; code?: string; content?: string };
         if (packet.type === "delta" && packet.text) {
           received += packet.text;
           setMessages((current) => current.map((item) => item.id === assistantId ? { ...item, content: received } : item));
         } else if (packet.type === "error") {
-          throw new Error(packet.error || t.error);
+          throw new Error(withDiagnostic(packet.error || t.error, response.status, packet.code));
         } else if (packet.type === "done" && typeof packet.content === "string") {
           received = packet.content;
           completed = true;
