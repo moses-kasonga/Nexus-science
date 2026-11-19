@@ -5,7 +5,7 @@ import { supabase } from "./supabase";
 export type Role = "student" | "teacher" | "admin";
 export type Profile = { id: string; first_name: string | null; last_name: string | null; email: string | null; role: Role; preferred_language?: "fr" | "en" | "pt" | "es" };
 
-type ProfileLoadIssue = { kind: "query_failed" | "not_found"; code?: string };
+type ProfileLoadIssue = { kind: "query_failed" | "not_found"; code?: string; status?: number };
 type AuthState = { session: Session | null; profile: Profile | null; profileIssue: ProfileLoadIssue | null; loading: boolean; signOut: () => Promise<void> };
 const AuthContext = createContext<AuthState | null>(null);
 
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!active) return;
         if (result.error) {
           setProfile(null);
-          setProfileIssue({ kind: "query_failed", code: result.error.code || "unknown" });
+          setProfileIssue({ kind: "query_failed", code: result.error.code || "unknown", status: result.error.status });
         } else if (!result.data) {
           setProfile(null);
           setProfileIssue({ kind: "not_found" });
