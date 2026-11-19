@@ -10,6 +10,10 @@ const apiBase = "/api/moise";
 const allowedFiles = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp", "image/gif"]);
 const maxFileBytes = 2 * 1024 * 1024;
 
+function withDiagnostic(message: string, status: number | string, code?: string): string {
+  return `${message} [Diagnostic : HTTP ${status}${code ? ` · ${code}` : ""}]`;
+}
+
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -45,9 +49,9 @@ export default function MoiseAssistant({ role, accessToken }: { role: Role; acce
     void (async () => {
       try {
         const response = await fetch(apiBase + "/nexus/chat/status", { headers: { Authorization: "Bearer " + accessToken } });
-        const result = await response.json().catch(() => ({})) as { connected?: boolean; error?: string };
+        const result = await response.json().catch(() => ({})) as { connected?: boolean; error?: string; code?: string };
         if (!response.ok) {
-          if (active) { setConnected(false); setError(result.error || `Erreur de connexion MOÏSE (HTTP ${response.status}).`); }
+          if (active) { setConnected(false); setError(withDiagnostic(result.error || "Erreur de connexion MOÏSE.", response.status, result.code)); }
           return;
         }
         if (active) {
@@ -55,7 +59,7 @@ export default function MoiseAssistant({ role, accessToken }: { role: Role; acce
           if (result.connected !== true) setError("Le fournisseur IA n'est pas configuré sur ce serveur.");
         }
       } catch {
-        if (active) { setConnected(false); setError("Impossible de joindre le serveur MOÏSE (réseau ou CORS)."); }
+        if (active) { setConnected(false); setError(withDiagnostic("Impossible de joindre le serveur MOÏSE (réseau ou CORS).", "NETWORK")); }
       }
     })();
     return () => { active = false; };
@@ -90,11 +94,12 @@ export default function MoiseAssistant({ role, accessToken }: { role: Role; acce
       const response = await fetch(apiBase + "/nexus/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + accessToken },
-        body: JSON.stringify({ messages: payloadMessages, language }),
+        body: JSON.stringify({ messages: payloadMessages, language, stream: true, channel: "nexus" }),
       });
       if (!response.ok || !response.body) {
         const result = await response.json().catch(() => ({})) as { error?: string; code?: string };
-        throw new Error(result.code === "quota_exceeded" ? t.quota : result.code === "invalid_session" ? t.session : result.error || t.error);
+        const message = result.code === "quota_exceeded" ? t.quota : result.code === "invalid_session" ? t.session : result.error || t.error;
+        throw new Error(withDiagnostic(message, response.status, result.code));
       }
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -105,12 +110,12 @@ export default function MoiseAssistant({ role, accessToken }: { role: Role; acce
         if (!line.startsWith("data:")) return;
         const raw = line.slice(5).trim();
         if (!raw) return;
-        const packet = JSON.parse(raw) as { type?: string; text?: string; error?: string; content?: string };
+        const packet = JSON.parse(raw) as { type?: string; text?: string; error?: string; code?: string; content?: string };
         if (packet.type === "delta" && packet.text) {
           received += packet.text;
           setMessages((current) => current.map((item) => item.id === assistantId ? { ...item, content: received } : item));
         } else if (packet.type === "error") {
-          throw new Error(packet.error || t.error);
+          throw new Error(withDiagnostic(packet.error || t.error, response.status, packet.code));
         } else if (packet.type === "done" && typeof packet.content === "string") {
           received = packet.content;
           completed = true;

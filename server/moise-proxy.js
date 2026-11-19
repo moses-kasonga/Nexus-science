@@ -6,29 +6,45 @@ function sendJson(res, status, payload, extraHeaders = {}) {
   res.end(JSON.stringify(payload));
 }
 
+// Log only the failing stage, HTTP status, and error class. Never log credentials or response bodies.
+function logSupabaseFailure(stage, status, error) {
+  console.warn("[moise-proxy] Supabase request failed", {
+    stage,
+    status: Number.isInteger(status) ? status : null,
+    error: error && typeof error.name === "string" ? error.name : undefined,
+  });
+}
+
 function supabaseConfig() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   return url && key ? { url: url.replace(/\/$/, ""), key } : null;
 }
 
-/** Vérifie auprès de Supabase que le jeton correspond à un compte réel (et non seulement à un en-tête bien formé). */
+/** Vérifie auprès de Supabase que le jeton correspond à un compte réel. */
 async function verifySession(config, authorization) {
   try {
     const response = await fetch(config.url + "/auth/v1/user", {
       headers: { Authorization: authorization, apikey: config.key },
       signal: AbortSignal.timeout(5000),
     });
-    if (response.status === 401 || response.status === 403) return "invalid";
-    if (!response.ok) return "unavailable";
+    if (response.status === 401 || response.status === 403) {
+      logSupabaseFailure("auth_verify", response.status);
+      return "invalid";
+    }
+    if (!response.ok) {
+      logSupabaseFailure("auth_verify", response.status);
+      return "unavailable";
+    }
     const user = await response.json().catch(() => null);
     return user && typeof user.id === "string" ? "valid" : "invalid";
-  } catch {
+  } catch (error) {
+    logSupabaseFailure("auth_verify", null, error);
     return "unavailable";
   }
 }
 
-/** Décompte un message dans le quota du jour (fonction SQL consume_moise_quota, appelée avec le jeton de l'utilisateur). */
+/** Décompte un message dans le quota du jour via consume_moise_quota. */
 async function consumeQuota(config, authorization) {
   const limit = Number.parseInt(process.env.MOISE_DAILY_LIMIT || "", 10);
   try {
@@ -38,13 +54,23 @@ async function consumeQuota(config, authorization) {
       body: JSON.stringify(Number.isFinite(limit) ? { p_limit: limit } : {}),
       signal: AbortSignal.timeout(5000),
     });
-    if (response.status === 401 || response.status === 403) return "invalid";
-    if (!response.ok) return "unavailable";
+    if (response.status === 401 || response.status === 403) {
+      logSupabaseFailure("quota_rpc", response.status);
+      return "auth_rejected";
+    }
+    if (!response.ok) {
+      logSupabaseFailure("quota_rpc", response.status);
+      return "unavailable";
+    }
     const result = await response.json().catch(() => null);
     const row = Array.isArray(result) ? result[0] : result;
-    if (!row || typeof row.is_allowed !== "boolean") return "unavailable";
+    if (!row || typeof row.is_allowed !== "boolean") {
+      logSupabaseFailure("quota_rpc_invalid_response", response.status);
+      return "unavailable";
+    }
     return row.is_allowed ? "allowed" : "exceeded";
-  } catch {
+  } catch (error) {
+    logSupabaseFailure("quota_rpc", null, error);
     return "unavailable";
   }
 }
@@ -79,7 +105,10 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
     sendJson(res, 503, { error: "The MOÏSE proxy cannot verify sessions (Supabase settings missing).", code: "not_configured" });
     return;
   }
+  const requestStartedAt = Date.now();
+  const authStartedAt = Date.now();
   const session = await verifySession(supabase, authorization);
+  console.info("[moise-proxy] stage timing", { stage: "nexus_auth", durationMs: Date.now() - authStartedAt });
   if (session === "invalid") {
     sendJson(res, 401, { error: "A valid NEXUS session is required.", code: "invalid_session" });
     return;
@@ -92,6 +121,7 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
   const headers = {
     Authorization: authorization,
     "x-vercel-protection-bypass": bypassSecret,
+    "x-nexus-apikey": supabase.key,
     Accept: allowedMethod === "POST" ? "text/event-stream" : "application/json",
   };
   let body;
@@ -114,9 +144,11 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
     body = Buffer.concat(chunks);
     headers["Content-Type"] = "application/json";
 
+    const quotaStartedAt = Date.now();
     const quota = await consumeQuota(supabase, authorization);
-    if (quota === "invalid") {
-      sendJson(res, 401, { error: "A valid NEXUS session is required.", code: "invalid_session" });
+    console.info("[moise-proxy] stage timing", { stage: "daily_quota", durationMs: Date.now() - quotaStartedAt });
+    if (quota === "auth_rejected") {
+      sendJson(res, 502, { error: "Supabase rejected authorization for the quota check.", code: "quota_auth_rejected" });
       return;
     }
     if (quota === "exceeded") {
@@ -130,6 +162,7 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
   }
 
   try {
+    const upstreamStartedAt = Date.now();
     const upstream = await fetch(upstreamOrigin.replace(/\/$/, "") + "/api" + upstreamPath, {
       method: allowedMethod,
       headers,
@@ -137,6 +170,7 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
       redirect: "manual",
     });
 
+    console.info("[moise-proxy] stage timing", { stage: "upstream_headers", durationMs: Date.now() - upstreamStartedAt, status: upstream.status, elapsedMs: Date.now() - requestStartedAt });
     res.statusCode = upstream.status;
     const responseType = upstream.headers.get("content-type");
     if (responseType) res.setHeader("Content-Type", responseType);
@@ -151,10 +185,15 @@ export async function proxyMoise(req, res, upstreamPath, allowedMethod) {
     }
 
     const reader = upstream.body.getReader();
+    let firstChunkLogged = false;
     try {
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
+        if (!firstChunkLogged) {
+          firstChunkLogged = true;
+          console.info("[moise-proxy] stage timing", { stage: "first_upstream_chunk", elapsedMs: Date.now() - requestStartedAt });
+        }
         if (!res.write(Buffer.from(value))) {
           await new Promise((resolve) => res.once("drain", resolve));
         }

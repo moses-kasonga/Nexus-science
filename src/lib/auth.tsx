@@ -5,7 +5,8 @@ import { supabase } from "./supabase";
 export type Role = "student" | "teacher" | "admin";
 export type Profile = { id: string; first_name: string | null; last_name: string | null; email: string | null; role: Role; preferred_language?: "fr" | "en" | "pt" | "es" };
 
-type AuthState = { session: Session | null; profile: Profile | null; loading: boolean; signOut: () => Promise<void> };
+type ProfileLoadIssue = { kind: "query_failed" | "not_found"; code?: string };
+type AuthState = { session: Session | null; profile: Profile | null; profileIssue: ProfileLoadIssue | null; loading: boolean; signOut: () => Promise<void> };
 const AuthContext = createContext<AuthState | null>(null);
 
 export const roleLabel: Record<Role, string> = { student: "Élève", teacher: "Enseignant", admin: "Administrateur" };
@@ -18,6 +19,7 @@ export function displayName(profile: Profile | null, fallbackEmail?: string | nu
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileIssue, setProfileIssue] = useState<ProfileLoadIssue | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,22 +38,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const userId = session?.user.id;
   useEffect(() => {
-    if (!userId) return;
     let active = true;
+    setProfile(null);
+    setProfileIssue(null);
+    if (!userId) {
+      setLoading(false);
+      return () => { active = false; };
+    }
     setLoading(true);
     const loadProfile = async () => {
-      let result = await supabase.from("profiles").select("id, first_name, last_name, email, role, preferred_language").eq("id", userId).maybeSingle();
-      // Compatibilité temporaire tant que la migration de préférence linguistique n'est pas appliquée.
-      if (result.error && (result.error.code === "42703" || result.error.code === "PGRST204")) {
-        result = await supabase.from("profiles").select("id, first_name, last_name, email, role").eq("id", userId).maybeSingle();
+      try {
+        let result = await supabase.from("profiles").select("id, first_name, last_name, email, role, preferred_language").eq("id", userId).maybeSingle();
+        // Compatibilité temporaire tant que la migration de préférence linguistique n'est pas appliquée.
+        if (result.error && (result.error.code === "42703" || result.error.code === "PGRST204")) {
+          result = await supabase.from("profiles").select("id, first_name, last_name, email, role").eq("id", userId).maybeSingle();
+        }
+        if (!active) return;
+        if (result.error) {
+          setProfile(null);
+          setProfileIssue({ kind: "query_failed", code: result.error.code || "unknown" });
+        } else if (!result.data) {
+          setProfile(null);
+          setProfileIssue({ kind: "not_found" });
+        } else if (result.data.id !== userId) {
+          setProfile(null);
+          setProfileIssue({ kind: "query_failed", code: "profile_user_mismatch" });
+        } else {
+          setProfile(result.data as Profile);
+          setProfileIssue(null);
+        }
+      } catch {
+        if (active) {
+          setProfile(null);
+          setProfileIssue({ kind: "query_failed", code: "unexpected_error" });
+        }
+      } finally {
+        if (active) setLoading(false);
       }
-      if (active) { setProfile((result.data as Profile | null) ?? null); setLoading(false); }
     };
     void loadProfile();
     return () => { active = false; };
   }, [userId]);
 
-  const value = useMemo<AuthState>(() => ({ session, profile, loading, signOut: async () => { await supabase.auth.signOut(); } }), [session, profile, loading]);
+  const value = useMemo<AuthState>(() => ({ session, profile, profileIssue, loading, signOut: async () => { await supabase.auth.signOut(); } }), [session, profile, profileIssue, loading]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

@@ -5,7 +5,7 @@ import { useT } from "../lib/i18n";
 import { pagesText } from "../lib/translations";
 
 export default function Account() {
-  const { session, profile, loading } = useAuth();
+  const { session, profile, profileIssue, loading } = useAuth();
   const t = useT(pagesText);
   if (loading) return <section className="wrap page"><p className="muted" role="status">{t.loading}</p></section>;
   if (!session) return <Navigate to="/connexion" replace />;
@@ -18,8 +18,9 @@ export default function Account() {
       <dl className="facts">
         <div><dt>{t.name}</dt><dd>{displayName(profile, session.user.email)}</dd></div>
         <div><dt>{t.email}</dt><dd>{session.user.email}</dd></div>
-        <div><dt>{t.role}</dt><dd>{profile?.role === "admin" ? t.roleAdmin : profile?.role === "teacher" ? t.roleTeacher : t.roleStudent}</dd></div>
+        <div><dt>{t.role}</dt><dd>{profile ? (profile.role === "admin" ? t.roleAdmin : profile.role === "teacher" ? t.roleTeacher : t.roleStudent) : t.profileUnavailable}</dd></div>
       </dl>
+      {profileIssue && <p className="notice" role="alert">{profileIssue.kind === "not_found" ? t.profileNotFound : t.profileLoadFailed} {profileIssue.code && <span>({profileIssue.code})</span>}</p>}
       {profile?.role === "admin" && <p><Link className="btn" to="/admin">{t.goAdmin}</Link></p>}
       {profile?.role === "teacher" && <p><Link className="btn primary" to="/enseignant">{t.goTeacher}</Link></p>}
       <p><Link className="btn" to="/">{t.seeCourses}</Link></p>
