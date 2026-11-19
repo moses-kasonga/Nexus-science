@@ -90,7 +90,7 @@ export default function MoiseAssistant({ role, accessToken }: { role: Role; acce
       const response = await fetch(apiBase + "/nexus/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + accessToken },
-        body: JSON.stringify({ messages: payloadMessages, language }),
+        body: JSON.stringify({ messages: payloadMessages, language, stream: true, channel: "nexus" }),
       });
       if (!response.ok || !response.body) {
         const result = await response.json().catch(() => ({})) as { error?: string; code?: string };
