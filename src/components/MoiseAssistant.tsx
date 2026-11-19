@@ -10,7 +10,11 @@ const apiBase = "/api/moise";
 const allowedFiles = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp", "image/gif"]);
 const maxFileBytes = 2 * 1024 * 1024;
 
-function withDiagnostic(message: string, status: number | string, code?: string): string {\n  return `${message} [Diagnostic : HTTP ${status}${code ? ` · ${code}` : ""}]`;\n}\n\nfunction readFileAsDataUrl(file: File): Promise<string> {
+function withDiagnostic(message: string, status: number | string, code?: string): string {
+  return `${message} [Diagnostic : HTTP ${status}${code ? ` · ${code}` : ""}]`;
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Lecture du fichier impossible."));
