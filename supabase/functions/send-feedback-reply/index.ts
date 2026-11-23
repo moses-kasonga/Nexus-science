@@ -1,18 +1,28 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@^9";
 
-const appOrigin = Deno.env.get("APP_ORIGIN") ?? "https://nexus-science-rho.vercel.app";
+// No production fallback: each environment must explicitly set its own public origin.
+const appOrigin = Deno.env.get("APP_ORIGIN") ?? "";
 const allowedOrigins = new Set(
   (Deno.env.get("APP_ALLOWED_ORIGINS") ?? appOrigin)
     .split(",").map((value) => value.trim()).filter(Boolean),
 );
 
 const getCorsHeaders = (origin: string | null) => ({
-  "Access-Control-Allow-Origin": origin && allowedOrigins.has(origin) ? origin : appOrigin,
+  ...(origin && allowedOrigins.has(origin) ? { "Access-Control-Allow-Origin": origin } : {}),
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Vary": "Origin",
 });
+
+function isHttpsOrigin(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" && parsed.origin === value;
+  } catch {
+    return false;
+  }
+}
 
 const json = (body: unknown, status = 200, origin: string | null = null) =>
   new Response(JSON.stringify(body), { status, headers: { ...getCorsHeaders(origin), "Content-Type": "application/json" } });
@@ -79,6 +89,14 @@ Deno.serve(async (request) => {
   const smtpUser = Deno.env.get("SMTP_USER");
   const smtpPass = Deno.env.get("SMTP_PASS");
   const fromEmail = Deno.env.get("FEEDBACK_FROM_EMAIL") ?? smtpUser;
+
+  if (
+    !isHttpsOrigin(appOrigin) ||
+    !allowedOrigins.has(appOrigin) ||
+    ![...allowedOrigins].every(isHttpsOrigin)
+  ) {
+    return json({ error: "APP_ORIGIN et APP_ALLOWED_ORIGINS doivent être configurés avec des origines HTTPS exactes pour cet environnement." }, 503, request.headers.get("Origin"));
+  }
 
   if (!authorization?.startsWith("Bearer ") || !supabaseUrl || !anonKey || !serviceKey) {
     return json({ error: "Configuration ou session manquante." }, 401, request.headers.get("Origin"));
