@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,6 +15,41 @@ function json(body: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+async function hasCurrentCourseAuthorization(
+  client: SupabaseClient,
+  userId: string,
+  courseId: string,
+): Promise<boolean> {
+  const { data: profile, error: profileError } = await client
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (profileError || !profile || !["admin", "teacher"].includes(profile.role)) {
+    return false;
+  }
+
+  const { data: course, error: courseError } = await client
+    .from("courses")
+    .select("id")
+    .eq("id", courseId)
+    .eq("published", true)
+    .maybeSingle();
+
+  if (courseError || !course) return false;
+  if (profile.role === "admin") return true;
+
+  const { data: assignment, error: assignmentError } = await client
+    .from("course_teachers")
+    .select("course_id")
+    .eq("course_id", courseId)
+    .eq("teacher_id", userId)
+    .maybeSingle();
+
+  return !assignmentError && Boolean(assignment);
 }
 
 async function hash(value: unknown): Promise<string> {
@@ -165,20 +200,8 @@ Deno.serve(async (request) => {
   const service = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { data: profile } = await service.from("profiles")
-    .select("role").eq("id", authData.user.id).maybeSingle();
-
-  if (!profile || !["admin", "teacher"].includes(profile.role)) {
-    return json({ error: "Accès réservé à l'administration et aux enseignants autorisés." }, 403);
-  }
-
-  if (profile.role === "teacher") {
-    const { data: assignment } = await service.from("course_teachers")
-      .select("course_id")
-      .eq("course_id", courseId)
-      .eq("teacher_id", authData.user.id)
-      .maybeSingle();
-    if (!assignment) return json({ error: "Vous n'êtes pas affecté à ce cours." }, 403);
+  if (!(await hasCurrentCourseAuthorization(service, authData.user.id, courseId))) {
+    return json({ error: "Accès réservé à l'administration et aux enseignants actuellement affectés à ce cours publié." }, 403);
   }
 
   const { data: course, error: courseError } = await service.from("courses")
@@ -264,6 +287,15 @@ Deno.serve(async (request) => {
           geminiApiKey,
           geminiModel,
         );
+
+        // La clé de service contourne RLS : revalider le rôle et l'affectation
+        // après l'appel Gemini, juste avant toute écriture persistante.
+        if (!(await hasCurrentCourseAuthorization(service, authData.user.id, courseId))) {
+          return json({
+            error: "Vos droits sur ce cours ont changé pendant la traduction. Le traitement a été interrompu.",
+            translated: results.length,
+          }, 403);
+        }
 
         const { error } = await service.from("content_translations").upsert({
           entity_type: entity.type,
