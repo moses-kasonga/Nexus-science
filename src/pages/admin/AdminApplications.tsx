@@ -8,15 +8,18 @@ type Application = {
   education_level: string; desired_program: string; motivation: string;
   status: "submitted" | "under_review" | "accepted" | "rejected";
   review_note: string | null; created_at: string;
+  internal_note?: string | null;
+  internal_note_created_at?: string | null;
+  internal_note_status?: "under_review" | "accepted" | null;
   first_name?: string | null; last_name?: string | null; email?: string | null;
 };
 
 export default function AdminApplications() {
   const t = useT({
-    fr:{submitted:"À examiner",review:"En examen",accepted:"Acceptée",rejected:"Refusée",loadError:"Impossible de charger les dossiers. Vérifiez que la migration candidature est activée et que le compte possède le rôle administrateur.",identityError:"Les dossiers sont chargés, mais les identités des candidats ne sont pas accessibles.",reason:"Motif ou éléments à compléter (facultatif) :",internal:"Note interne (facultatif) :",heading:"Dossiers de candidature",count:"dossier(s) enregistré(s)",filter:"Filtrer les dossiers",all:"Tous les statuts",none:"Aucun dossier pour ce filtre.",candidate:"Candidat",birth:"Date de naissance",notProvided:"Non renseignée",phone:"Téléphone",nationality:"Nationalité / résidence",studies:"Études",desired:"Formation souhaitée",motivation:"Motivation",reviewAction:"Mettre en examen",accept:"Accepter",refuse:"Refuser / demander correction"},
-    en:{submitted:"To review",review:"Under review",accepted:"Accepted",rejected:"Rejected",loadError:"Unable to load applications. Check that the application migration is enabled and that this account has the administrator role.",identityError:"Applications loaded, but candidate identities are unavailable.",reason:"Reason or details to complete (optional):",internal:"Internal note (optional):",heading:"Applications",count:"application(s) recorded",filter:"Filter applications",all:"All statuses",none:"No applications for this filter.",candidate:"Candidate",birth:"Date of birth",notProvided:"Not provided",phone:"Phone",nationality:"Nationality / residence",studies:"Education",desired:"Desired course",motivation:"Motivation",reviewAction:"Mark as under review",accept:"Accept",refuse:"Reject / request changes"},
-    pt:{submitted:"Por analisar",review:"Em análise",accepted:"Aceite",rejected:"Recusada",loadError:"Não foi possível carregar as candidaturas. Verifique se a migração está ativa e se a conta tem o perfil de administrador.",identityError:"As candidaturas foram carregadas, mas as identidades dos candidatos não estão disponíveis.",reason:"Motivo ou elementos a completar (opcional):",internal:"Nota interna (opcional):",heading:"Candidaturas",count:"candidatura(s) registada(s)",filter:"Filtrar candidaturas",all:"Todos os estados",none:"Não existem candidaturas para este filtro.",candidate:"Candidato",birth:"Data de nascimento",notProvided:"Não indicada",phone:"Telefone",nationality:"Nacionalidade / residência",studies:"Estudos",desired:"Curso pretendido",motivation:"Motivação",reviewAction:"Colocar em análise",accept:"Aceitar",refuse:"Recusar / pedir correção"},
-    es:{submitted:"Pendiente de revisión",review:"En revisión",accepted:"Aceptada",rejected:"Rechazada",loadError:"No se pudieron cargar las solicitudes. Comprueba que la migración esté activa y que la cuenta tenga el rol de administrador.",identityError:"Las solicitudes se han cargado, pero las identidades de los candidatos no están disponibles.",reason:"Motivo o información que debe completarse (opcional):",internal:"Nota interna (opcional):",heading:"Solicitudes",count:"solicitud(es) registrada(s)",filter:"Filtrar solicitudes",all:"Todos los estados",none:"No hay solicitudes para este filtro.",candidate:"Candidato",birth:"Fecha de nacimiento",notProvided:"No indicada",phone:"Teléfono",nationality:"Nacionalidad / residencia",studies:"Estudios",desired:"Curso solicitado",motivation:"Motivación",reviewAction:"Marcar en revisión",accept:"Aceptar",refuse:"Rechazar / solicitar corrección"}
+    fr:{submitted:"À examiner",review:"En examen",accepted:"Acceptée",rejected:"Refusée",loadError:"Impossible de charger les dossiers. Vérifiez que la migration candidature est activée et que le compte possède le rôle administrateur.",identityError:"Les dossiers sont chargés, mais les identités des candidats ne sont pas accessibles.",reason:"Motif ou éléments à compléter (facultatif) :",internal:"Note interne (facultatif) :",internalNote:"Note interne",notesError:"Les notes internes n’ont pas pu être chargées.",heading:"Dossiers de candidature",count:"dossier(s) enregistré(s)",filter:"Filtrer les dossiers",all:"Tous les statuts",none:"Aucun dossier pour ce filtre.",candidate:"Candidat",birth:"Date de naissance",notProvided:"Non renseignée",phone:"Téléphone",nationality:"Nationalité / résidence",studies:"Études",desired:"Formation souhaitée",motivation:"Motivation",reviewAction:"Mettre en examen",accept:"Accepter",refuse:"Refuser / demander correction"},
+    en:{submitted:"To review",review:"Under review",accepted:"Accepted",rejected:"Rejected",loadError:"Unable to load applications. Check that the application migration is enabled and that this account has the administrator role.",identityError:"Applications loaded, but candidate identities are unavailable.",reason:"Reason or details to complete (optional):",internal:"Internal note (optional):",internalNote:"Internal note",notesError:"Internal notes could not be loaded.",heading:"Applications",count:"application(s) recorded",filter:"Filter applications",all:"All statuses",none:"No applications for this filter.",candidate:"Candidate",birth:"Date of birth",notProvided:"Not provided",phone:"Phone",nationality:"Nationality / residence",studies:"Education",desired:"Desired course",motivation:"Motivation",reviewAction:"Mark as under review",accept:"Accept",refuse:"Reject / request changes"},
+    pt:{submitted:"Por analisar",review:"Em análise",accepted:"Aceite",rejected:"Recusada",loadError:"Não foi possível carregar as candidaturas. Verifique se a migração está ativa e se a conta tem o perfil de administrador.",identityError:"As candidaturas foram carregadas, mas as identidades dos candidatos não estão disponíveis.",reason:"Motivo ou elementos a completar (opcional):",internal:"Nota interna (opcional):",internalNote:"Nota interna",notesError:"Não foi possível carregar as notas internas.",heading:"Candidaturas",count:"candidatura(s) registada(s)",filter:"Filtrar candidaturas",all:"Todos os estados",none:"Não existem candidaturas para este filtro.",candidate:"Candidato",birth:"Data de nascimento",notProvided:"Não indicada",phone:"Telefone",nationality:"Nacionalidade / residência",studies:"Estudos",desired:"Curso pretendido",motivation:"Motivação",reviewAction:"Colocar em análise",accept:"Aceitar",refuse:"Recusar / pedir correção"},
+    es:{submitted:"Pendiente de revisión",review:"En revisión",accepted:"Aceptada",rejected:"Rechazada",loadError:"No se pudieron cargar las solicitudes. Comprueba que la migración esté activa y que la cuenta tenga el rol de administrador.",identityError:"Las solicitudes se han cargado, pero las identidades de los candidatos no están disponibles.",reason:"Motivo o información que debe completarse (opcional):",internal:"Nota interna (opcional):",internalNote:"Nota interna",notesError:"No se pudieron cargar las notas internas.",heading:"Solicitudes",count:"solicitud(es) registrada(s)",filter:"Filtrar solicitudes",all:"Todos los estados",none:"No hay solicitudes para este filtro.",candidate:"Candidato",birth:"Fecha de nacimiento",notProvided:"No indicada",phone:"Teléfono",nationality:"Nacionalidad / residencia",studies:"Estudios",desired:"Curso solicitado",motivation:"Motivación",reviewAction:"Marcar en revisión",accept:"Aceptar",refuse:"Rechazar / solicitar corrección"}
   });
   const locale = dateLocale[useLanguage()];
   const labels = { submitted:t.submitted, under_review:t.review, accepted:t.accepted, rejected:t.rejected };
@@ -35,12 +38,39 @@ export default function AdminApplications() {
       : { data: [], error: null };
     if (profileError) setError(t.identityError);
     const byId = new Map((profiles ?? []).map((profile: { id: string; first_name: string | null; last_name: string | null; email: string | null }) => [profile.id, profile]));
-    setRows(applications.map(row => ({ ...row, ...byId.get(row.user_id) })));
+    const { data: notes, error: notesError } = ids.length
+      ? await supabase.from("candidate_application_internal_notes")
+          .select("application_id, note, decision_status, created_at")
+          .in("application_id", ids)
+          .order("created_at", { ascending: false })
+      : { data: [], error: null };
+    if (notesError) setError(t.notesError);
+    const latestNoteByApplication = new Map<string, { note: string; decision_status: "under_review" | "accepted"; created_at: string }>();
+    for (const note of notes ?? []) {
+      if (!latestNoteByApplication.has(note.application_id)) {
+        latestNoteByApplication.set(note.application_id, {
+          note: note.note,
+          decision_status: note.decision_status,
+          created_at: note.created_at,
+        });
+      }
+    }
+    setRows(applications.map(row => {
+      const internal = latestNoteByApplication.get(row.id);
+      return {
+        ...row,
+        ...byId.get(row.user_id),
+        internal_note: internal?.note ?? null,
+        internal_note_status: internal?.decision_status ?? null,
+        internal_note_created_at: internal?.created_at ?? null,
+      };
+    }));
   }
   useEffect(() => { void reload(); }, []);
 
   async function review(row: Application, status: "under_review" | "accepted" | "rejected") {
-    const note = window.prompt(status === "rejected" ? t.reason : t.internal, row.review_note ?? "");
+    const note = window.prompt(status === "rejected" ? t.reason : t.internal,
+      status === "rejected" ? row.review_note ?? "" : row.internal_note ?? "");
     if (note === null) return;
     setBusyId(row.id); setError("");
     const { error: cause } = await supabase.rpc("review_candidate_application", {
@@ -82,10 +112,16 @@ export default function AdminApplications() {
               </dl>
               <h3>{t.motivation}</h3><p>{row.motivation}</p>
               {row.review_note && <p className="notice">{row.review_note}</p>}
+              {row.internal_note && (
+                <p className="notice small-text">
+                  <strong>{t.internalNote}</strong> · {row.internal_note_status === "accepted" ? t.accepted : t.review} · {row.internal_note}
+                  {row.internal_note_created_at && <> · {new Date(row.internal_note_created_at).toLocaleDateString(locale)}</>}
+                </p>
+              )}
               <div className="row wrap">
-                <button className="btn small" disabled={!!busyId || row.status === "under_review"} onClick={() => void review(row, "under_review")}>{t.reviewAction}</button>
-                <button className="btn small" disabled={!!busyId || row.status === "accepted"} onClick={() => void review(row, "accepted")}>{t.accept}</button>
-                <button className="btn small" disabled={!!busyId || row.status === "rejected"} onClick={() => void review(row, "rejected")}>{t.refuse}</button>
+                <button className="btn small" disabled={!!busyId || row.status !== "submitted"} onClick={() => void review(row, "under_review")}>{t.reviewAction}</button>
+                <button className="btn small" disabled={!!busyId || row.status === "accepted" || row.status === "rejected"} onClick={() => void review(row, "accepted")}>{t.accept}</button>
+                <button className="btn small" disabled={!!busyId || row.status === "accepted" || row.status === "rejected"} onClick={() => void review(row, "rejected")}>{t.refuse}</button>
               </div>
             </article>
           ))}
