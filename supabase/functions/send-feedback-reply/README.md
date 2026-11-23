@@ -21,14 +21,16 @@ When entering the Google App Password, remove the display spaces if Google shows
 
 ## Deploy
 
-From the repository root, after confirming the target Supabase project:
+This remediation branch is isolated to staging. For any staging validation, the only permitted target is Supabase project `wxszuziqcbobzzunocyd` (`nexus-science-staging`). **Never link or deploy this branch's Edge Function to production project `zggyzsnracscupaigjcs`.**
+
+After confirming that the staging SMTP secrets and staging Preview origins are configured, a staging-only deployment command would be:
 
 ```sh
-supabase link --project-ref zggyzsnracscupaigjcs
+supabase link --project-ref wxszuziqcbobzzunocyd
 supabase functions deploy send-feedback-reply
 ```
 
-Do not deploy this function to the shared project until the SMTP secrets have been configured and the deployment is explicitly approved.
+The function intentionally fails closed with HTTP 503 when `APP_ORIGIN` or `APP_ALLOWED_ORIGINS` is missing, malformed, or not HTTPS. Set `APP_ORIGIN` to the exact origin of the current staging Preview deployment (no trailing slash), and include that origin in `APP_ALLOWED_ORIGINS`. Never put a production origin in staging secrets.
 
 ## Validation checklist
 
