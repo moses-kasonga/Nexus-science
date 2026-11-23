@@ -177,6 +177,19 @@ Deno.serve(async (request) => {
     socketTimeout: 20000,
   });
 
+  // Recontrôler le rôle juste avant l'envoi SMTP : le compte peut avoir été
+  // rétrogradé pendant la lecture du message et la préparation de l'e-mail.
+  const { data: currentProfile, error: currentProfileError } = await service
+    .from("profiles")
+    .select("role")
+    .eq("id", authData.user.id)
+    .maybeSingle();
+
+  if (currentProfileError || currentProfile?.role !== "admin") {
+    transporter.close();
+    return json({ error: "Les droits administrateur ne sont plus actifs." }, 403, request.headers.get("Origin"));
+  }
+
   try {
     await transporter.sendMail({
       from: { name: "NEXUS SCIENCE | NO REPLY", address: fromEmail },
