@@ -30,12 +30,11 @@ async function verifySession(config, authorization) {
 
 /** Décompte un message dans le quota du jour (fonction SQL consume_moise_quota, appelée avec le jeton de l'utilisateur). */
 async function consumeQuota(config, authorization) {
-  const limit = Number.parseInt(process.env.MOISE_DAILY_LIMIT || "", 10);
   try {
     const response = await fetch(config.url + "/rest/v1/rpc/consume_moise_quota", {
       method: "POST",
       headers: { Authorization: authorization, apikey: config.key, "Content-Type": "application/json" },
-      body: JSON.stringify(Number.isFinite(limit) ? { p_limit: limit } : {}),
+      body: JSON.stringify({}),
       signal: AbortSignal.timeout(5000),
     });
     if (response.status === 401 || response.status === 403) return "invalid";
