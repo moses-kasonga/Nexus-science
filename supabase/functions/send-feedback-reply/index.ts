@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-import nodemailer from "npm:nodemailer@^9";
+import nodemailer from "npm:nodemailer@10.6.1";
 
 // No production fallback: each environment must explicitly set its own public origin.
 const appOrigin = Deno.env.get("APP_ORIGIN") ?? "";
